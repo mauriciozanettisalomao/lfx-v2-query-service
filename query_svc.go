@@ -1,14 +1,17 @@
+// Copyright The Linux Foundation and each contributor to LFX.
+// SPDX-License-Identifier: MIT
+
 package querysvcapi
 
 import (
 	"context"
 	"fmt"
+	"log/slog"
 
 	querysvc "github.com/linuxfoundation/lfx-v2-query-service/gen/query_svc"
 	"github.com/linuxfoundation/lfx-v2-query-service/internal/domain"
 	"github.com/linuxfoundation/lfx-v2-query-service/internal/service"
 
-	"goa.design/clue/log"
 	"goa.design/goa/v3/security"
 )
 
@@ -50,7 +53,10 @@ func (s *querySvcsrvc) JWTAuth(ctx context.Context, token string, scheme *securi
 // Locate resources by their type or parent, or use typeahead search to query
 // resources by a display name or similar alias.
 func (s *querySvcsrvc) QueryResources(ctx context.Context, p *querysvc.QueryResourcesPayload) (res *querysvc.QueryResourcesResult, err error) {
-	log.Printf(ctx, "querySvc.query-resources")
+
+	slog.DebugContext(ctx, "querySvc.query-resources",
+		"name", p.Name,
+	)
 
 	// Convert payload to domain criteria
 	criteria := s.payloadToCriteria(p)
@@ -68,13 +74,13 @@ func (s *querySvcsrvc) QueryResources(ctx context.Context, p *querysvc.QueryReso
 
 // Check if the service is able to take inbound requests.
 func (s *querySvcsrvc) Readyz(ctx context.Context) (res []byte, err error) {
-	log.Printf(ctx, "querySvc.readyz")
+	slog.DebugContext(ctx, "querySvc.readyz")
 	return
 }
 
 // Check if the service is alive.
 func (s *querySvcsrvc) Livez(ctx context.Context) (res []byte, err error) {
-	log.Printf(ctx, "querySvc.livez")
+	slog.DebugContext(ctx, "querySvc.livez")
 	return
 }
 

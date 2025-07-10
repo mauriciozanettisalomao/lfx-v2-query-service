@@ -9,6 +9,7 @@ import (
 	"net/http/httptest"
 	"testing"
 
+	"github.com/linuxfoundation/lfx-v2-query-service/pkg/constants"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -60,7 +61,7 @@ func TestRequestIDMiddleware(t *testing.T) {
 			// Create request
 			req := httptest.NewRequest("GET", "/test", nil)
 			if tc.existingRequestID != "" {
-				req.Header.Set(RequestIDHeader, tc.existingRequestID)
+				req.Header.Set(string(constants.RequestIDHeader), tc.existingRequestID)
 			}
 
 			rec := httptest.NewRecorder()
@@ -80,7 +81,7 @@ func TestRequestIDMiddleware(t *testing.T) {
 
 			// Verify response header contains request ID
 			if tc.expectHeaderSet {
-				responseRequestID := rec.Header().Get(RequestIDHeader)
+				responseRequestID := rec.Header().Get(string(constants.RequestIDHeader))
 				assertion.Equal(capturedRequestID, responseRequestID)
 			}
 
@@ -159,7 +160,7 @@ func TestMiddlewareIntegration(t *testing.T) {
 
 // Helper function to extract request ID from context
 func getRequestIDFromContext(ctx context.Context) string {
-	if requestID, ok := ctx.Value(requestIDKey{}).(string); ok {
+	if requestID, ok := ctx.Value(constants.RequestIDHeader).(string); ok {
 		return requestID
 	}
 	return ""

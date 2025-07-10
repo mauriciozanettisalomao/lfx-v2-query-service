@@ -1,9 +1,14 @@
+// Copyright The Linux Foundation and each contributor to LFX.
+// SPDX-License-Identifier: MIT
+
 package main
 
 import (
 	"context"
 	"flag"
 	"fmt"
+	"log"
+	"log/slog"
 	"net"
 	"net/url"
 	"os"
@@ -19,7 +24,6 @@ import (
 	logging "github.com/linuxfoundation/lfx-v2-query-service/pkg/log"
 
 	"goa.design/clue/debug"
-	"goa.design/clue/log"
 )
 
 func init() {
@@ -48,29 +52,25 @@ func main() {
 	)
 	flag.Parse()
 
-	// Setup logger. Replace logger with your own log package of choice.
-	format := log.FormatJSON
-	if log.IsTerminal() {
-		format = log.FormatTerminal
-	}
-	ctx := log.Context(context.Background(), log.WithFormat(format))
-	if *dbgF {
-		ctx = log.Context(ctx, log.WithDebug())
-		log.Debugf(ctx, "debug logs enabled")
-	}
-	log.Print(ctx, log.KV{K: "http-port", V: *httpPortF})
+	ctx := context.Background()
+	slog.InfoContext(ctx, "Starting query service",
+		"host", *hostF,
+		"http-port", *httpPortF,
+	)
 
 	// Initialize the resource searcher based on configuration
-	var resourceSearcher domain.ResourceSearcher
-	var err error
+	var (
+		resourceSearcher domain.ResourceSearcher
+		err              error
+	)
 
 	switch *searchImpl {
 	case "mock":
-		log.Printf(ctx, "initializing mock resource searcher")
+		slog.InfoContext(ctx, "initializing mock resource searcher")
 		resourceSearcher = mock.NewMockResourceSearcher()
 
 	case "elasticsearch":
-		log.Printf(ctx, "initializing elasticsearch resource searcher")
+		slog.InfoContext(ctx, "initializing elasticsearch resource searcher")
 		esConfig := elasticsearch.Config{
 			URL:      *esURL,
 			Username: *esUsername,
@@ -80,11 +80,11 @@ func main() {
 
 		resourceSearcher, err = elasticsearch.NewElasticsearchSearcherFromConfig(esConfig)
 		if err != nil {
-			log.Fatalf(ctx, err, "failed to initialize Elasticsearch searcher")
+			log.Fatalf("failed to initialize Elasticsearch searcher: %v", err)
 		}
 
 	default:
-		log.Fatalf(ctx, fmt.Errorf("unsupported search implementation: %s", *searchImpl), "valid options: mock, elasticsearch")
+		log.Fatalf("unsupported search implementation: %s", *searchImpl)
 	}
 
 	// Initialize the services.
@@ -103,7 +103,6 @@ func main() {
 	{
 		querySvcEndpoints = querysvc.NewEndpoints(querySvcSvc)
 		querySvcEndpoints.Use(debug.LogPayloads())
-		querySvcEndpoints.Use(log.Endpoint)
 	}
 
 	// Create channel used by both the signal handler and server goroutines
@@ -128,7 +127,7 @@ func main() {
 			addr := "http://localhost:8080"
 			u, err := url.Parse(addr)
 			if err != nil {
-				log.Fatalf(ctx, err, "invalid URL %#v\n", addr)
+				log.Fatalf("invalid URL %#v, error: %v\n", addr, err)
 			}
 			if *secureF {
 				u.Scheme = "https"
@@ -139,7 +138,7 @@ func main() {
 			if *httpPortF != "" {
 				h, _, err := net.SplitHostPort(u.Host)
 				if err != nil {
-					log.Fatalf(ctx, err, "invalid URL %#v\n", u.Host)
+					log.Fatalf("invalid URL %#v, error: %v\n", u.Host, err)
 				}
 				u.Host = net.JoinHostPort(h, *httpPortF)
 			} else if u.Port() == "" {
@@ -149,15 +148,17 @@ func main() {
 		}
 
 	default:
-		log.Fatal(ctx, fmt.Errorf("invalid host argument: %q (valid hosts: localhost)", *hostF))
+		log.Fatal("invalid host argument: %v", *hostF)
 	}
 
 	// Wait for signal.
-	log.Printf(ctx, "exiting (%v)", <-errc)
+	slog.InfoContext(ctx, "received shutdown signal, stopping servers",
+		"signal", <-errc,
+	)
 
 	// Send cancellation signal to the goroutines.
 	cancel()
 
 	wg.Wait()
-	log.Printf(ctx, "exited")
+	slog.InfoContext(ctx, "exited")
 }

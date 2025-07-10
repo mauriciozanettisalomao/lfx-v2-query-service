@@ -1,3 +1,6 @@
+// Copyright The Linux Foundation and each contributor to LFX.
+// SPDX-License-Identifier: MIT
+
 package main
 
 import (
@@ -11,8 +14,8 @@ import (
 	querysvcsvr "github.com/linuxfoundation/lfx-v2-query-service/gen/http/query_svc/server"
 	querysvc "github.com/linuxfoundation/lfx-v2-query-service/gen/query_svc"
 	"github.com/linuxfoundation/lfx-v2-query-service/internal/middleware"
+
 	"goa.design/clue/debug"
-	"goa.design/clue/log"
 	goahttp "goa.design/goa/v3/http"
 )
 
@@ -66,13 +69,16 @@ func handleHTTPServer(ctx context.Context, u *url.URL, querySvcEndpoints *querys
 		// Log query and response bodies if debug logs are enabled.
 		handler = debug.HTTP()(handler)
 	}
-	handler = log.HTTP(ctx)(handler)
 
 	// Start HTTP server using default configuration, change the code to
 	// configure the server as required by your service.
 	srv := &http.Server{Addr: u.Host, Handler: handler, ReadHeaderTimeout: time.Second * 60}
 	for _, m := range querySvcServer.Mounts {
-		log.Printf(ctx, "HTTP %q mounted on %s %s", m.Method, m.Verb, m.Pattern)
+		slog.InfoContext(ctx, "HTTP endpoint mounted",
+			"method", m.Method,
+			"verb", m.Verb,
+			"pattern", m.Pattern,
+		)
 	}
 
 	(*wg).Add(1)
@@ -81,12 +87,12 @@ func handleHTTPServer(ctx context.Context, u *url.URL, querySvcEndpoints *querys
 
 		// Start HTTP server in a separate goroutine.
 		go func() {
-			log.Printf(ctx, "HTTP server listening on %q", u.Host)
+			slog.InfoContext(ctx, "HTTP server listening", "host", u.Host)
 			errc <- srv.ListenAndServe()
 		}()
 
 		<-ctx.Done()
-		log.Printf(ctx, "shutting down HTTP server at %q", u.Host)
+		slog.InfoContext(ctx, "shutting down HTTP server", "host", u.Host)
 
 		// Shutdown gracefully with a 30s timeout.
 		ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
@@ -94,7 +100,7 @@ func handleHTTPServer(ctx context.Context, u *url.URL, querySvcEndpoints *querys
 
 		err := srv.Shutdown(ctx)
 		if err != nil {
-			log.Printf(ctx, "failed to shutdown: %v", err)
+			slog.ErrorContext(ctx, "failed to shutdown HTTP server", "error", err)
 		}
 	}()
 }
@@ -104,6 +110,6 @@ func handleHTTPServer(ctx context.Context, u *url.URL, querySvcEndpoints *querys
 // to correlate.
 func errorHandler(logCtx context.Context) func(context.Context, http.ResponseWriter, error) {
 	return func(ctx context.Context, w http.ResponseWriter, err error) {
-		slog.ErrorContext(ctx, "HTTP error occurred", "error", err)
+		slog.ErrorContext(logCtx, "HTTP error occurred", "error", err)
 	}
 }

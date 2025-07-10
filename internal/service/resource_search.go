@@ -37,10 +37,7 @@ func (s *ResourceSearch) QueryResources(ctx context.Context, criteria domain.Sea
 	}
 
 	// Log the search operation
-	slog.DebugContext(ctx, "performing resource search",
-		"name", criteria.Name,
-		"type", criteria.Type,
-		"parent", criteria.Parent)
+	slog.DebugContext(ctx, "validated search criteria, proceeding with search")
 
 	// Delegate to the search implementation
 	result, err := s.resourceSearcher.QueryResources(ctx, criteria)

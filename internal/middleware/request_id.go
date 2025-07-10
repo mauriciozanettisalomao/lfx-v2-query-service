@@ -8,22 +8,18 @@ import (
 	"log/slog"
 	"net/http"
 
+	"github.com/linuxfoundation/lfx-v2-query-service/pkg/constants"
 	"github.com/linuxfoundation/lfx-v2-query-service/pkg/log"
 
 	"github.com/google/uuid"
 )
-
-type requestIDHeaderType string
-
-// requestIDHeader is the header name for the request ID
-const requestIDHeader requestIDHeaderType = "X-REQUEST-ID"
 
 // RequestIDMiddleware creates a middleware that adds a request ID to the context
 func RequestIDMiddleware() func(http.Handler) http.Handler {
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			// Try to get request ID from header first
-			requestID := r.Header.Get(string(requestIDHeader))
+			requestID := r.Header.Get(string(constants.RequestIDHeader))
 
 			// If no request ID in header, generate a new one
 			if requestID == "" {
@@ -31,15 +27,15 @@ func RequestIDMiddleware() func(http.Handler) http.Handler {
 			}
 
 			// Add request ID to response header
-			w.Header().Set(string(requestIDHeader), requestID)
+			w.Header().Set(string(constants.RequestIDHeader), requestID)
 
 			// Add request ID to context
-			ctx := context.WithValue(r.Context(), requestIDHeader, requestID)
+			ctx := context.WithValue(r.Context(), constants.RequestIDHeader, requestID)
 
 			// Log the request ID using the context-aware logger
 			// So using slog along with the context
 			// This allows the request ID to be included in all logs for this request
-			ctx = log.AppendCtx(ctx, slog.String(string(requestIDHeader), requestID))
+			ctx = log.AppendCtx(ctx, slog.String(string(constants.RequestIDHeader), requestID))
 
 			// Create a new request with the updated context
 			r = r.WithContext(ctx)

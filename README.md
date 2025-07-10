@@ -1,5 +1,6 @@
 # lfx-v2-query-service
-LFX v2 Platform Query
+
+HTTP service for LFX API consumers to perform access-controlled queries for LFX resources, including typeahead and full-text search.
 
 ## Architecture Overview
 
