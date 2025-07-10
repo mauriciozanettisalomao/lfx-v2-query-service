@@ -24,7 +24,7 @@ func NewMockResourceSearcher() *MockResourceSearcher {
 			{
 				Type: "committee",
 				ID:   "123",
-				Data: map[string]interface{}{
+				Data: map[string]any{
 					"name":        "Technical Advisory Committee",
 					"description": "Main technical governance body",
 					"status":      "active",
@@ -34,7 +34,7 @@ func NewMockResourceSearcher() *MockResourceSearcher {
 			{
 				Type: "project",
 				ID:   "456",
-				Data: map[string]interface{}{
+				Data: map[string]any{
 					"name":        "LFX Platform Project",
 					"description": "Core platform development project",
 					"status":      "active",
@@ -44,7 +44,7 @@ func NewMockResourceSearcher() *MockResourceSearcher {
 			{
 				Type: "committee",
 				ID:   "789",
-				Data: map[string]interface{}{
+				Data: map[string]any{
 					"name":        "Security Committee",
 					"description": "Handles security-related matters",
 					"status":      "active",
@@ -54,7 +54,7 @@ func NewMockResourceSearcher() *MockResourceSearcher {
 			{
 				Type: "meeting",
 				ID:   "101",
-				Data: map[string]interface{}{
+				Data: map[string]any{
 					"name":        "Monthly Board Meeting",
 					"description": "Regular board meeting for project governance",
 					"status":      "active",
@@ -72,9 +72,9 @@ func (m *MockResourceSearcher) QueryResources(ctx context.Context, criteria doma
 	var filteredResources []domain.Resource
 
 	// Filter by type
-	if criteria.Type != nil {
+	if criteria.ResourceType != nil {
 		for _, resource := range m.resources {
-			if resource.Type == *criteria.Type {
+			if resource.Type == *criteria.ResourceType {
 				filteredResources = append(filteredResources, resource)
 			}
 		}
@@ -123,7 +123,7 @@ func (m *MockResourceSearcher) QueryResources(ctx context.Context, criteria doma
 	}
 
 	// Sort results (simplified implementation)
-	m.sortResources(filteredResources, criteria.Sort)
+	m.sortResources(filteredResources, criteria.SortBy)
 
 	result := &domain.SearchResult{
 		Resources: filteredResources,

@@ -5,10 +5,12 @@ package service
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"log/slog"
 
 	"github.com/linuxfoundation/lfx-v2-query-service/internal/domain"
+	"github.com/linuxfoundation/lfx-v2-query-service/pkg/constants"
 )
 
 // ResourceSearch handles resource-related business operations
@@ -22,19 +24,28 @@ func (s *ResourceSearch) QueryResources(ctx context.Context, criteria domain.Sea
 
 	slog.DebugContext(ctx, "starting resource search",
 		"name", criteria.Name,
-		"type", criteria.Type,
+		"type", criteria.ResourceType,
 		"parent", criteria.Parent,
 	)
 
-	// Validate business rules
+	// It seems that Goa v3 does not natively support complex conditional validations
+	// like “at least one of these fields must be set
 	if err := s.validateSearchCriteria(criteria); err != nil {
 		slog.With("error", err).ErrorContext(ctx, "search criteria validation failed")
 		return nil, fmt.Errorf("invalid search criteria: %w", err)
 	}
 
-	// Apply default sorting if not provided
-	if criteria.Sort == "" {
-		criteria.Sort = "name_asc"
+	// Grab the principal which was stored into the context by the security handler.
+	principal, ok := ctx.Value(constants.PrincipalContextID).(string)
+	if !ok {
+		// This should not happen; the Auther always sets this or errors.
+		return nil, errors.New("authenticated principal is missing")
+	}
+	if principal == constants.AnonymousPrincipal {
+		// For an anonymous use, we will use the "public:true" OpenSearch term
+		// filter, instead of OpenFGA, to filter results for performance.
+		slog.DebugContext(ctx, "anonymous user detected, applying public-only filter")
+		criteria.PublicOnly = true
 	}
 
 	// Log the search operation
@@ -46,8 +57,9 @@ func (s *ResourceSearch) QueryResources(ctx context.Context, criteria domain.Sea
 		return nil, fmt.Errorf("search operation failed: %w", err)
 	}
 
-	// Apply business rules to the results
-	s.processSearchResults(ctx, result)
+	// TODO check access NATS implementation
+	//
+	//
 
 	return result, nil
 }
@@ -55,43 +67,11 @@ func (s *ResourceSearch) QueryResources(ctx context.Context, criteria domain.Sea
 // validateSearchCriteria validates the search criteria according to business rules
 func (s *ResourceSearch) validateSearchCriteria(criteria domain.SearchCriteria) error {
 	// At least one search parameter must be provided
-	if criteria.Name == nil && criteria.Parent == nil && criteria.Type == nil && len(criteria.Tags) == 0 {
+	if criteria.Name == nil && criteria.Parent == nil && criteria.ResourceType == nil && len(criteria.Tags) == 0 {
 		return fmt.Errorf("at least one search parameter must be provided")
 	}
 
-	// Validate name length if provided
-	if criteria.Name != nil && len(*criteria.Name) < 1 {
-		return fmt.Errorf("name must be at least 1 character long")
-	}
-
-	// Validate sort parameter
-	validSortValues := []string{"name_asc", "name_desc", "updated_asc", "updated_desc"}
-	if criteria.Sort != "" {
-		valid := false
-		for _, v := range validSortValues {
-			if criteria.Sort == v {
-				valid = true
-				break
-			}
-		}
-		if !valid {
-			return fmt.Errorf("invalid sort value: %s", criteria.Sort)
-		}
-	}
-
 	return nil
-}
-
-// processSearchResults applies business logic to search results
-func (s *ResourceSearch) processSearchResults(ctx context.Context, result *domain.SearchResult) {
-	// Apply cache control policy
-	if result.CacheControl == nil {
-		cacheControl := "public, max-age=300"
-		result.CacheControl = &cacheControl
-	}
-
-	// Log the results count
-	slog.InfoContext(ctx, "search completed successfully", "resources_found", len(result.Resources))
 }
 
 // NewResourceSearch creates a new ResourceSearch instance

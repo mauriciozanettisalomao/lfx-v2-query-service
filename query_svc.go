@@ -11,6 +11,7 @@ import (
 	querysvc "github.com/linuxfoundation/lfx-v2-query-service/gen/query_svc"
 	"github.com/linuxfoundation/lfx-v2-query-service/internal/domain"
 	"github.com/linuxfoundation/lfx-v2-query-service/internal/service"
+	"github.com/linuxfoundation/lfx-v2-query-service/pkg/constants"
 
 	"goa.design/goa/v3/security"
 )
@@ -20,32 +21,13 @@ type querySvcsrvc struct {
 	resourceService domain.ResourceSearcher
 }
 
-// NewQuerySvc returns the query-svc service implementation.
-func NewQuerySvc(resourceSearcher domain.ResourceSearcher) querysvc.Service {
-	resourceService := service.NewResourceSearch(resourceSearcher)
-	return &querySvcsrvc{
-		resourceService: resourceService,
-	}
-}
-
 // JWTAuth implements the authorization logic for service "query-svc" for the
 // "jwt" security scheme.
 func (s *querySvcsrvc) JWTAuth(ctx context.Context, token string, scheme *security.JWTScheme) (context.Context, error) {
 	//
-	// TBD: add authorization logic.
-	//
-	// In case of authorization failure this function should return
-	// one of the generated error structs, e.g.:
-	//
-	//    return ctx, myservice.MakeUnauthorizedError("invalid token")
-	//
-	// Alternatively this function may return an instance of
-	// goa.ServiceError with a Name field value that matches one of
-	// the design error names, e.g:
-	//
-	//    return ctx, goa.PermanentError("unauthorized", "invalid token")
-	//
-	//return ctx, fmt.Errorf("not implemented")
+	// TODO - implement JWT authorization logic
+
+	ctx = context.WithValue(ctx, constants.PrincipalContextID, "_anonymous") // Simulate anonymous user for now
 
 	return ctx, nil // No authorization logic implemented yet
 }
@@ -86,13 +68,30 @@ func (s *querySvcsrvc) Livez(ctx context.Context) (res []byte, err error) {
 
 // payloadToCriteria converts the generated payload to domain search criteria
 func (s *querySvcsrvc) payloadToCriteria(p *querysvc.QueryResourcesPayload) domain.SearchCriteria {
+
 	criteria := domain.SearchCriteria{
-		Name:      p.Name,
-		Parent:    p.Parent,
-		Type:      p.Type,
-		Tags:      p.Tags,
-		Sort:      p.Sort,
-		PageToken: p.PageToken,
+		Name:         p.Name,
+		Parent:       p.Parent,
+		ResourceType: p.Type,
+		Tags:         p.Tags,
+		SortBy:       p.Sort,
+		PageToken:    p.PageToken,
+		PageSize:     constants.DefaultPageSize,
+	}
+
+	switch p.Sort {
+	case "name_asc":
+		criteria.SortBy = "sort_name"
+		criteria.SortOrder = "asc"
+	case "name_desc":
+		criteria.SortBy = "sort_name"
+		criteria.SortOrder = "desc"
+	case "updated_asc":
+		criteria.SortBy = "updated_at"
+		criteria.SortOrder = "asc"
+	case "updated_desc":
+		criteria.SortBy = "updated_at"
+		criteria.SortOrder = "desc"
 	}
 	return criteria
 }
@@ -114,4 +113,12 @@ func (s *querySvcsrvc) domainResultToResponse(result *domain.SearchResult) *quer
 	}
 
 	return response
+}
+
+// NewQuerySvc returns the query-svc service implementation.
+func NewQuerySvc(resourceSearcher domain.ResourceSearcher) querysvc.Service {
+	resourceService := service.NewResourceSearch(resourceSearcher)
+	return &querySvcsrvc{
+		resourceService: resourceService,
+	}
 }

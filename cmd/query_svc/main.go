@@ -41,14 +41,12 @@ func main() {
 		secureF   = flag.Bool("secure", false, "Use secure scheme (https or grpcs)")
 		dbgF      = flag.Bool("debug", false, "Log request and response bodies")
 
-		// Search implementation configuration
-		searchImpl = flag.String("search-impl", "mock", "Search implementation to use (mock, elasticsearch)")
+		// Search source implementation configuration
+		searchSource = flag.String("search-source", "mock", "Search implementation to use (mock, elasticsearch)")
 
-		// Elasticsearch configuration flags
-		esURL      = flag.String("es-url", "http://localhost:9200", "Elasticsearch URL")
-		esUsername = flag.String("es-username", "", "Elasticsearch username")
-		esPassword = flag.String("es-password", "", "Elasticsearch password")
-		esIndex    = flag.String("es-index", "lfx-resources", "Elasticsearch index name")
+		// OpenSearch configuration flags
+		opensearchURL   = flag.String("opensearch-url", "http://localhost:9200", "Opensearch URL")
+		opensearchIndex = flag.String("opensearch-index", "lfx-resources", "Opensearch index name")
 	)
 	flag.Parse()
 
@@ -64,27 +62,25 @@ func main() {
 		err              error
 	)
 
-	switch *searchImpl {
+	switch *searchSource {
 	case "mock":
 		slog.InfoContext(ctx, "initializing mock resource searcher")
 		resourceSearcher = mock.NewMockResourceSearcher()
 
 	case "opensearch":
 		slog.InfoContext(ctx, "initializing opensearch resource searcher")
-		esConfig := opensearch.Config{
-			URL:      *esURL,
-			Username: *esUsername,
-			Password: *esPassword,
-			Index:    *esIndex,
+		opensearchConfig := opensearch.Config{
+			URL:   *opensearchURL,
+			Index: *opensearchIndex,
 		}
 
-		resourceSearcher, err = opensearch.NewOpenSearchSearcherFromConfig(esConfig)
+		resourceSearcher, err = opensearch.NewSearcher(ctx, opensearchConfig)
 		if err != nil {
 			log.Fatalf("failed to initialize OpenSearch searcher: %v", err)
 		}
 
 	default:
-		log.Fatalf("unsupported search implementation: %s", *searchImpl)
+		log.Fatalf("unsupported search implementation: %s", *searchSource)
 	}
 
 	// Initialize the services.
@@ -148,7 +144,7 @@ func main() {
 		}
 
 	default:
-		log.Fatal("invalid host argument: %v", *hostF)
+		log.Fatalf("invalid host argument: %v", *hostF)
 	}
 
 	// Wait for signal.

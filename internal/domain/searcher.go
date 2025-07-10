@@ -17,18 +17,28 @@ type ResourceSearcher interface {
 
 // SearchCriteria encapsulates all possible search parameters
 type SearchCriteria struct {
+	// Tags to filter resources
+	Tags []string
 	// Resource name or alias; supports typeahead
 	Name *string
 	// Parent (for navigation; varies by object type)
 	Parent *string
-	// Resource type to search
-	Type *string
-	// Tags to search (varies by object type)
-	Tags []string
-	// Sort order for results
-	Sort string
+	// ParentRef is a reference to the parent resource
+	ParentRef *string
+	// ResourceType to search
+	ResourceType *string
+	// SearchAfter is used for pagination
+	SearchAfter *string
+	// Sortby order for results
+	SortBy string
+	// SortOrder for results
+	SortOrder string
 	// Opaque token for pagination
 	PageToken *string
+	// Pagesize for pagination
+	PageSize int
+	// PublicOnly indicates if only public resources should be returned
+	PublicOnly bool
 }
 
 // SearchResult contains the results of a resource search

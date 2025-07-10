@@ -8,23 +8,26 @@ import (
 	"encoding/json"
 	"fmt"
 	"log/slog"
-	"strings"
+	"net"
+	"net/http"
+	"time"
 
 	"github.com/linuxfoundation/lfx-v2-query-service/internal/domain"
+
+	"github.com/opensearch-project/opensearch-go/v4"
+	"github.com/opensearch-project/opensearch-go/v4/opensearchapi"
 )
 
 // OpenSearchSearcher implements the ResourceSearcher interface for OpenSearch
 type OpenSearchSearcher struct {
-	client    OpenSearchClient
-	templates *SearchTemplates
-	index     string
+	client OpenSearchClientRetriever
+	index  string
 }
 
-// OpenSearchClient defines the interface for OpenSearch operations
+// OpenSearchClientRetriever defines the interface for OpenSearch operations
 // This allows for easy mocking and testing
-type OpenSearchClient interface {
-	Search(ctx context.Context, index string, query string) (*SearchResponse, error)
-	IsHealthy(ctx context.Context) error
+type OpenSearchClientRetriever interface {
+	Search(ctx context.Context, index string, query []byte) (*SearchResponse, error)
 }
 
 // QueryResources implements the ResourceSearcher interface
@@ -37,7 +40,7 @@ func (os *OpenSearchSearcher) QueryResources(ctx context.Context, criteria domai
 	templateData := os.prepareTemplateData(criteria)
 
 	// Render the appropriate query template
-	query, err := os.renderQuery(templateData)
+	query, err := templateData.Render(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("failed to render query: %w", err)
 	}
@@ -63,48 +66,34 @@ func (os *OpenSearchSearcher) QueryResources(ctx context.Context, criteria domai
 // prepareTemplateData converts domain search criteria to template data
 func (os *OpenSearchSearcher) prepareTemplateData(criteria domain.SearchCriteria) TemplateData {
 	data := TemplateData{
-		Sort: criteria.Sort,
-		Size: 50, // Default page size
-		From: 0,
+		PublicOnly: criteria.PublicOnly,
+		SortBy:     criteria.SortBy,
+		SortOrder:  criteria.SortOrder,
+		PageSize:   criteria.PageSize,
 	}
 
 	if criteria.Name != nil {
 		data.Name = *criteria.Name
 	}
-	if criteria.Type != nil {
-		data.Type = *criteria.Type
+	if criteria.ResourceType != nil {
+		data.ResourceType = *criteria.ResourceType
 	}
 	if criteria.Parent != nil {
-		data.Parent = *criteria.Parent
+		data.ParentRef = *criteria.ParentRef
 	}
 	if criteria.Tags != nil {
 		data.Tags = criteria.Tags
 	}
-	if criteria.PageToken != nil {
-		data.PageToken = *criteria.PageToken
-		// Parse page token to set pagination offset
-		// This is a simplified implementation - in production you'd use a more sophisticated approach
-		if offset := parsePageToken(*criteria.PageToken); offset > 0 {
-			data.From = offset
-		}
+	if criteria.SearchAfter != nil {
+		data.SearchAfter = *criteria.SearchAfter
 	}
 
 	return data
 }
 
-// renderQuery renders the appropriate query template based on the search criteria
-func (os *OpenSearchSearcher) renderQuery(data TemplateData) (string, error) {
-	// If this is a typeahead search (name only with no other filters), use typeahead template
-	if data.Name != "" && data.Type == "" && data.Parent == "" && len(data.Tags) == 0 {
-		return os.templates.RenderTypeaheadQuery(data)
-	}
-
-	// Otherwise, use the full resource search template
-	return os.templates.RenderResourceSearchQuery(data)
-}
-
 // convertResponse converts OpenSearch response to domain objects
 func (os *OpenSearchSearcher) convertResponse(ctx context.Context, response *SearchResponse) (*domain.SearchResult, error) {
+
 	result := &domain.SearchResult{
 		Resources: make([]domain.Resource, 0, len(response.Hits.Hits)),
 	}
@@ -120,10 +109,7 @@ func (os *OpenSearchSearcher) convertResponse(ctx context.Context, response *Sea
 	}
 
 	// Generate next page token if there are more results
-	if len(response.Hits.Hits) > 0 && response.Hits.Total.Value > int64(len(result.Resources)) {
-		nextPageToken := generatePageToken(len(result.Resources))
-		result.PageToken = &nextPageToken
-	}
+	// TODO check for pagination logic
 
 	return result, nil
 }
@@ -142,7 +128,7 @@ func (os *OpenSearchSearcher) convertHit(hit Hit) (domain.Resource, error) {
 		}
 
 		// Extract type
-		if typeVal, ok := sourceData["type"].(string); ok {
+		if typeVal, ok := sourceData["object_type"].(string); ok {
 			resource.Type = typeVal
 		}
 
@@ -158,37 +144,41 @@ func (os *OpenSearchSearcher) convertHit(hit Hit) (domain.Resource, error) {
 	return resource, nil
 }
 
-// parsePageToken parses the page token to extract pagination offset
-func parsePageToken(token string) int {
-	// This is a simplified implementation
-	// In production, you'd use a more sophisticated approach like base64 encoding
-	if strings.HasPrefix(token, "offset_") {
-		offsetStr := strings.TrimPrefix(token, "offset_")
-		var offset int
-		if _, err := fmt.Sscanf(offsetStr, "%d", &offset); err == nil {
-			return offset
-		}
+// NewSearcher returns a new OpenSearchSearcher implementation
+func NewSearcher(ctx context.Context, config Config) (domain.ResourceSearcher, error) {
+
+	if config.URL == "" {
+		slog.ErrorContext(ctx, "opensearch URL is required")
+		return nil, fmt.Errorf("opensearch URL is required")
 	}
-	return 0
-}
+	if config.Index == "" {
+		slog.ErrorContext(ctx, "opensearch index is required")
+		return nil, fmt.Errorf("opensearch index is required")
+	}
 
-// generatePageToken generates a page token for pagination
-func generatePageToken(offset int) string {
-	// This is a simplified implementation
-	// In production, you'd use a more sophisticated approach
-	return fmt.Sprintf("offset_%d", offset)
-}
-
-// NewOpenSearchSearcher creates a new OpenSearch searcher
-func NewOpenSearchSearcher(client OpenSearchClient, index string) (*OpenSearchSearcher, error) {
-	templates, err := NewSearchTemplates()
-	if err != nil {
-		return nil, fmt.Errorf("failed to initialize search templates: %w", err)
+	opensearchClient, errpensearchClient := opensearchapi.NewClient(opensearchapi.Config{
+		Client: opensearch.Config{
+			Addresses: []string{config.URL},
+			Transport: &http.Transport{
+				MaxIdleConnsPerHost:   10,
+				ResponseHeaderTimeout: time.Second,
+				DialContext:           (&net.Dialer{Timeout: 3 * time.Second}).DialContext,
+			},
+		},
+	})
+	if errpensearchClient != nil {
+		slog.ErrorContext(ctx, "failed to create OpenSearch client", "error", errpensearchClient)
+		return nil, fmt.Errorf("failed to create OpenSearch client: %w", errpensearchClient)
 	}
 
 	return &OpenSearchSearcher{
-		client:    client,
-		templates: templates,
-		index:     index,
+		client: &httpClient{
+			baseURL: config.URL,
+			httpClient: &http.Client{
+				Timeout: 30 * time.Second,
+			},
+			client: opensearchClient,
+		},
+		index: config.Index,
 	}, nil
 }
