@@ -1,7 +1,7 @@
 // Copyright The Linux Foundation and each contributor to LFX.
 // SPDX-License-Identifier: MIT
 
-package elasticsearch
+package opensearch
 
 import (
 	"context"
@@ -13,55 +13,55 @@ import (
 	"github.com/linuxfoundation/lfx-v2-query-service/internal/domain"
 )
 
-// ElasticsearchSearcher implements the ResourceSearcher interface for Elasticsearch
-type ElasticsearchSearcher struct {
-	client    ElasticsearchClient
+// OpenSearchSearcher implements the ResourceSearcher interface for OpenSearch
+type OpenSearchSearcher struct {
+	client    OpenSearchClient
 	templates *SearchTemplates
 	index     string
 }
 
-// ElasticsearchClient defines the interface for Elasticsearch operations
+// OpenSearchClient defines the interface for OpenSearch operations
 // This allows for easy mocking and testing
-type ElasticsearchClient interface {
+type OpenSearchClient interface {
 	Search(ctx context.Context, index string, query string) (*SearchResponse, error)
 	IsHealthy(ctx context.Context) error
 }
 
 // QueryResources implements the ResourceSearcher interface
-func (es *ElasticsearchSearcher) QueryResources(ctx context.Context, criteria domain.SearchCriteria) (*domain.SearchResult, error) {
-	slog.DebugContext(ctx, "executing elasticsearch query for criteria",
+func (os *OpenSearchSearcher) QueryResources(ctx context.Context, criteria domain.SearchCriteria) (*domain.SearchResult, error) {
+	slog.DebugContext(ctx, "executing opensearch query for criteria",
 		"criteria", criteria,
 	)
 
 	// Prepare template data
-	templateData := es.prepareTemplateData(criteria)
+	templateData := os.prepareTemplateData(criteria)
 
 	// Render the appropriate query template
-	query, err := es.renderQuery(templateData)
+	query, err := os.renderQuery(templateData)
 	if err != nil {
 		return nil, fmt.Errorf("failed to render query: %w", err)
 	}
 
 	// Execute the search
-	response, err := es.client.Search(ctx, es.index, query)
+	response, err := os.client.Search(ctx, os.index, query)
 	if err != nil {
-		return nil, fmt.Errorf("elasticsearch search failed: %w", err)
+		return nil, fmt.Errorf("opensearch search failed: %w", err)
 	}
 
 	// Convert response to domain objects
-	result, err := es.convertResponse(ctx, response)
+	result, err := os.convertResponse(ctx, response)
 	if err != nil {
 		return nil, fmt.Errorf("failed to convert search response: %w", err)
 	}
 
-	slog.DebugContext(ctx, "elasticsearch search completed",
+	slog.DebugContext(ctx, "opensearch search completed",
 		"results_count", len(result.Resources),
 	)
 	return result, nil
 }
 
 // prepareTemplateData converts domain search criteria to template data
-func (es *ElasticsearchSearcher) prepareTemplateData(criteria domain.SearchCriteria) TemplateData {
+func (os *OpenSearchSearcher) prepareTemplateData(criteria domain.SearchCriteria) TemplateData {
 	data := TemplateData{
 		Sort: criteria.Sort,
 		Size: 50, // Default page size
@@ -93,24 +93,24 @@ func (es *ElasticsearchSearcher) prepareTemplateData(criteria domain.SearchCrite
 }
 
 // renderQuery renders the appropriate query template based on the search criteria
-func (es *ElasticsearchSearcher) renderQuery(data TemplateData) (string, error) {
+func (os *OpenSearchSearcher) renderQuery(data TemplateData) (string, error) {
 	// If this is a typeahead search (name only with no other filters), use typeahead template
 	if data.Name != "" && data.Type == "" && data.Parent == "" && len(data.Tags) == 0 {
-		return es.templates.RenderTypeaheadQuery(data)
+		return os.templates.RenderTypeaheadQuery(data)
 	}
 
 	// Otherwise, use the full resource search template
-	return es.templates.RenderResourceSearchQuery(data)
+	return os.templates.RenderResourceSearchQuery(data)
 }
 
-// convertResponse converts Elasticsearch response to domain objects
-func (es *ElasticsearchSearcher) convertResponse(ctx context.Context, response *SearchResponse) (*domain.SearchResult, error) {
+// convertResponse converts OpenSearch response to domain objects
+func (os *OpenSearchSearcher) convertResponse(ctx context.Context, response *SearchResponse) (*domain.SearchResult, error) {
 	result := &domain.SearchResult{
 		Resources: make([]domain.Resource, 0, len(response.Hits.Hits)),
 	}
 
 	for _, hit := range response.Hits.Hits {
-		resource, err := es.convertHit(hit)
+		resource, err := os.convertHit(hit)
 		if err != nil {
 			// Log error but continue processing other hits
 			slog.ErrorContext(ctx, "failed to convert hit", "hit_id", hit.ID, "error", err)
@@ -128,8 +128,8 @@ func (es *ElasticsearchSearcher) convertResponse(ctx context.Context, response *
 	return result, nil
 }
 
-// convertHit converts a single Elasticsearch hit to a domain resource
-func (es *ElasticsearchSearcher) convertHit(hit Hit) (domain.Resource, error) {
+// convertHit converts a single OpenSearch hit to a domain resource
+func (os *OpenSearchSearcher) convertHit(hit Hit) (domain.Resource, error) {
 	resource := domain.Resource{
 		ID: hit.ID,
 	}
@@ -179,14 +179,14 @@ func generatePageToken(offset int) string {
 	return fmt.Sprintf("offset_%d", offset)
 }
 
-// NewElasticsearchSearcher creates a new Elasticsearch searcher
-func NewElasticsearchSearcher(client ElasticsearchClient, index string) (*ElasticsearchSearcher, error) {
+// NewOpenSearchSearcher creates a new OpenSearch searcher
+func NewOpenSearchSearcher(client OpenSearchClient, index string) (*OpenSearchSearcher, error) {
 	templates, err := NewSearchTemplates()
 	if err != nil {
 		return nil, fmt.Errorf("failed to initialize search templates: %w", err)
 	}
 
-	return &ElasticsearchSearcher{
+	return &OpenSearchSearcher{
 		client:    client,
 		templates: templates,
 		index:     index,

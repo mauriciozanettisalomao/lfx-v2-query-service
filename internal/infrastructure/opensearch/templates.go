@@ -1,7 +1,7 @@
 // Copyright The Linux Foundation and each contributor to LFX.
 // SPDX-License-Identifier: MIT
 
-package elasticsearch
+package opensearch
 
 import (
 	"bytes"
@@ -9,7 +9,7 @@ import (
 	"text/template"
 )
 
-// SearchTemplates contains all Elasticsearch query templates
+// SearchTemplates contains all OpenSearch query templates
 type SearchTemplates struct {
 	resourceSearchTemplate *template.Template
 	typeaheadTemplate      *template.Template

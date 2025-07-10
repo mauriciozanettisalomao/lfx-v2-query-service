@@ -1,11 +1,11 @@
 // Copyright The Linux Foundation and each contributor to LFX.
 // SPDX-License-Identifier: MIT
 
-package elasticsearch
+package opensearch
 
 import "encoding/json"
 
-// SearchResponse represents the Elasticsearch search response
+// SearchResponse represents the OpenSearch search response
 type SearchResponse struct {
 	Hits struct {
 		Total struct {

@@ -28,6 +28,7 @@ func (s *ResourceSearch) QueryResources(ctx context.Context, criteria domain.Sea
 
 	// Validate business rules
 	if err := s.validateSearchCriteria(criteria); err != nil {
+		slog.With("error", err).ErrorContext(ctx, "search criteria validation failed")
 		return nil, fmt.Errorf("invalid search criteria: %w", err)
 	}
 

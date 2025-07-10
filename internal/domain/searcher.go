@@ -8,7 +8,7 @@ import (
 )
 
 // ResourceSearcher defines the interface for resource search operations
-// This abstraction allows different search implementations (Elasticsearch, etc.)
+// This abstraction allows different search implementations (OpenSearch, etc.)
 // without the domain layer knowing about specific implementations
 type ResourceSearcher interface {
 	// QueryResources searches for resources based on the provided criteria

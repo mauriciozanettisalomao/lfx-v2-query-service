@@ -19,8 +19,8 @@ import (
 	querysvcapi "github.com/linuxfoundation/lfx-v2-query-service"
 	querysvc "github.com/linuxfoundation/lfx-v2-query-service/gen/query_svc"
 	"github.com/linuxfoundation/lfx-v2-query-service/internal/domain"
-	"github.com/linuxfoundation/lfx-v2-query-service/internal/infrastructure/elasticsearch"
 	"github.com/linuxfoundation/lfx-v2-query-service/internal/infrastructure/mock"
+	"github.com/linuxfoundation/lfx-v2-query-service/internal/infrastructure/opensearch"
 	logging "github.com/linuxfoundation/lfx-v2-query-service/pkg/log"
 
 	"goa.design/clue/debug"
@@ -69,18 +69,18 @@ func main() {
 		slog.InfoContext(ctx, "initializing mock resource searcher")
 		resourceSearcher = mock.NewMockResourceSearcher()
 
-	case "elasticsearch":
-		slog.InfoContext(ctx, "initializing elasticsearch resource searcher")
-		esConfig := elasticsearch.Config{
+	case "opensearch":
+		slog.InfoContext(ctx, "initializing opensearch resource searcher")
+		esConfig := opensearch.Config{
 			URL:      *esURL,
 			Username: *esUsername,
 			Password: *esPassword,
 			Index:    *esIndex,
 		}
 
-		resourceSearcher, err = elasticsearch.NewElasticsearchSearcherFromConfig(esConfig)
+		resourceSearcher, err = opensearch.NewOpenSearchSearcherFromConfig(esConfig)
 		if err != nil {
-			log.Fatalf("failed to initialize Elasticsearch searcher: %v", err)
+			log.Fatalf("failed to initialize OpenSearch searcher: %v", err)
 		}
 
 	default:

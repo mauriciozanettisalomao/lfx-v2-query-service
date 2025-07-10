@@ -1,7 +1,7 @@
 // Copyright The Linux Foundation and each contributor to LFX.
 // SPDX-License-Identifier: MIT
 
-package elasticsearch
+package opensearch
 
 import (
 	"bytes"
@@ -14,7 +14,7 @@ import (
 	"time"
 )
 
-// HTTPClient implements the ElasticsearchClient interface using HTTP
+// HTTPClient implements the OpenSearchClient interface using HTTP
 type HTTPClient struct {
 	baseURL    string
 	httpClient *http.Client
@@ -22,7 +22,7 @@ type HTTPClient struct {
 	password   string
 }
 
-// NewHTTPClient creates a new HTTP client for Elasticsearch
+// NewHTTPClient creates a new HTTP client for OpenSearch
 func NewHTTPClient(baseURL, username, password string) *HTTPClient {
 	return &HTTPClient{
 		baseURL:  baseURL,
@@ -34,11 +34,11 @@ func NewHTTPClient(baseURL, username, password string) *HTTPClient {
 	}
 }
 
-// Search executes a search query against Elasticsearch
+// Search executes a search query against OpenSearch
 func (c *HTTPClient) Search(ctx context.Context, index string, query string) (*SearchResponse, error) {
 	url := fmt.Sprintf("%s/%s/_search", c.baseURL, index)
 
-	slog.DebugContext(ctx, "executing elasticsearch search", "index", index)
+	slog.DebugContext(ctx, "executing opensearch search", "index", index)
 
 	req, err := http.NewRequestWithContext(ctx, "POST", url, bytes.NewBufferString(query))
 	if err != nil {
@@ -62,7 +62,7 @@ func (c *HTTPClient) Search(ctx context.Context, index string, query string) (*S
 	}
 
 	if resp.StatusCode != http.StatusOK {
-		return nil, fmt.Errorf("elasticsearch returned status %d: %s", resp.StatusCode, string(body))
+		return nil, fmt.Errorf("opensearch returned status %d: %s", resp.StatusCode, string(body))
 	}
 
 	var searchResponse SearchResponse
@@ -73,7 +73,7 @@ func (c *HTTPClient) Search(ctx context.Context, index string, query string) (*S
 	return &searchResponse, nil
 }
 
-// IsHealthy checks if Elasticsearch is healthy
+// IsHealthy checks if OpenSearch is healthy
 func (c *HTTPClient) IsHealthy(ctx context.Context) error {
 	url := fmt.Sprintf("%s/_cluster/health", c.baseURL)
 
@@ -93,7 +93,7 @@ func (c *HTTPClient) IsHealthy(ctx context.Context) error {
 	defer resp.Body.Close()
 
 	if resp.StatusCode != http.StatusOK {
-		return fmt.Errorf("elasticsearch health check failed with status %d", resp.StatusCode)
+		return fmt.Errorf("opensearch health check failed with status %d", resp.StatusCode)
 	}
 
 	var healthResponse struct {
@@ -110,13 +110,13 @@ func (c *HTTPClient) IsHealthy(ctx context.Context) error {
 	}
 
 	if healthResponse.Status != "green" && healthResponse.Status != "yellow" {
-		return fmt.Errorf("elasticsearch cluster status is %s", healthResponse.Status)
+		return fmt.Errorf("opensearch cluster status is %s", healthResponse.Status)
 	}
 
 	return nil
 }
 
-// Config represents Elasticsearch configuration
+// Config represents OpenSearch configuration
 type Config struct {
 	URL      string `json:"url"`
 	Username string `json:"username"`
@@ -124,15 +124,15 @@ type Config struct {
 	Index    string `json:"index"`
 }
 
-// NewElasticsearchSearcherFromConfig creates a new Elasticsearch searcher from configuration
-func NewElasticsearchSearcherFromConfig(config Config) (*ElasticsearchSearcher, error) {
+// NewOpenSearchSearcherFromConfig creates a new OpenSearch searcher from configuration
+func NewOpenSearchSearcherFromConfig(config Config) (*OpenSearchSearcher, error) {
 	if config.URL == "" {
-		return nil, fmt.Errorf("elasticsearch URL is required")
+		return nil, fmt.Errorf("opensearch URL is required")
 	}
 	if config.Index == "" {
-		return nil, fmt.Errorf("elasticsearch index is required")
+		return nil, fmt.Errorf("opensearch index is required")
 	}
 
 	client := NewHTTPClient(config.URL, config.Username, config.Password)
-	return NewElasticsearchSearcher(client, config.Index)
+	return NewOpenSearchSearcher(client, config.Index)
 }

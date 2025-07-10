@@ -19,10 +19,10 @@ The implementation follows the clean architecture principles where:
 │   ├── service/
 │   │   └── resource_service.go    # Business logic layer
 │   └── infrastructure/
-│       ├── elasticsearch/
-│       │   ├── templates.go       # Elasticsearch query templates
-│       │   ├── searcher.go        # Elasticsearch implementation
-│       │   └── client.go          # HTTP client for Elasticsearch
+│       ├── opensearch/
+│       │   ├── templates.go       # OpenSearch query templates
+│       │   ├── searcher.go        # OpenSearch implementation
+│       │   └── client.go          # HTTP client for OpenSearch
 │       └── mock/
 │           └── searcher.go        # Mock implementation for testing
 ├── cmd/query_svc/
@@ -45,10 +45,10 @@ The implementation follows the clean architecture principles where:
 
 ### Infrastructure Layer (`internal/infrastructure/`)
 
-#### Elasticsearch Implementation
-- **templates.go**: Contains Elasticsearch query templates for different search scenarios
-- **searcher.go**: Implements the ResourceSearcher interface using Elasticsearch
-- **client.go**: HTTP client for communicating with Elasticsearch cluster
+#### OpenSearch Implementation
+- **templates.go**: Contains OpenSearch query templates for different search scenarios
+- **searcher.go**: Implements the ResourceSearcher interface using OpenSearch
+- **client.go**: HTTP client for communicating with OpenSearch cluster
 
 #### Mock Implementation
 - **searcher.go**: In-memory implementation for testing and development
@@ -64,8 +64,8 @@ var resourceSearcher domain.ResourceSearcher
 switch *searchImpl {
 case "mock":
     resourceSearcher = mock.NewMockResourceSearcher()
-case "elasticsearch":
-    resourceSearcher, err = elasticsearch.NewElasticsearchSearcherFromConfig(esConfig)
+case "opensearch":
+    resourceSearcher, err = opensearch.NewOpenSearchSearcherFromConfig(esConfig)
 }
 
 // Inject into service
@@ -87,33 +87,33 @@ querySvcSvc = querysvcapi.NewQuerySvc(resourceSearcher)
 go run cmd/query_svc/main.go -search-impl=mock
 ```
 
-### Running with Elasticsearch
+### Running with OpenSearch
 ```bash
 go run cmd/query_svc/main.go \
-    -search-impl=elasticsearch \
+    -search-impl=opensearch \
     -es-url=http://localhost:9200 \
     -es-index=lfx-resources \
-    -es-username=elastic \
-    -es-password=changeme
+    -es-username=admin \
+    -es-password=admin
 ```
 
 ### Available Command Line Flags
 
 **Search Implementation:**
-- `-search-impl`: Choose between "mock" or "elasticsearch" (default: "mock")
+- `-search-impl`: Choose between "mock" or "opensearch" (default: "mock")
 
-**Elasticsearch Configuration:**
-- `-es-url`: Elasticsearch URL (default: "http://localhost:9200")
-- `-es-username`: Elasticsearch username
-- `-es-password`: Elasticsearch password
-- `-es-index`: Elasticsearch index name (default: "lfx-resources")
+**OpenSearch Configuration:**
+- `-es-url`: OpenSearch URL (default: "http://localhost:9200")
+- `-es-username`: OpenSearch username
+- `-es-password`: OpenSearch password
+- `-es-index`: OpenSearch index name (default: "lfx-resources")
 
 **Server Configuration:**
 - `-host`: Server host (default: "localhost")
 - `-http-port`: HTTP port
 - `-debug`: Enable debug logging
 
-## API Usage
+### API Usage
 
 The service exposes a RESTful API through the Goa framework:
 
@@ -149,9 +149,9 @@ GET /query/resources?name=committee&type=committee&v=1
 }
 ```
 
-## Elasticsearch Query Templates
+### OpenSearch Query Templates
 
-The Elasticsearch implementation uses template-based queries located in `internal/infrastructure/elasticsearch/templates.go`:
+The OpenSearch implementation uses template-based queries located in `internal/infrastructure/opensearch/templates.go`:
 
 - **Resource Search Template**: Full-featured search with filtering, sorting, and pagination
 - **Typeahead Template**: Optimized for autocomplete scenarios
@@ -163,7 +163,7 @@ Templates support:
 - Pagination with search_after
 - Highlighting for matched terms
 
-## Testing
+### Testing
 
 The clean architecture makes testing straightforward:
 
@@ -176,7 +176,7 @@ service := service.NewResourceService(searcher)
 result, err := service.QueryResources(ctx, criteria)
 ```
 
-## Extending the Architecture
+### Extending the Architecture
 
 To add a new search implementation:
 
@@ -185,4 +185,21 @@ To add a new search implementation:
 3. Add configuration options to `main.go`
 4. Update the dependency injection switch statement
 
-The domain and service layers remain unchanged, demonstrating the power of the clean architecture pattern. 
+## Development
+
+To contribute to this repository:
+
+1. Fork the repository
+2. Make your changes
+3. Submit a pull request
+
+## License
+
+Copyright The Linux Foundation and each contributor to LFX.
+
+This project’s source code is licensed under the MIT License. A copy of the
+license is available in `LICENSE`.
+
+This project’s documentation is licensed under the Creative Commons Attribution
+4.0 International License \(CC-BY-4.0\). A copy of the license is available in
+`LICENSE-docs`.
