@@ -4,12 +4,15 @@
 package opensearch
 
 import (
+	"bytes"
 	"context"
 	"encoding/json"
 	"fmt"
 	"log/slog"
 	"net"
 	"net/http"
+	"strconv"
+	"text/template"
 	"time"
 
 	"github.com/linuxfoundation/lfx-v2-query-service/internal/domain"
@@ -17,6 +20,13 @@ import (
 	"github.com/opensearch-project/opensearch-go/v4"
 	"github.com/opensearch-project/opensearch-go/v4/opensearchapi"
 )
+
+var queryResourceTemplate = template.Must(
+	template.New("queryResource").
+		Funcs(template.FuncMap{
+			"quote": strconv.Quote,
+		}).
+		Parse(queryResourceSource))
 
 // OpenSearchSearcher implements the ResourceSearcher interface for OpenSearch
 type OpenSearchSearcher struct {
@@ -36,11 +46,8 @@ func (os *OpenSearchSearcher) QueryResources(ctx context.Context, criteria domai
 		"criteria", criteria,
 	)
 
-	// Prepare template data
-	templateData := os.prepareTemplateData(criteria)
-
 	// Render the appropriate query template
-	query, err := templateData.Render(ctx)
+	query, err := os.Render(ctx, criteria)
 	if err != nil {
 		return nil, fmt.Errorf("failed to render query: %w", err)
 	}
@@ -63,32 +70,23 @@ func (os *OpenSearchSearcher) QueryResources(ctx context.Context, criteria domai
 	return result, nil
 }
 
-// prepareTemplateData converts domain search criteria to template data
-func (os *OpenSearchSearcher) prepareTemplateData(criteria domain.SearchCriteria) TemplateData {
-	data := TemplateData{
-		PublicOnly: criteria.PublicOnly,
-		SortBy:     criteria.SortBy,
-		SortOrder:  criteria.SortOrder,
-		PageSize:   criteria.PageSize,
+// Render generates the OpenSearch query based on the provided search criteria
+func (os *OpenSearchSearcher) Render(ctx context.Context, criteria domain.SearchCriteria) ([]byte, error) {
+	var buf bytes.Buffer
+	if err := queryResourceTemplate.Execute(&buf, criteria); err != nil {
+		slog.ErrorContext(ctx, "failed to render query template", "error", err)
+		return nil, err
 	}
+	query := json.RawMessage(buf.Bytes())
 
-	if criteria.Name != nil {
-		data.Name = *criteria.Name
-	}
-	if criteria.ResourceType != nil {
-		data.ResourceType = *criteria.ResourceType
-	}
-	if criteria.Parent != nil {
-		data.ParentRef = *criteria.ParentRef
-	}
-	if criteria.Tags != nil {
-		data.Tags = criteria.Tags
-	}
-	if criteria.SearchAfter != nil {
-		data.SearchAfter = *criteria.SearchAfter
-	}
+	fmt.Println("Rendered OpenSearch query:", string(query))
 
-	return data
+	parsed, err := json.Marshal(query)
+	if err != nil {
+		slog.ErrorContext(ctx, "failed to marshal rendered query", "error", err)
+		return nil, err
+	}
+	return parsed, nil
 }
 
 // convertResponse converts OpenSearch response to domain objects
@@ -133,12 +131,12 @@ func (os *OpenSearchSearcher) convertHit(hit Hit) (domain.Resource, error) {
 		}
 
 		// Extract data
-		if dataVal, ok := sourceData["data"]; ok {
-			resource.Data = dataVal
-		} else {
+		data, ok := sourceData["data"]
+		if !ok {
 			// If no separate data field, use the entire source as data
-			resource.Data = sourceData
+			data = sourceData
 		}
+		resource.Data = data
 	}
 
 	return resource, nil

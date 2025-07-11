@@ -61,11 +61,12 @@ The clean architecture is wired together in `cmd/query_svc/main.go`:
 // Choose implementation based on configuration
 var resourceSearcher domain.ResourceSearcher
 
-switch *searchImpl {
+switch *searchSource {
 case "mock":
     resourceSearcher = mock.NewMockResourceSearcher()
 case "opensearch":
     resourceSearcher, err = opensearch.NewOpenSearchSearcherFromConfig(esConfig)
+...
 }
 
 // Inject into service
@@ -91,10 +92,8 @@ go run cmd/query_svc/main.go -search-impl=mock
 ```bash
 go run cmd/query_svc/main.go \
     -search-impl=opensearch \
-    -es-url=http://localhost:9200 \
-    -es-index=lfx-resources \
-    -es-username=admin \
-    -es-password=admin
+    -opeansearch-url=http://localhost:9200 \
+    -opeansearch-index=lfx-resources 
 ```
 
 ### Available Command Line Flags
@@ -103,10 +102,8 @@ go run cmd/query_svc/main.go \
 - `-search-impl`: Choose between "mock" or "opensearch" (default: "mock")
 
 **OpenSearch Configuration:**
-- `-es-url`: OpenSearch URL (default: "http://localhost:9200")
-- `-es-username`: OpenSearch username
-- `-es-password`: OpenSearch password
-- `-es-index`: OpenSearch index name (default: "lfx-resources")
+- `-opeansearch-url`: OpenSearch URL (default: "http://localhost:9200")
+- `-opeansearch-index`: OpenSearch index name (default: "lfx-resources")
 
 **Server Configuration:**
 - `-host`: Server host (default: "localhost")

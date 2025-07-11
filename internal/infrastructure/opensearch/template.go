@@ -3,16 +3,6 @@
 
 package opensearch
 
-import (
-	"bytes"
-	"context"
-	"encoding/json"
-	"log/slog"
-	"text/template"
-
-	"github.com/Masterminds/sprig/v3"
-)
-
 const queryResourceSource = `{
   "size": {{ .PageSize }},
   "query": {
@@ -85,36 +75,3 @@ const queryResourceSource = `{
     {"_id": "asc"}
   ]
 }`
-
-var queryResourceTemplate = template.Must(
-	template.New("queryResource").
-		Funcs(sprig.FuncMap()).
-		Parse(queryResourceSource))
-
-// TemplateData represents the data structure for template rendering
-type TemplateData struct {
-	Tags         []string
-	Name         string
-	ResourceType string
-	ParentRef    string
-	SortBy       string
-	SortOrder    string
-	SearchAfter  string
-	PageSize     int
-	PublicOnly   bool
-}
-
-func (t *TemplateData) Render(ctx context.Context) ([]byte, error) {
-	var buf bytes.Buffer
-	if err := queryResourceTemplate.Execute(&buf, t); err != nil {
-		slog.ErrorContext(ctx, "failed to render query template", "error", err)
-		return nil, err
-	}
-	query := json.RawMessage(buf.Bytes())
-	parsed, err := json.Marshal(query)
-	if err != nil {
-		slog.ErrorContext(ctx, "failed to marshal rendered query", "error", err)
-		return nil, err
-	}
-	return parsed, nil
-}
