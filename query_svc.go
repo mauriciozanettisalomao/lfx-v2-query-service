@@ -18,7 +18,8 @@ import (
 
 // query-svc service implementation using clean architecture.
 type querySvcsrvc struct {
-	resourceService domain.ResourceSearcher
+	resourceService           domain.ResourceSearcher
+	accessControlCheckService domain.AccessControlChecker
 }
 
 // JWTAuth implements the authorization logic for service "query-svc" for the
@@ -27,7 +28,7 @@ func (s *querySvcsrvc) JWTAuth(ctx context.Context, token string, scheme *securi
 	//
 	// TODO - implement JWT authorization logic
 
-	ctx = context.WithValue(ctx, constants.PrincipalContextID, "_anonymous") // Simulate anonymous user for now
+	ctx = context.WithValue(ctx, constants.PrincipalContextID, "msalomao@contractor.linuxfoundation.org") // Simulate anonymous user for now
 
 	return ctx, nil // No authorization logic implemented yet
 }
@@ -116,8 +117,8 @@ func (s *querySvcsrvc) domainResultToResponse(result *domain.SearchResult) *quer
 }
 
 // NewQuerySvc returns the query-svc service implementation.
-func NewQuerySvc(resourceSearcher domain.ResourceSearcher) querysvc.Service {
-	resourceService := service.NewResourceSearch(resourceSearcher)
+func NewQuerySvc(resourceSearcher domain.ResourceSearcher, accessControlChecker domain.AccessControlChecker) querysvc.Service {
+	resourceService := service.NewResourceSearch(resourceSearcher, accessControlChecker)
 	return &querySvcsrvc{
 		resourceService: resourceService,
 	}

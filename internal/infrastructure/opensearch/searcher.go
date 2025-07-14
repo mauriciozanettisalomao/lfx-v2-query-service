@@ -79,8 +79,6 @@ func (os *OpenSearchSearcher) Render(ctx context.Context, criteria domain.Search
 	}
 	query := json.RawMessage(buf.Bytes())
 
-	fmt.Println("Rendered OpenSearch query:", string(query))
-
 	parsed, err := json.Marshal(query)
 	if err != nil {
 		slog.ErrorContext(ctx, "failed to marshal rendered query", "error", err)
@@ -100,7 +98,7 @@ func (os *OpenSearchSearcher) convertResponse(ctx context.Context, response *Sea
 		resource, err := os.convertHit(hit)
 		if err != nil {
 			// Log error but continue processing other hits
-			slog.ErrorContext(ctx, "failed to convert hit", "hit_id", hit.ID, "error", err)
+			slog.ErrorContext(ctx, "failed to convert hit", "hitid", hit.ID, "error", err)
 			continue
 		}
 		result.Resources = append(result.Resources, resource)
@@ -120,7 +118,7 @@ func (os *OpenSearchSearcher) convertHit(hit Hit) (domain.Resource, error) {
 
 	// Parse the source data
 	if hit.Source != nil {
-		sourceData := make(map[string]interface{})
+		sourceData := make(map[string]any)
 		if err := json.Unmarshal(hit.Source, &sourceData); err != nil {
 			return resource, fmt.Errorf("failed to unmarshal source data: %w", err)
 		}
@@ -137,6 +135,11 @@ func (os *OpenSearchSearcher) convertHit(hit Hit) (domain.Resource, error) {
 			data = sourceData
 		}
 		resource.Data = data
+
+		if err := json.Unmarshal(hit.Source, &resource.TransactionBodyStub); err != nil {
+			return resource, fmt.Errorf("failed to unmarshal source data into TransactionBodyStub: %w", err)
+		}
+
 	}
 
 	return resource, nil

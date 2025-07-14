@@ -59,4 +59,20 @@ type Resource struct {
 	ID string
 	// Resource data snapshot
 	Data any
+	// Metadata about the resource
+	TransactionBodyStub
+}
+
+// TransactionBodyStub is used to decode the response's "source".
+// **Ensure the fields here align to the relevant `SourceIncludes`
+// parameters**.
+type TransactionBodyStub struct {
+	ObjectRef            string `json:"object_ref"`
+	ObjectType           string `json:"object_type"`
+	ObjectID             string `json:"object_id"`
+	Public               bool   `json:"public"`
+	AccessCheckObject    string `json:"access_check_object"`
+	AccessCheckRelation  string `json:"access_check_relation"`
+	HistoryCheckObject   string `json:"history_check_object"`
+	HistoryCheckRelation string `json:"history_check_relation"`
 }
