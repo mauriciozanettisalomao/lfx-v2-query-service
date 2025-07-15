@@ -12,6 +12,7 @@ import (
 	"github.com/linuxfoundation/lfx-v2-query-service/internal/domain"
 	"github.com/linuxfoundation/lfx-v2-query-service/internal/service"
 	"github.com/linuxfoundation/lfx-v2-query-service/pkg/constants"
+	"github.com/linuxfoundation/lfx-v2-query-service/pkg/log"
 
 	"goa.design/goa/v3/security"
 )
@@ -31,6 +32,10 @@ func (s *querySvcsrvc) JWTAuth(ctx context.Context, token string, scheme *securi
 	if err != nil {
 		return ctx, err
 	}
+
+	// Log the principal for debugging purposes in all logs for this request.
+	ctx = log.AppendCtx(ctx, slog.String(string(constants.PrincipalAttribute), principal))
+
 	// Return a new context containing the principal as a value.
 	return context.WithValue(ctx, constants.PrincipalContextID, principal), nil
 }
