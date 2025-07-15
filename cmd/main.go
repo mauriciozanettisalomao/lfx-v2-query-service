@@ -9,8 +9,6 @@ import (
 	"fmt"
 	"log"
 	"log/slog"
-	"net"
-	"net/url"
 	"os"
 	"os/signal"
 	"strconv"
@@ -25,11 +23,11 @@ import (
 	"github.com/linuxfoundation/lfx-v2-query-service/internal/infrastructure/nats"
 	"github.com/linuxfoundation/lfx-v2-query-service/internal/infrastructure/opensearch"
 	logging "github.com/linuxfoundation/lfx-v2-query-service/pkg/log"
-
 	"goa.design/clue/debug"
 )
 
 const (
+	defaultPort = "8080"
 	// gracefulShutdownSeconds should be higher than NATS client
 	// request timeout, and lower than the pod or liveness probe's
 	// terminationGracePeriodSeconds.
@@ -45,26 +43,26 @@ func main() {
 	// Define command line flags, add any other flag required to configure the
 	// service.
 	var (
-		hostF     = flag.String("host", "localhost", "Server host (valid values: localhost)")
-		domainF   = flag.String("domain", "", "Host domain name (overrides host domain specified in service design)")
-		httpPortF = flag.String("http-port", "", "HTTP port (overrides host HTTP port specified in service design)")
-		secureF   = flag.Bool("secure", false, "Use secure scheme (https or grpcs)")
-		dbgF      = flag.Bool("debug", false, "Log request and response bodies")
+		dbgF = flag.Bool("d", false, "enable debug logging")
+		port = flag.String("p", defaultPort, "listen port")
+		bind = flag.String("bind", "*", "interface to bind on")
 	)
+	flag.Usage = func() {
+		flag.PrintDefaults()
+		os.Exit(2)
+	}
+	flag.Parse()
 
 	ctx := context.Background()
 	slog.InfoContext(ctx, "Starting query service",
-		"host", *hostF,
-		"http-port", *httpPortF,
+		"bind", *bind,
+		"http-port", *port,
 		"graceful-shutdown-seconds", gracefulShutdownSeconds,
 	)
 
 	// Initialize the resource searcher based on configuration
 	resourceSearcher := searcherImpl(ctx)
 	accessControlChecker := accessControlCheckerImpl(ctx)
-
-	// TODO Move after flags once the openSearch and access control implementations moves from args to env vars
-	flag.Parse()
 
 	// Initialize the services.
 	var (
@@ -98,35 +96,12 @@ func main() {
 	querysvcapi.SetupJWTAuth(ctx)
 
 	// Start the servers and send errors (if any) to the error channel.
-	switch *hostF {
-	case "localhost":
-		{
-			addr := "http://localhost:8080"
-			u, err := url.Parse(addr)
-			if err != nil {
-				log.Fatalf("invalid URL %#v, error: %v\n", addr, err)
-			}
-			if *secureF {
-				u.Scheme = "https"
-			}
-			if *domainF != "" {
-				u.Host = *domainF
-			}
-			if *httpPortF != "" {
-				h, _, err := net.SplitHostPort(u.Host)
-				if err != nil {
-					log.Fatalf("invalid URL %#v, error: %v\n", u.Host, err)
-				}
-				u.Host = net.JoinHostPort(h, *httpPortF)
-			} else if u.Port() == "" {
-				u.Host = net.JoinHostPort(u.Host, "8080")
-			}
-			handleHTTPServer(ctx, u, querySvcEndpoints, &wg, errc, *dbgF)
-		}
-
-	default:
-		log.Fatalf("invalid host argument: %v", *hostF)
+	addr := ":" + *port
+	if *bind != "*" {
+		addr = *bind + ":" + *port
 	}
+
+	handleHTTPServer(ctx, addr, querySvcEndpoints, &wg, errc, *dbgF)
 
 	// Wait for signal.
 	slog.InfoContext(ctx, "received shutdown signal, stopping servers",
@@ -187,7 +162,7 @@ func searcherImpl(ctx context.Context) domain.ResourceSearcher {
 
 	opensearchIndex := os.Getenv("OPENSEARCH_INDEX")
 	if opensearchIndex == "" {
-		opensearchIndex = "lfx-resources"
+		opensearchIndex = "resources"
 	}
 
 	switch searchSource {

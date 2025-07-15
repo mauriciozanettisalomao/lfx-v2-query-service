@@ -7,7 +7,6 @@ import (
 	"context"
 	"log/slog"
 	"net/http"
-	"net/url"
 	"sync"
 	"time"
 
@@ -21,7 +20,7 @@ import (
 
 // handleHTTPServer starts configures and starts a HTTP server on the given
 // URL. It shuts down the server if any error is received in the error channel.
-func handleHTTPServer(ctx context.Context, u *url.URL, querySvcEndpoints *querysvc.Endpoints, wg *sync.WaitGroup, errc chan error, dbg bool) {
+func handleHTTPServer(ctx context.Context, host string, querySvcEndpoints *querysvc.Endpoints, wg *sync.WaitGroup, errc chan error, dbg bool) {
 
 	// Provide the transport specific request decoder and response encoder.
 	// The goa http package has built-in support for JSON, XML and gob.
@@ -72,7 +71,7 @@ func handleHTTPServer(ctx context.Context, u *url.URL, querySvcEndpoints *querys
 
 	// Start HTTP server using default configuration, change the code to
 	// configure the server as required by your service.
-	srv := &http.Server{Addr: u.Host, Handler: handler, ReadHeaderTimeout: time.Second * 60}
+	srv := &http.Server{Addr: host, Handler: handler, ReadHeaderTimeout: time.Second * 60}
 	for _, m := range querySvcServer.Mounts {
 		slog.InfoContext(ctx, "HTTP endpoint mounted",
 			"method", m.Method,
@@ -87,12 +86,12 @@ func handleHTTPServer(ctx context.Context, u *url.URL, querySvcEndpoints *querys
 
 		// Start HTTP server in a separate goroutine.
 		go func() {
-			slog.InfoContext(ctx, "HTTP server listening", "host", u.Host)
+			slog.InfoContext(ctx, "HTTP server listening", "host", host)
 			errc <- srv.ListenAndServe()
 		}()
 
 		<-ctx.Done()
-		slog.InfoContext(ctx, "shutting down HTTP server", "host", u.Host)
+		slog.InfoContext(ctx, "shutting down HTTP server", "host", host)
 
 		// Shutdown gracefully with a 30s timeout.
 		ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)

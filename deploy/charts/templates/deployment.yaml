@@ -1,0 +1,51 @@
+# Copyright The Linux Foundation and each contributor to LFX.
+# SPDX-License-Identifier: MIT
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: query-svc
+  namespace: lfx
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: query-svc
+  template:
+    metadata:
+      labels:
+        app: query-svc
+    spec:
+      containers:
+        - name: app
+          image: {{ .Values.image.repository }}:{{ .Values.image.tag }}
+          imagePullPolicy: Never
+          env:
+            - name: OPENSEARCH_URL
+              value: "http://opensearch-cluster-master:9200"
+            - name: NATS_URL
+              value: "nats://nats.lfx.svc.cluster.local:4222"
+          envFrom:
+            - secretRef:
+                name: query-svc-secrets
+          ports:
+            - containerPort: 8080
+              name: web
+          livenessProbe:
+            httpGet:
+              path: /livez
+              port: web
+            failureThreshold: 3
+            periodSeconds: 15
+          readinessProbe:
+            httpGet:
+              path: /readyz
+              port: web
+            failureThreshold: 1
+            periodSeconds: 10
+          startupProbe:
+            httpGet:
+              path: /readyz
+              port: web
+            failureThreshold: 30
+            periodSeconds: 1

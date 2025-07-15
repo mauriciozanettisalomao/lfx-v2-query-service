@@ -13,102 +13,111 @@ The implementation follows the clean architecture principles where:
 ## Directory Structure
 
 ```
-├── internal/
-│   ├── domain/
-│   │   └── interfaces.go          # Domain interfaces and models
-│   ├── service/
-│   │   └── resource_service.go    # Business logic layer
-│   └── infrastructure/
-│       ├── opensearch/
-│       │   ├── templates.go       # OpenSearch query templates
-│       │   ├── searcher.go        # OpenSearch implementation
-│       │   └── client.go          # HTTP client for OpenSearch
-│       └── mock/
-│           └── searcher.go        # Mock implementation for testing
-├── cmd/query_svc/
-│   └── main.go                    # Dependency injection and startup
-└── query_svc.go                   # Goa service implementation
+├── .github/                        # Github files
+│   └── workflows/                  # Github Action workflow files
+├── deploy/                         # Contains Kubernetes/Helm manifests
+│   ├── k8s/                        # K8s manifests (raw YAML)
+│   └── charts/                     # Helm charts
+├── cmd/                            # Services (main packages)
+│   └── query_svc/.                 # Query service code
+├── internal/                       # Internal service packages
+│   ├── domain/                     # Domain logic layer
+│   ├── service/                    # Business logic layer
+│   └── infrastructure/             # Infrastructure layer
+└── pkg/                            # Shared packages for internal and external services
 ```
 
 ## Key Components
 
 ### Domain Layer (`internal/domain/`)
 - **ResourceSearcher Interface**: Defines the contract for resource search operations
-- **Domain Models**: Pure business entities without infrastructure dependencies
-- **Search Criteria**: Encapsulates search parameters
-- **Search Result**: Represents search outcomes
+- **AccessControlChecker Interface**: Defines the contract for access control operations
 
 ### Service Layer (`internal/service/`)
 - **ResourceService**: Contains business logic and validation
-- **Validation**: Ensures business rules are enforced
-- **Orchestration**: Coordinates between domain and infrastructure layers
 
 ### Infrastructure Layer (`internal/infrastructure/`)
 
 #### OpenSearch Implementation
-- **templates.go**: Contains OpenSearch query templates for different search scenarios
-- **searcher.go**: Implements the ResourceSearcher interface using OpenSearch
-- **client.go**: HTTP client for communicating with OpenSearch cluster
+The OpenSearch implementation includes query templates, a searcher, and a client for interacting with the OpenSearch cluster.
 
-#### Mock Implementation
-- **searcher.go**: In-memory implementation for testing and development
+#### NATS Implementation
+The NATS implementation consists of a client, access control logic, and request/response models for messaging and access control.
 
 ## Dependency Injection
-
-The clean architecture is wired together in `cmd/query_svc/main.go`:
-
-```go
-// Choose implementation based on configuration
-var resourceSearcher domain.ResourceSearcher
-
-switch *searchSource {
-case "mock":
-    resourceSearcher = mock.NewMockResourceSearcher()
-case "opensearch":
-    resourceSearcher, err = opensearch.NewOpenSearchSearcherFromConfig(esConfig)
-...
-}
-
-// Inject into service
-querySvcSvc = querysvcapi.NewQuerySvc(resourceSearcher)
-```
+Dependency injection is performed in `cmd/main.go`, where the concrete implementations for resource search and access control are selected based on configuration and then injected into the service constructor.
 
 ## Benefits of This Architecture
 
 1. **Testability**: Easy to swap implementations for testing
-2. **Flexibility**: Can easily switch between different search backends
+2. **Flexibility**: Can easily switch between different search backends and access control systems
 3. **Maintainability**: Clear separation of concerns
-4. **Scalability**: Easy to add new search implementations
+4. **Scalability**: Easy to add new search and access control implementations
 5. **Independence**: Layers don't depend on external frameworks
+
+## Docker
+
+### Building the Docker Image
+
+#### Example: Build the Docker image with Make
+
+```bash
+make docker-build
+```
+
+### Running with Docker
+
+#### Basic Docker Run
+```bash
+make docker-run
+```
 
 ## Usage
 
-### Running with Mock Implementation (Default)
+### Running Locally
+
+#### With Mock Implementation (Default for Development)
 ```bash
-go run cmd/query_svc/main.go -search-impl=mock
+# Using mock implementations
+SEARCH_SOURCE=mock ACCESS_CONTROL_SOURCE=mock go run cmd/main.go
+
+# With custom port
+SEARCH_SOURCE=mock ACCESS_CONTROL_SOURCE=mock go run cmd/main.go -p 3000
 ```
 
-### Running with OpenSearch
+#### With OpenSearch and NATS
 ```bash
-go run cmd/query_svc/main.go \
-    -search-impl=opensearch \
-    -opeansearch-url=http://localhost:9200 \
-    -opeansearch-index=lfx-resources 
+# Using OpenSearch and NATS (production-like setup)
+SEARCH_SOURCE=opensearch \
+ACCESS_CONTROL_SOURCE=nats \
+OPENSEARCH_URL=http://localhost:9200 \
+OPENSEARCH_INDEX=resources \
+NATS_URL=nats://localhost:4222 \
+go run cmd/main.go
 ```
 
-### Available Command Line Flags
+### Available Environment Variables
 
 **Search Implementation:**
-- `-search-impl`: Choose between "mock" or "opensearch" (default: "mock")
+- `SEARCH_SOURCE`: Choose between "mock" or "opensearch" (default: "opensearch")
 
 **OpenSearch Configuration:**
-- `-opeansearch-url`: OpenSearch URL (default: "http://localhost:9200")
-- `-opeansearch-index`: OpenSearch index name (default: "lfx-resources")
+- `OPENSEARCH_URL`: OpenSearch URL (default: "http://localhost:9200")
+- `OPENSEARCH_INDEX`: OpenSearch index name (default: "resources")
+
+**Access Control Implementation:**
+- `ACCESS_CONTROL_SOURCE`: Choose between "mock" or "nats" (default: "nats")
+
+**NATS Configuration:**
+- `NATS_URL`: NATS server URL (default: "nats://localhost:4222")
+- `NATS_TIMEOUT`: Request timeout duration (default: "10s")
+- `NATS_MAX_RECONNECT`: Maximum reconnection attempts (default: "3")
+- `NATS_RECONNECT_WAIT`: Time between reconnection attempts (default: "2s")
 
 **Server Configuration:**
-- `-host`: Server host (default: "localhost")
-- `-http-port`: HTTP port
-- `-debug`: Enable debug logging
+- `-p`: HTTP port (default: "8080")
+- `-bind`: Interface to bind on (default: "*")
+- `-d`: Enable debug logging
 
 ### API Usage
 
@@ -146,30 +155,19 @@ GET /query/resources?name=committee&type=committee&v=1
 }
 ```
 
-### OpenSearch Query Templates
-
-The OpenSearch implementation uses template-based queries located in `internal/infrastructure/opensearch/templates.go`:
-
-- **Resource Search Template**: Full-featured search with filtering, sorting, and pagination
-- **Typeahead Template**: Optimized for autocomplete scenarios
-
-Templates support:
-- Multi-field text search with relevance scoring
-- Exact term filtering (type, parent, tags)
-- Multiple sort options
-- Pagination with search_after
-- Highlighting for matched terms
-
 ### Testing
 
 The clean architecture makes testing straightforward:
 
 ```go
-// Use mock implementation for unit tests
+// Use mock implementations for unit tests
 searcher := mock.NewMockResourceSearcher()
 searcher.AddResource(testResource)
 
-service := service.NewResourceService(searcher)
+accessChecker := mock.NewMockAccessControlChecker()
+accessChecker.SetAccessResult(testResult)
+
+service := service.NewResourceService(searcher, accessChecker)
 result, err := service.QueryResources(ctx, criteria)
 ```
 
@@ -179,6 +177,13 @@ To add a new search implementation:
 
 1. Create a new package in `internal/infrastructure/`
 2. Implement the `domain.ResourceSearcher` interface
+3. Add configuration options to `main.go`
+4. Update the dependency injection switch statement
+
+To add a new access control implementation:
+
+1. Create a new package in `internal/infrastructure/`
+2. Implement the `domain.AccessControlChecker` interface
 3. Add configuration options to `main.go`
 4. Update the dependency injection switch statement
 
