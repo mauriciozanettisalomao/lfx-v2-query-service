@@ -82,6 +82,13 @@ func (s *ResourceSearch) QueryResources(ctx context.Context, criteria domain.Sea
 		searchResult.Resources = append(searchResult.Resources, checkedResources...)
 	}
 
+	slog.DebugContext(ctx, "resource search completed",
+		"query_count", len(result.Resources),
+		"public_resources_count", len(publicResources),
+		"checked_resources_count", len(resourcesToCheck),
+		"response_count", len(searchResult.Resources),
+	)
+
 	if principal == constants.AnonymousPrincipal {
 		// Set a cache control header for anonymous users.
 		cacheControl := constants.AnonymousCacheControlHeader

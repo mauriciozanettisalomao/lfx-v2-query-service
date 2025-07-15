@@ -15,6 +15,7 @@ require (
 )
 
 require (
+	github.com/auth0/go-jwt-middleware/v2 v2.3.0 // indirect
 	github.com/aws/smithy-go v1.22.3 // indirect
 	github.com/davecgh/go-spew v1.1.1 // indirect
 	github.com/dimfeld/httppath v0.0.0-20170720192232-ee938bf73598 // indirect
@@ -41,5 +42,6 @@ require (
 	google.golang.org/genproto/googleapis/rpc v0.0.0-20250519155744-55703ea1f237 // indirect
 	google.golang.org/grpc v1.73.0 // indirect
 	google.golang.org/protobuf v1.36.6 // indirect
+	gopkg.in/go-jose/go-jose.v2 v2.6.3 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 )

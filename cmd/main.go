@@ -18,7 +18,7 @@ import (
 	"syscall"
 	"time"
 
-	querysvcapi "github.com/linuxfoundation/lfx-v2-query-service"
+	querysvcapi "github.com/linuxfoundation/lfx-v2-query-service/cmd/query_svc"
 	querysvc "github.com/linuxfoundation/lfx-v2-query-service/gen/query_svc"
 	"github.com/linuxfoundation/lfx-v2-query-service/internal/domain"
 	"github.com/linuxfoundation/lfx-v2-query-service/internal/infrastructure/mock"
@@ -93,6 +93,9 @@ func main() {
 
 	var wg sync.WaitGroup
 	ctx, cancel := context.WithCancel(ctx)
+
+	// Setup the JWT authentication which validates and parses the JWT token.
+	querysvcapi.SetupJWTAuth(ctx)
 
 	// Start the servers and send errors (if any) to the error channel.
 	switch *hostF {

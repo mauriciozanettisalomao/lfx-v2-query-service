@@ -25,12 +25,14 @@ type querySvcsrvc struct {
 // JWTAuth implements the authorization logic for service "query-svc" for the
 // "jwt" security scheme.
 func (s *querySvcsrvc) JWTAuth(ctx context.Context, token string, scheme *security.JWTScheme) (context.Context, error) {
-	//
-	// TODO - implement JWT authorization logic
 
-	ctx = context.WithValue(ctx, constants.PrincipalContextID, "msalomao@contractor.linuxfoundation.org") // Simulate anonymous user for now
-
-	return ctx, nil // No authorization logic implemented yet
+	// Parse the Heimdall-authorized principal from the token.
+	principal, err := ParsePrincipal(ctx, token)
+	if err != nil {
+		return ctx, err
+	}
+	// Return a new context containing the principal as a value.
+	return context.WithValue(ctx, constants.PrincipalContextID, principal), nil
 }
 
 // Locate resources by their type or parent, or use typeahead search to query
