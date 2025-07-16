@@ -10,6 +10,7 @@ import (
 	"log/slog"
 	"net/http"
 
+	"github.com/linuxfoundation/lfx-v2-query-service/pkg/constants"
 	"github.com/linuxfoundation/lfx-v2-query-service/pkg/global"
 	"github.com/linuxfoundation/lfx-v2-query-service/pkg/paging"
 	"github.com/opensearch-project/opensearch-go/v4/opensearchapi"
@@ -72,8 +73,8 @@ func (c *httpClient) Search(ctx context.Context, index string, query []byte) (*S
 		}
 	}
 
-	// If there are more hits than the returned ones, we need to handle pagination.
-	if len(searchResponse.Hits.Hits) > 0 && searchResponse.Hits.Total.Value > len(searchResponse.Hits.Hits) {
+	// if the number of hits returned equals the page size, there may be more results.
+	if len(searchResponse.Hits.Hits) == constants.DefaultPageSize {
 		searchAfter := searchResponse.Hits.Hits[len(searchResponse.Hits.Hits)-1].Sort
 		pageToken, errEncodePageToken := paging.EncodePageToken(searchAfter, global.PageTokenSecret(ctx))
 		if errEncodePageToken != nil {
