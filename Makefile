@@ -67,7 +67,7 @@ docker-run: ## Run Docker container locally
 
 ##@ Helm/Kubernetes
 
-.PHONY: helm-install
+.PHONY: helm-render
 helm-render: ## Render Helm templates
 	@echo "Rendering Helm templates..."
 	helm template lfx-query-svc deploy/charts --set image.tag=$(DOCKER_TAG)

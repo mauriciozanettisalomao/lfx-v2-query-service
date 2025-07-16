@@ -81,7 +81,7 @@ func InitStructureLogConfig() {
 			addSourceBool := false
 
 			addSource := os.Getenv("LOG_ADD_SOURCE")
-			if addSource != "" || addSource == "true" || addSource == "false" {
+			if addSource == "true" || addSource == "false" {
 				addSourceBool = addSource == "true"
 			}
 			slog.Info("log config",

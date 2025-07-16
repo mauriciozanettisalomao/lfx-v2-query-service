@@ -5,7 +5,7 @@ package global
 
 import (
 	"context"
-	"fmt"
+	"log"
 	"log/slog"
 	"os"
 	"sync"
@@ -24,9 +24,11 @@ func PageTokenSecret(ctx context.Context) *[32]byte {
 		const pageTokenSecretName = "PAGE_TOKEN_SECRET"
 
 		pageTokenSecretValue := os.Getenv(pageTokenSecretName)
-		if pageTokenSecretValue == "" {
-			slog.ErrorContext(ctx, fmt.Sprintf("%s environment variable is not set", pageTokenSecretName))
-			os.Exit(1)
+		if pageTokenSecretValue == "" || len(pageTokenSecretValue) < 32 {
+			slog.ErrorContext(ctx, "missing or invalid PAGE_TOKEN_SECRET environment variable",
+				"actual_length", len(pageTokenSecretValue),
+			)
+			log.Fatalf("environment variable %s must be set with 32 characters", pageTokenSecretName)
 		}
 		copy(pageTokenSecret[:], []byte(pageTokenSecretValue))
 	})

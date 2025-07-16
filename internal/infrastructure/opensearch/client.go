@@ -15,10 +15,6 @@ import (
 	"github.com/opensearch-project/opensearch-go/v4/opensearchapi"
 )
 
-const (
-	nonceSize = 24
-)
-
 type httpClient struct {
 	baseURL    string
 	httpClient *http.Client
