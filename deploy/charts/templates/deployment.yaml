@@ -29,7 +29,7 @@ spec:
               valueFrom:
                 secretKeyRef:
                   name: query-svc-secrets
-                  key: page_token_secret
+                  key: PAGE_TOKEN_SECRET
           envFrom:
             - secretRef:
                 name: query-svc-secrets

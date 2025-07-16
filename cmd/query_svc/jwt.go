@@ -98,7 +98,6 @@ func SetupJWTAuth(ctx context.Context) {
 // ParsePrincipal extracts the principal from the JWT claims.
 func ParsePrincipal(ctx context.Context, token string) (string, error) {
 
-	// TODO get from the header X-MOCK-LOCAL-PRINCIPAL
 	if mockLocalPrincipal := os.Getenv("JWT_AUTH_DISABLED_MOCK_LOCAL_PRINCIPAL"); mockLocalPrincipal != "" {
 		slog.InfoContext(ctx, "JWT authentication is disabled, returning mock principal",
 			"principal", mockLocalPrincipal,
