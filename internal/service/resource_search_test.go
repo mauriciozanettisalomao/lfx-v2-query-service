@@ -382,7 +382,7 @@ func TestResourceSearchBuildMessage(t *testing.T) {
 					},
 				},
 			},
-			expectedPublicCount:     1,
+			expectedPublicCount:     2, // Both resources remain, both are public
 			expectedNeedCheckCount:  0,
 			expectedMessageContains: []string{},
 		},
@@ -406,7 +406,7 @@ func TestResourceSearchBuildMessage(t *testing.T) {
 				},
 			},
 			expectedPublicCount:     0,
-			expectedNeedCheckCount:  0,
+			expectedNeedCheckCount:  1,
 			expectedMessageContains: []string{},
 		},
 	}
@@ -422,11 +422,25 @@ func TestResourceSearchBuildMessage(t *testing.T) {
 			ctx := context.Background()
 
 			// Execute
-			publicResources, needCheckResources, message := service.BuildMessage(ctx, tc.principal, tc.searchResult)
+			message := service.BuildMessage(ctx, tc.principal, tc.searchResult)
+
+			// Count resources by their NeedCheck field
+			publicCount := 0
+			needCheckCount := 0
+			for _, resource := range tc.searchResult.Resources {
+				if resource.NeedCheck {
+					needCheckCount++
+				} else {
+					publicCount++
+				}
+			}
 
 			// Verify
-			assertion.Equal(tc.expectedPublicCount, len(publicResources))
-			assertion.Equal(tc.expectedNeedCheckCount, len(needCheckResources))
+			assertion.Equal(tc.expectedPublicCount, publicCount)
+			if tc.expectedNeedCheckCount != needCheckCount {
+				t.Errorf("Test case '%s' failed: expected needCheckCount=%d, got=%d", tc.name, tc.expectedNeedCheckCount, needCheckCount)
+			}
+			assertion.Equal(tc.expectedNeedCheckCount, needCheckCount)
 
 			messageStr := string(message)
 			for _, expectedSubstring := range tc.expectedMessageContains {
@@ -451,9 +465,10 @@ func TestResourceSearchCheckAccess(t *testing.T) {
 			principal: "user123",
 			resources: []domain.Resource{
 				{
-					Type: "project",
-					ID:   "test-project",
-					Data: map[string]any{"name": "Test Project"},
+					Type:      "project",
+					ID:        "test-project",
+					Data:      map[string]any{"name": "Test Project"},
+					NeedCheck: true,
 					TransactionBodyStub: domain.TransactionBodyStub{
 						ObjectRef:           "project:test-project",
 						ObjectType:          "project",
@@ -465,6 +480,7 @@ func TestResourceSearchCheckAccess(t *testing.T) {
 			},
 			message: []byte("project:test-project#view@user:user123\n"),
 			setupAccessChecker: func(checker *mock.MockAccessControlChecker) {
+				checker.DefaultResult = "allowed"
 				checker.AllowedUserIDs = []string{"user123"}
 			},
 			expectedResources: 1,
@@ -475,9 +491,10 @@ func TestResourceSearchCheckAccess(t *testing.T) {
 			principal: "user123",
 			resources: []domain.Resource{
 				{
-					Type: "project",
-					ID:   "test-project",
-					Data: map[string]any{"name": "Test Project"},
+					Type:      "project",
+					ID:        "test-project",
+					Data:      map[string]any{"name": "Test Project"},
+					NeedCheck: true,
 					TransactionBodyStub: domain.TransactionBodyStub{
 						ObjectRef:           "project:test-project",
 						ObjectType:          "project",
@@ -489,7 +506,7 @@ func TestResourceSearchCheckAccess(t *testing.T) {
 			},
 			message: []byte("project:test-project#view@user:user123\n"),
 			setupAccessChecker: func(checker *mock.MockAccessControlChecker) {
-				checker.DefaultResult = "false"
+				checker.DefaultResult = "denied"
 			},
 			expectedResources: 0,
 			expectedError:     false,
@@ -499,9 +516,10 @@ func TestResourceSearchCheckAccess(t *testing.T) {
 			principal: "user123",
 			resources: []domain.Resource{
 				{
-					Type: "project",
-					ID:   "allowed-project",
-					Data: map[string]any{"name": "Allowed Project"},
+					Type:      "project",
+					ID:        "allowed-project",
+					Data:      map[string]any{"name": "Allowed Project"},
+					NeedCheck: true,
 					TransactionBodyStub: domain.TransactionBodyStub{
 						ObjectRef:           "project:allowed-project",
 						ObjectType:          "project",
@@ -511,9 +529,10 @@ func TestResourceSearchCheckAccess(t *testing.T) {
 					},
 				},
 				{
-					Type: "project",
-					ID:   "denied-project",
-					Data: map[string]any{"name": "Denied Project"},
+					Type:      "project",
+					ID:        "denied-project",
+					Data:      map[string]any{"name": "Denied Project"},
+					NeedCheck: true,
 					TransactionBodyStub: domain.TransactionBodyStub{
 						ObjectRef:           "project:denied-project",
 						ObjectType:          "project",
@@ -525,6 +544,7 @@ func TestResourceSearchCheckAccess(t *testing.T) {
 			},
 			message: []byte("project:allowed-project#view@user:user123\nproject:denied-project#view@user:user123\n"),
 			setupAccessChecker: func(checker *mock.MockAccessControlChecker) {
+				// Set up allowed and denied resources
 				checker.AllowedUserIDs = []string{"user123"}
 				checker.DeniedResourceIDs = []string{"denied-project"}
 			},
@@ -537,9 +557,33 @@ func TestResourceSearchCheckAccess(t *testing.T) {
 			resources: []domain.Resource{},
 			message:   []byte(""),
 			setupAccessChecker: func(checker *mock.MockAccessControlChecker) {
-				checker.DefaultResult = "true"
+				checker.DefaultResult = "allowed"
 			},
 			expectedResources: 0,
+			expectedError:     false,
+		},
+		{
+			name:      "public resources should be included without access check",
+			principal: "user123",
+			resources: []domain.Resource{
+				{
+					Type:      "project",
+					ID:        "public-project",
+					Data:      map[string]any{"name": "Public Project"},
+					NeedCheck: false,
+					TransactionBodyStub: domain.TransactionBodyStub{
+						ObjectRef:  "project:public-project",
+						ObjectType: "project",
+						ObjectID:   "public-project",
+						Public:     true,
+					},
+				},
+			},
+			message: []byte(""),
+			setupAccessChecker: func(checker *mock.MockAccessControlChecker) {
+				checker.DefaultResult = "allowed"
+			},
+			expectedResources: 1,
 			expectedError:     false,
 		},
 	}

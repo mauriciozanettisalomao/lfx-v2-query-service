@@ -12,7 +12,9 @@ import (
 	"github.com/linuxfoundation/lfx-v2-query-service/internal/domain"
 	"github.com/linuxfoundation/lfx-v2-query-service/internal/service"
 	"github.com/linuxfoundation/lfx-v2-query-service/pkg/constants"
+	"github.com/linuxfoundation/lfx-v2-query-service/pkg/global"
 	"github.com/linuxfoundation/lfx-v2-query-service/pkg/log"
+	"github.com/linuxfoundation/lfx-v2-query-service/pkg/paging"
 
 	"goa.design/goa/v3/security"
 )
@@ -49,7 +51,11 @@ func (s *querySvcsrvc) QueryResources(ctx context.Context, p *querysvc.QueryReso
 	)
 
 	// Convert payload to domain criteria
-	criteria := s.payloadToCriteria(p)
+	criteria, errCriteria := s.payloadToCriteria(ctx, p)
+	if errCriteria != nil {
+		slog.ErrorContext(ctx, "failed to convert payload to criteria", "error", errCriteria)
+		return nil, fmt.Errorf("failed to convert payload to criteria: %w", errCriteria)
+	}
 
 	// Execute search using the service layer
 	result, err := s.resourceService.QueryResources(ctx, criteria)
@@ -75,7 +81,7 @@ func (s *querySvcsrvc) Livez(ctx context.Context) (res []byte, err error) {
 }
 
 // payloadToCriteria converts the generated payload to domain search criteria
-func (s *querySvcsrvc) payloadToCriteria(p *querysvc.QueryResourcesPayload) domain.SearchCriteria {
+func (s *querySvcsrvc) payloadToCriteria(ctx context.Context, p *querysvc.QueryResourcesPayload) (domain.SearchCriteria, error) {
 
 	criteria := domain.SearchCriteria{
 		Name:         p.Name,
@@ -86,7 +92,6 @@ func (s *querySvcsrvc) payloadToCriteria(p *querysvc.QueryResourcesPayload) doma
 		PageToken:    p.PageToken,
 		PageSize:     constants.DefaultPageSize,
 	}
-
 	switch p.Sort {
 	case "name_asc":
 		criteria.SortBy = "sort_name"
@@ -101,7 +106,21 @@ func (s *querySvcsrvc) payloadToCriteria(p *querysvc.QueryResourcesPayload) doma
 		criteria.SortBy = "updated_at"
 		criteria.SortOrder = "desc"
 	}
-	return criteria
+
+	if criteria.PageToken != nil {
+		pageToken, err := paging.DecodePageToken(ctx, *criteria.PageToken, global.PageTokenSecret(ctx))
+		if err != nil {
+			slog.ErrorContext(ctx, "failed to decode page token", "error", err)
+			return criteria, fmt.Errorf("failed to decode page token: %w", err)
+		}
+		criteria.SearchAfter = &pageToken
+		slog.DebugContext(ctx, "decoded page token",
+			"page_token", *criteria.PageToken,
+			"decoded", pageToken,
+		)
+	}
+
+	return criteria, nil
 }
 
 // domainResultToResponse converts domain search result to generated response

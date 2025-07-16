@@ -10,7 +10,13 @@ import (
 	"log/slog"
 	"net/http"
 
+	"github.com/linuxfoundation/lfx-v2-query-service/pkg/global"
+	"github.com/linuxfoundation/lfx-v2-query-service/pkg/paging"
 	"github.com/opensearch-project/opensearch-go/v4/opensearchapi"
+)
+
+const (
+	nonceSize = 24
 )
 
 type httpClient struct {
@@ -69,5 +75,21 @@ func (c *httpClient) Search(ctx context.Context, index string, query []byte) (*S
 			Source: hit.Source,
 		}
 	}
+
+	// If there are more hits than the returned ones, we need to handle pagination.
+	if len(searchResponse.Hits.Hits) > 0 && searchResponse.Hits.Total.Value > len(searchResponse.Hits.Hits) {
+		searchAfter := searchResponse.Hits.Hits[len(searchResponse.Hits.Hits)-1].Sort
+		pageToken, errEncodePageToken := paging.EncodePageToken(searchAfter, global.PageTokenSecret(ctx))
+		if errEncodePageToken != nil {
+			slog.ErrorContext(ctx, "failed to encode page token", "error", errEncodePageToken)
+			return nil, fmt.Errorf("failed to encode page token: %w", errEncodePageToken)
+		}
+		result.PageToken = &pageToken
+		slog.DebugContext(ctx, "pagination token generated",
+			"page_token", *result.PageToken,
+			"total_hits", searchResponse.Hits.Total.Value,
+		)
+	}
+
 	return result, nil
 }

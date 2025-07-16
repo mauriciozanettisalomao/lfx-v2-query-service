@@ -63,30 +63,26 @@ func (s *ResourceSearch) QueryResources(ctx context.Context, criteria domain.Sea
 		"resource_count", len(result.Resources),
 	)
 
-	publicResources, resourcesToCheck, message := s.BuildMessage(ctx, principal, result)
+	messageCheckAccess := s.BuildMessage(ctx, principal, result)
 
 	searchResult := &domain.SearchResult{
-		Resources: publicResources,
+		PageToken: result.PageToken,
 	}
 
-	// Check access control for the resources
-	if len(resourcesToCheck) > 0 {
-		checkedResources, errCheckAccess := s.CheckAccess(ctx, principal, resourcesToCheck, message)
-		if errCheckAccess != nil {
-			slog.ErrorContext(ctx, "access control check failed",
-				"error", errCheckAccess,
-				"message", string(message),
-			)
-			return nil, fmt.Errorf("access control check failed: %w", errCheckAccess)
-		}
-		searchResult.Resources = append(searchResult.Resources, checkedResources...)
+	// Check access control for the resources if needed
+	checkedResources, errCheckAccess := s.CheckAccess(ctx, principal, result.Resources, messageCheckAccess)
+	if errCheckAccess != nil {
+		slog.ErrorContext(ctx, "access control check failed",
+			"error", errCheckAccess,
+			"message", string(messageCheckAccess),
+		)
+		return nil, fmt.Errorf("access control check failed: %w", errCheckAccess)
 	}
+	searchResult.Resources = checkedResources
 
 	slog.DebugContext(ctx, "resource search completed",
 		"query_count", len(result.Resources),
-		"public_resources_count", len(publicResources),
-		"checked_resources_count", len(resourcesToCheck),
-		"response_count", len(searchResult.Resources),
+		"response_after_access_check", len(searchResult.Resources),
 	)
 
 	if principal == constants.AnonymousPrincipal {
@@ -108,63 +104,55 @@ func (s *ResourceSearch) validateSearchCriteria(criteria domain.SearchCriteria) 
 	return nil
 }
 
-func (s *ResourceSearch) BuildMessage(ctx context.Context, principal string, result *domain.SearchResult) (public []domain.Resource, needCheck []domain.Resource, msg []byte) {
+func (s *ResourceSearch) BuildMessage(ctx context.Context, principal string, result *domain.SearchResult) []byte {
 
 	// avoid duplicate resource references in the result
 	seenRefs := make(map[string]struct{}, len(result.Resources))
 
-	accessCheckNeededHits := make([]domain.Resource, 0, len(result.Resources))
 	// estimate the size of each line in the access check message
 	accessCheckMessage := make([]byte, 0, 80*len(result.Resources))
+	for idx := range result.Resources {
 
-	// TODO - evaluate if it's necessary to execute concurrent access control checks (GOROUTINEs)
-	resources := make([]domain.Resource, 0, len(result.Resources))
-	for _, resource := range result.Resources {
-
-		if _, seen := seenRefs[resource.ObjectRef]; seen {
+		if _, seen := seenRefs[result.Resources[idx].ObjectRef]; seen {
 			// Skip this result.
 			continue
 		}
-		seenRefs[resource.ObjectRef] = struct{}{}
+		seenRefs[result.Resources[idx].ObjectRef] = struct{}{}
 
-		if resource.Public {
-			resources = append(resources, domain.Resource{
-				ID:   resource.ID,
-				Type: resource.Type,
-				Data: resource.Data,
-			})
+		if result.Resources[idx].Public {
+			result.Resources[idx].NeedCheck = false
 			continue
 		}
 
-		if resource.AccessCheckObject == "" || resource.AccessCheckRelation == "" {
+		if result.Resources[idx].AccessCheckObject == "" || result.Resources[idx].AccessCheckRelation == "" {
 			// Unable to perform access check without these fields.
 			slog.WarnContext(ctx, "resource missing access control information, skipping",
-				"object_ref", resource.ObjectRef,
-				"object_type", resource.ObjectType,
-				"object_id", resource.ObjectID,
+				"object_ref", result.Resources[idx].ObjectRef,
+				"object_type", result.Resources[idx].ObjectType,
+				"object_id", result.Resources[idx].ObjectID,
 			)
+			result.Resources[idx].NeedCheck = true
 			continue
 		}
-		accessCheckNeededHits = append(accessCheckNeededHits, resource)
+		result.Resources[idx].NeedCheck = true
 		// make the access check message
-		accessCheckMessage = append(accessCheckMessage, resource.AccessCheckObject...)
+		accessCheckMessage = append(accessCheckMessage, result.Resources[idx].AccessCheckObject...)
 		accessCheckMessage = append(accessCheckMessage, byte('#'))
-		accessCheckMessage = append(accessCheckMessage, resource.AccessCheckRelation...)
+		accessCheckMessage = append(accessCheckMessage, result.Resources[idx].AccessCheckRelation...)
 		accessCheckMessage = append(accessCheckMessage, []byte("@user:")...)
 		accessCheckMessage = append(accessCheckMessage, []byte(principal)...)
 		accessCheckMessage = append(accessCheckMessage, '\n')
 
 	}
-	return resources, accessCheckNeededHits, accessCheckMessage
+	return accessCheckMessage
 }
 
-func (s *ResourceSearch) CheckAccess(ctx context.Context, principal string, accessCheckNeededHits []domain.Resource, accessCheckMessage []byte) ([]domain.Resource, error) {
+func (s *ResourceSearch) CheckAccess(ctx context.Context, principal string, resourceList []domain.Resource, accessCheckMessage []byte) ([]domain.Resource, error) {
 
-	accessCheckResponses := make(map[string]string, len(accessCheckNeededHits))
-	if len(accessCheckNeededHits) > 0 {
+	var accessCheckResponses map[string]string
+	if len(accessCheckMessage) > 0 {
 
 		slog.DebugContext(ctx, "performing access control checks",
-			"resource_count", len(accessCheckNeededHits),
 			"message", string(accessCheckMessage),
 		)
 
@@ -182,15 +170,17 @@ func (s *ResourceSearch) CheckAccess(ctx context.Context, principal string, acce
 	}
 
 	var resources []domain.Resource
-	for _, resource := range accessCheckNeededHits {
-		relationKey := resource.AccessCheckObject + "#" + resource.AccessCheckRelation + "@user:" + principal
-		if allowed, ok := accessCheckResponses[relationKey]; ok && allowed == "true" {
-			resources = append(resources, domain.Resource{
-				ID:   resource.ObjectID,
-				Type: resource.ObjectType,
-				Data: resource.Data,
-			})
-			continue
+	// ensuring the ori
+	for _, resource := range resourceList {
+		addToList := false
+		if resource.NeedCheck && resource.AccessCheckObject != "" && resource.AccessCheckRelation != "" {
+			relationKey := resource.AccessCheckObject + "#" + resource.AccessCheckRelation + "@user:" + principal
+			if allowed, ok := accessCheckResponses[relationKey]; ok && allowed == "true" {
+				addToList = true
+			}
+		}
+		if !resource.NeedCheck || addToList {
+			resources = append(resources, resource)
 		}
 	}
 

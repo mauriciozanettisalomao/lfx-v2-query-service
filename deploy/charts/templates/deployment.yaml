@@ -25,6 +25,11 @@ spec:
               value: "http://opensearch-cluster-master:9200"
             - name: NATS_URL
               value: "nats://nats.lfx.svc.cluster.local:4222"
+            - name: PAGE_TOKEN_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: query-svc-secrets
+                  key: page_token_secret
           envFrom:
             - secretRef:
                 name: query-svc-secrets

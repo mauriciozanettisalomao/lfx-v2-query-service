@@ -10,4 +10,6 @@ const (
 	AnonymousPrincipal = `_anonymous`
 	// PrincipalAttribute is the attribute used to indicate the principal in the logging context
 	PrincipalAttribute = "principal"
+	// NonceSize is the size of the number used for nonce generation
+	NonceSize = 24
 )

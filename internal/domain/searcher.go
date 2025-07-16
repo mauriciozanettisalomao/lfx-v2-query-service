@@ -49,6 +49,8 @@ type SearchResult struct {
 	PageToken *string
 	// Cache control header
 	CacheControl *string
+	// Total number of resources found
+	Total int
 }
 
 // Resource represents a domain resource entity
@@ -61,6 +63,8 @@ type Resource struct {
 	Data any
 	// Metadata about the resource
 	TransactionBodyStub
+	// NeedCheck indicates if access control check is needed
+	NeedCheck bool
 }
 
 // TransactionBodyStub is used to decode the response's "source".

@@ -13,7 +13,8 @@ type Config struct {
 
 // SearchResponse represents the OpenSearch search response
 type SearchResponse struct {
-	Hits `json:"hits"`
+	Hits      `json:"hits"`
+	PageToken *string `json:"last_item_id,omitempty"`
 }
 
 // Hits represents the hits in the search response

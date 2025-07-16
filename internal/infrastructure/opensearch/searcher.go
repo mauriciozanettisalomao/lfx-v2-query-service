@@ -92,6 +92,8 @@ func (os *OpenSearchSearcher) convertResponse(ctx context.Context, response *Sea
 
 	result := &domain.SearchResult{
 		Resources: make([]domain.Resource, 0, len(response.Hits.Hits)),
+		PageToken: response.PageToken,
+		Total:     response.Hits.Total.Value,
 	}
 
 	for _, hit := range response.Hits.Hits {
@@ -103,9 +105,6 @@ func (os *OpenSearchSearcher) convertResponse(ctx context.Context, response *Sea
 		}
 		result.Resources = append(result.Resources, resource)
 	}
-
-	// Generate next page token if there are more results
-	// TODO check for pagination logic
 
 	return result, nil
 }
