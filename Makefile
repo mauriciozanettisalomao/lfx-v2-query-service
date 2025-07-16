@@ -6,7 +6,6 @@ VERSION := $(shell git describe --tags --always)
 BUILD_TIME := $(shell date -u +%Y-%m-%dT%H:%M:%SZ)
 GIT_COMMIT := $(shell git rev-parse HEAD)
 
-
 # Docker
 DOCKER_REGISTRY := linuxfoundation## container registry ghcr.io/ ???
 DOCKER_IMAGE := $(DOCKER_REGISTRY)/$(APP_NAME)
@@ -17,7 +16,18 @@ GO_VERSION := 1.24.2
 GOOS := linux
 GOARCH := amd64
 
+# Linting
+GOLANGCI_LINT_VERSION := v1.64.6
+LINT_TIMEOUT := 10m
+LINT_TOOL=$(shell go env GOPATH)/bin/golangci-lint
+
 ##@ Development
+
+.PHONY: setup-dev
+setup-dev: ## Setup development tools
+	@echo "Installing development tools..."
+	@echo "Installing golangci-lint $(GOLANGCI_LINT_VERSION)..."
+	go install github.com/golangci/golangci-lint/cmd/golangci-lint@$(GOLANGCI_LINT_VERSION)
 
 .PHONY: setup
 setup: ## Setup development environment
@@ -33,6 +43,11 @@ deps: ## Install dependencies
 .PHONY: apigen
 apigen: deps #@ Generate API code using Goa
 	goa gen github.com/linuxfoundation/lfx-v2-query-service/design
+
+.PHONY: lint
+lint: ## Run golangci-lint with default settings
+	@echo "Running golangci-lint..."
+	@$(LINT_TOOL) run --config=.golangci.yml ./... && echo "==> Lint OK"
 
 .PHONY: test
 test: ## Run tests

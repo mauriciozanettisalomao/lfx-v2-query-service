@@ -63,7 +63,10 @@ func TestOpenSearchSearcherQueryResources(t *testing.T) {
 					},
 					"public": true,
 				}
-				sourceBytes, _ := json.Marshal(hitSource)
+				sourceBytes, errMarshal := json.Marshal(hitSource)
+				if errMarshal != nil {
+					t.Fatalf("failed to marshal hit source: %v", errMarshal)
+				}
 
 				mock.SetSearchResponse(&SearchResponse{
 					Hits: Hits{
@@ -97,7 +100,10 @@ func TestOpenSearchSearcherQueryResources(t *testing.T) {
 						},
 						"public": true,
 					}
-					sourceBytes, _ := json.Marshal(hitSource)
+					sourceBytes, errMarshal := json.Marshal(hitSource)
+					if errMarshal != nil {
+						t.Fatalf("failed to marshal hit source: %v", errMarshal)
+					}
 					hits = append(hits, Hit{
 						ID:     fmt.Sprintf("project-%d", i),
 						Score:  1.0,
@@ -581,7 +587,10 @@ func TestOpenSearchSearcherIntegration(t *testing.T) {
 			"access_check_object":   "project:integration-project",
 			"access_check_relation": "view",
 		}
-		sourceBytes, _ := json.Marshal(hitSource)
+		sourceBytes, errMarshal := json.Marshal(hitSource)
+		if errMarshal != nil {
+			t.Fatalf("failed to marshal hit source: %v", errMarshal)
+		}
 
 		mockClient.SetSearchResponse(&SearchResponse{
 			Hits: Hits{

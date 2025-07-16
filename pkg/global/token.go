@@ -24,10 +24,8 @@ func PageTokenSecret(ctx context.Context) *[32]byte {
 		const pageTokenSecretName = "PAGE_TOKEN_SECRET"
 
 		pageTokenSecretValue := os.Getenv(pageTokenSecretName)
-		if pageTokenSecretValue == "" || len(pageTokenSecretValue) < 32 {
-			slog.ErrorContext(ctx, "missing or invalid PAGE_TOKEN_SECRET environment variable",
-				"actual_length", len(pageTokenSecretValue),
-			)
+		if pageTokenSecretValue == "" {
+			slog.ErrorContext(ctx, "missing environment variable")
 			log.Fatalf("environment variable %s must be set with 32 characters", pageTokenSecretName)
 		}
 		copy(pageTokenSecret[:], []byte(pageTokenSecretValue))

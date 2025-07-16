@@ -384,7 +384,8 @@ func TestNewAccessControlChecker(t *testing.T) {
 				assertion.NotNil(checker)
 				assertion.IsType(&NATSAccessControlChecker{}, checker)
 				// Clean up
-				checker.Close()
+				errClose := checker.Close()
+				assertion.NoError(errClose, "failed to close NATS client")
 			}
 		})
 	}

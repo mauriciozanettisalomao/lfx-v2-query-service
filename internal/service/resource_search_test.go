@@ -151,7 +151,10 @@ func TestResourceSearchQueryResources(t *testing.T) {
 			tc.setupMocks(mockSearcher, mockAccessChecker)
 
 			// Create service
-			service := NewResourceSearch(mockSearcher, mockAccessChecker).(*ResourceSearch)
+			service, ok := NewResourceSearch(mockSearcher, mockAccessChecker).(*ResourceSearch)
+			if !ok {
+				t.Fatal("failed to create ResourceSearch service")
+			}
 
 			// Setup context
 			ctx := context.Background()
@@ -678,7 +681,10 @@ func TestResourceSearchQueryResourcesEdgeCases(t *testing.T) {
 		// Setup
 		mockSearcher := mock.NewMockResourceSearcher()
 		mockAccessChecker := mock.NewMockAccessControlChecker()
-		service := NewResourceSearch(mockSearcher, mockAccessChecker).(*ResourceSearch)
+		service, ok := NewResourceSearch(mockSearcher, mockAccessChecker).(*ResourceSearch)
+		if !ok {
+			t.Fatal("failed to create ResourceSearch service")
+		}
 
 		// Add test data
 		mockSearcher.AddResource(domain.Resource{
@@ -721,7 +727,10 @@ func TestResourceSearchQueryResourcesEdgeCases(t *testing.T) {
 		// Setup
 		mockSearcher := mock.NewMockResourceSearcher()
 		mockAccessChecker := mock.NewMockAccessControlChecker()
-		service := NewResourceSearch(mockSearcher, mockAccessChecker).(*ResourceSearch)
+		service, ok := NewResourceSearch(mockSearcher, mockAccessChecker).(*ResourceSearch)
+		if !ok {
+			t.Fatal("failed to create ResourceSearch service")
+		}
 
 		criteria := domain.SearchCriteria{
 			Name:      stringPtr("test"),

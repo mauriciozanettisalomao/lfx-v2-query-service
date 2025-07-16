@@ -21,8 +21,7 @@ import (
 
 // query-svc service implementation using clean architecture.
 type querySvcsrvc struct {
-	resourceService           domain.ResourceSearcher
-	accessControlCheckService domain.AccessControlChecker
+	resourceService domain.ResourceSearcher
 }
 
 // JWTAuth implements the authorization logic for service "query-svc" for the

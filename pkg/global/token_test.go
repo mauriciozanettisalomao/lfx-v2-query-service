@@ -257,6 +257,13 @@ func TestPageTokenSecretConcurrency(t *testing.T) {
 }
 
 func TestPageTokenSecretContextVariations(t *testing.T) {
+
+	type key string
+	var (
+		testKey1 = key("testKey1")
+		testKey2 = key("testKey2")
+	)
+
 	tests := []struct {
 		name         string
 		envVarValue  string
@@ -294,8 +301,8 @@ func TestPageTokenSecretContextVariations(t *testing.T) {
 			},
 			createCtx: func() context.Context {
 				ctx := context.Background()
-				ctx = context.WithValue(ctx, "key1", "value1")
-				ctx = context.WithValue(ctx, "key2", "value2")
+				ctx = context.WithValue(ctx, testKey1, "value1")
+				ctx = context.WithValue(ctx, testKey2, "value2")
 				return ctx
 			},
 			expectResult: true,
