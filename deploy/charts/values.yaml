@@ -1,6 +1,6 @@
 # Copyright The Linux Foundation and each contributor to LFX.
 # SPDX-License-Identifier: MIT
----:
+---
 replicaCount: 1
 
 # Override from CLI/CI: --set image.tag=<git-sha>, etc.

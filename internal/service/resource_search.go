@@ -170,7 +170,7 @@ func (s *ResourceSearch) CheckAccess(ctx context.Context, principal string, reso
 	}
 
 	var resources []domain.Resource
-	// ensuring the ori
+	// ensuring the original order of resources
 	for _, resource := range resourceList {
 		addToList := false
 		if resource.NeedCheck && resource.AccessCheckObject != "" && resource.AccessCheckRelation != "" {
