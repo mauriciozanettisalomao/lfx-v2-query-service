@@ -6,6 +6,7 @@ package querysvcapi
 import (
 	"context"
 	"errors"
+	"log"
 	"log/slog"
 	"net/url"
 	"os"
@@ -60,7 +61,7 @@ func SetupJWTAuth(ctx context.Context) {
 			"url", jwksEnv,
 			"error", err,
 		)
-		os.Exit(1)
+		log.Fatalf("failed to parse JWKS URL: %v", err)
 	}
 	var issuer *url.URL
 	issuer, err = url.Parse(defaultIssuer)
@@ -70,7 +71,7 @@ func SetupJWTAuth(ctx context.Context) {
 			"issuer", defaultIssuer,
 			"error", err,
 		)
-		os.Exit(1)
+		log.Fatalf("failed to parse issuer URL: %v", err)
 	}
 	provider := jwks.NewCachingProvider(issuer, 5*time.Minute, jwks.WithCustomJWKSURI(jwksURL))
 
@@ -91,7 +92,7 @@ func SetupJWTAuth(ctx context.Context) {
 		slog.ErrorContext(ctx, "failed to create JWT validator",
 			"error", err,
 		)
-		os.Exit(1)
+		log.Fatalf("failed to create JWT validator: %v", err)
 	}
 }
 

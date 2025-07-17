@@ -347,23 +347,6 @@ func TestPageTokenSecretContextVariations(t *testing.T) {
 	}
 }
 
-func TestPageTokenSecretMissingEnvVar(t *testing.T) {
-	// This test documents the expected behavior when the environment variable is missing
-	// The function calls os.Exit(1) which cannot be easily tested without subprocess execution
-	t.Skip("Skipping test that would cause os.Exit(1) - this test documents expected behavior")
-
-	// The expected behavior is:
-	// 1. Environment variable PAGE_TOKEN_SECRET is not set
-	// 2. Function logs an error message
-	// 3. Function calls os.Exit(1)
-	// 4. Process terminates with exit code 1
-
-	// To test this properly, you would need to:
-	// - Use a subprocess test
-	// - Mock os.Exit behavior
-	// - Refactor the code to return an error instead of calling os.Exit
-}
-
 // BenchmarkPageTokenSecret benchmarks the performance of PageTokenSecret
 func BenchmarkPageTokenSecret(b *testing.B) {
 	benchmarks := []struct {

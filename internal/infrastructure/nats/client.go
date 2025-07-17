@@ -93,6 +93,11 @@ func NewClient(ctx context.Context, config Config) (*NATSClient, error) {
 		"timeout", config.Timeout,
 	)
 
+	// Validate configuration
+	if config.URL == "" {
+		return nil, fmt.Errorf("failed to create NATS client: URL cannot be empty")
+	}
+
 	// Configure NATS connection options
 	opts := []nats.Option{
 		nats.Name("lfx-v2-query-service"),
@@ -114,7 +119,7 @@ func NewClient(ctx context.Context, config Config) (*NATSClient, error) {
 	conn, err := nats.Connect(config.URL, opts...)
 	if err != nil {
 		slog.ErrorContext(ctx, "failed to connect to NATS", "error", err)
-		return nil, fmt.Errorf("failed to connect to NATS: %w", err)
+		return nil, fmt.Errorf("failed to create NATS client: %w", err)
 	}
 
 	client := &NATSClient{
