@@ -42,6 +42,9 @@ var _ = Service("query-svc", func() {
 			Attribute("tags", ArrayOf(String), "Tags to search (varies by object type)", func() {
 				Example([]string{"active"})
 			})
+			Attribute("slug", String, "Resource slug for filtering", func() {
+				Example("cncf")
+			})
 			Required("bearer_token", "version")
 		})
 
@@ -67,6 +70,7 @@ var _ = Service("query-svc", func() {
 			Param("tags")
 			Param("sort")
 			Param("page_token")
+			Param("slug")
 			Header("bearer_token:Authorization")
 			Response(StatusOK, func() {
 				Header("cache_control:Cache-Control")

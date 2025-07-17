@@ -21,6 +21,8 @@ type SearchCriteria struct {
 	Tags []string
 	// Resource name or alias; supports typeahead
 	Name *string
+	// Resource slug for filtering
+	Slug *string
 	// Parent (for navigation; varies by object type)
 	Parent *string
 	// ParentRef is a reference to the parent resource

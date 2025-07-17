@@ -30,15 +30,82 @@ func NewMockResourceSearcher() *MockResourceSearcher {
 					"status":      "active",
 					"tags":        []string{"active", "governance"},
 				},
+				TransactionBodyStub: domain.TransactionBodyStub{
+					ObjectRef:           "committee:123",
+					ObjectType:          "committee",
+					ObjectID:            "123",
+					Public:              true,
+					AccessCheckObject:   "committee:123",
+					AccessCheckRelation: "view",
+				},
+			},
+			{
+				Type: "project",
+				ID:   "123",
+				Data: map[string]any{
+					"name":               "Cloud Native Computing Foundation",
+					"slug":               "cncf",
+					"description":        "The Cloud Native Computing Foundation (CNCF) hosts critical components of the global technology infrastructure. CNCF brings together the world’s top developers, end users, and vendors and runs the largest open source developer conferences.",
+					"status":             "active",
+					"logo":               "https://lf-master-project-logos-prod.s3.us-east-2.amazonaws.com/cncf.svg",
+					"tags":               []string{"active", "platform"},
+					"committees_count":   9,
+					"meetings_count":     10,
+					"mailing_list_count": 11,
+				},
+				TransactionBodyStub: domain.TransactionBodyStub{
+					ObjectRef:           "project:123",
+					ObjectType:          "project",
+					ObjectID:            "123",
+					Public:              true,
+					AccessCheckObject:   "project:123",
+					AccessCheckRelation: "view",
+				},
 			},
 			{
 				Type: "project",
 				ID:   "456",
 				Data: map[string]any{
-					"name":        "LFX Platform Project",
-					"description": "Core platform development project",
-					"status":      "active",
-					"tags":        []string{"active", "platform"},
+					"name":               "The Linux Foundation",
+					"slug":               "tlf",
+					"description":        "The Linux Foundation is dedicated to building sustainable ecosystems around open source projects to accelerate technology development and industry adoption. Founded in 2000, the Linux Foundation provides unparalleled support for open source communities through financial and intellectual resources, infrastructure, services, events, and training. Working together, the Linux Foundation and its projects form the most ambitious and successful investment in the creation of shared technology.",
+					"status":             "active",
+					"logo":               "https://lf-master-project-logos-prod.s3.us-east-2.amazonaws.com/thelinuxfoundation-color.svg",
+					"tags":               []string{"active", "platform"},
+					"committees_count":   3,
+					"meetings_count":     3,
+					"mailing_list_count": 3,
+				},
+				TransactionBodyStub: domain.TransactionBodyStub{
+					ObjectRef:           "project:456",
+					ObjectType:          "project",
+					ObjectID:            "456",
+					Public:              true,
+					AccessCheckObject:   "project:456",
+					AccessCheckRelation: "view",
+				},
+			},
+			{
+				Type: "project",
+				ID:   "789",
+				Data: map[string]any{
+					"name":               "Academy Software Foundation",
+					"slug":               "aswf",
+					"description":        "The mission of the Academy Software Foundation (ASWF) is to increase the quality and quantity of contributions to the content creation industry’s open source software base; to provide a neutral forum to coordinate cross-project efforts; to provide a common build and test infrastructure; and to provide individuals and organizations a clear path to participation in advancing our open source ecosystem.",
+					"status":             "active",
+					"logo":               "https://lf-master-project-logos-prod.s3.us-east-2.amazonaws.com/aswf.svg",
+					"tags":               []string{"active", "platform"},
+					"committees_count":   4,
+					"meetings_count":     5,
+					"mailing_list_count": 6,
+				},
+				TransactionBodyStub: domain.TransactionBodyStub{
+					ObjectRef:           "project:789",
+					ObjectType:          "project",
+					ObjectID:            "789",
+					Public:              true,
+					AccessCheckObject:   "project:789",
+					AccessCheckRelation: "view",
 				},
 			},
 			{
@@ -50,6 +117,14 @@ func NewMockResourceSearcher() *MockResourceSearcher {
 					"status":      "active",
 					"tags":        []string{"active", "security"},
 				},
+				TransactionBodyStub: domain.TransactionBodyStub{
+					ObjectRef:           "committee:789",
+					ObjectType:          "committee",
+					ObjectID:            "789",
+					Public:              true,
+					AccessCheckObject:   "committee:789",
+					AccessCheckRelation: "view",
+				},
 			},
 			{
 				Type: "meeting",
@@ -59,6 +134,14 @@ func NewMockResourceSearcher() *MockResourceSearcher {
 					"description": "Regular board meeting for project governance",
 					"status":      "active",
 					"tags":        []string{"active", "governance"},
+				},
+				TransactionBodyStub: domain.TransactionBodyStub{
+					ObjectRef:           "meeting:101",
+					ObjectType:          "meeting",
+					ObjectID:            "101",
+					Public:              true,
+					AccessCheckObject:   "meeting:101",
+					AccessCheckRelation: "view",
 				},
 			},
 		},
@@ -97,6 +180,23 @@ func (m *MockResourceSearcher) QueryResources(ctx context.Context, criteria doma
 			}
 		}
 		filteredResources = nameFilteredResources
+	}
+
+	// Filter by slug (exact match, case-insensitive)
+	if criteria.Slug != nil {
+		var slugFilteredResources []domain.Resource
+		searchSlug := strings.ToLower(*criteria.Slug)
+
+		for _, resource := range filteredResources {
+			if data, ok := resource.Data.(map[string]interface{}); ok {
+				if slug, ok := data["slug"].(string); ok {
+					if strings.ToLower(slug) == searchSlug {
+						slugFilteredResources = append(slugFilteredResources, resource)
+					}
+				}
+			}
+		}
+		filteredResources = slugFilteredResources
 	}
 
 	// Filter by tags

@@ -90,6 +90,7 @@ func (s *querySvcsrvc) payloadToCriteria(ctx context.Context, p *querysvc.QueryR
 		SortBy:       p.Sort,
 		PageToken:    p.PageToken,
 		PageSize:     constants.DefaultPageSize,
+		Slug:         p.Slug,
 	}
 	switch p.Sort {
 	case "name_asc":
