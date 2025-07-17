@@ -1,0 +1,344 @@
+openapi: 3.0.3
+info:
+    title: Goa API
+    version: 0.0.1
+servers:
+    - url: http://localhost:80
+      description: Default server for query-svc
+paths:
+    /livez:
+        get:
+            tags:
+                - query-svc
+            summary: livez query-svc
+            description: Check if the service is alive.
+            operationId: query-svc#livez
+            responses:
+                "200":
+                    description: OK response.
+                    content:
+                        text/plain:
+                            schema:
+                                type: string
+                                example: OK
+                                format: binary
+                            example: OK
+    /openapi.json:
+        get:
+            tags:
+                - query-svc
+            summary: Download gen/http/openapi3.json
+            operationId: query-svc#/openapi.json
+            responses:
+                "200":
+                    description: File downloaded
+    /query/resources:
+        get:
+            tags:
+                - query-svc
+            summary: query-resources query-svc
+            description: Locate resources by their type or parent, or use typeahead search to query resources by a display name or similar alias.
+            operationId: query-svc#query-resources
+            parameters:
+                - name: v
+                  in: query
+                  description: Version of the API
+                  allowEmptyValue: true
+                  required: true
+                  schema:
+                    type: string
+                    description: Version of the API
+                    example: "1"
+                    enum:
+                        - "1"
+                  example: "1"
+                - name: name
+                  in: query
+                  description: Resource name or alias; supports typeahead
+                  allowEmptyValue: true
+                  schema:
+                    type: string
+                    description: Resource name or alias; supports typeahead
+                    example: gov board
+                    minLength: 1
+                  example: gov board
+                - name: parent
+                  in: query
+                  description: Parent (for navigation; varies by object type)
+                  allowEmptyValue: true
+                  schema:
+                    type: string
+                    description: Parent (for navigation; varies by object type)
+                    example: project:123
+                  example: project:123
+                - name: type
+                  in: query
+                  description: Resource type to search
+                  allowEmptyValue: true
+                  schema:
+                    type: string
+                    description: Resource type to search
+                    example: committee
+                  example: committee
+                - name: tags
+                  in: query
+                  description: Tags to search (varies by object type)
+                  allowEmptyValue: true
+                  schema:
+                    type: array
+                    items:
+                        type: string
+                        example: Tempore id rerum qui cumque aut.
+                    description: Tags to search (varies by object type)
+                    example:
+                        - active
+                  example:
+                    - active
+                - name: sort
+                  in: query
+                  description: Sort order for results
+                  allowEmptyValue: true
+                  schema:
+                    type: string
+                    description: Sort order for results
+                    default: name_asc
+                    example: updated_desc
+                    enum:
+                        - name_asc
+                        - name_desc
+                        - updated_asc
+                        - updated_desc
+                  example: updated_desc
+                - name: page_token
+                  in: query
+                  description: Opaque token for pagination
+                  allowEmptyValue: true
+                  schema:
+                    type: string
+                    description: Opaque token for pagination
+                    example: '****'
+                  example: '****'
+            responses:
+                "200":
+                    description: OK response.
+                    headers:
+                        Cache-Control:
+                            description: Cache control header
+                            schema:
+                                type: string
+                                description: Cache control header
+                                example: public, max-age=300
+                            example: public, max-age=300
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/QueryResourcesResponseBody'
+                            example:
+                                page_token: '****'
+                                resources:
+                                    - data:
+                                        id: "123"
+                                        name: My committee
+                                        description: a committee
+                                      id: "123"
+                                      type: committee
+                                    - data:
+                                        id: "123"
+                                        name: My committee
+                                        description: a committee
+                                      id: "123"
+                                      type: committee
+                                    - data:
+                                        id: "123"
+                                        name: My committee
+                                        description: a committee
+                                      id: "123"
+                                      type: committee
+                                    - data:
+                                        id: "123"
+                                        name: My committee
+                                        description: a committee
+                                      id: "123"
+                                      type: committee
+                "400":
+                    description: 'BadRequest: Bad request'
+                    content:
+                        application/vnd.goa.error:
+                            schema:
+                                $ref: '#/components/schemas/Error'
+            security:
+                - jwt_header_Authorization: []
+    /readyz:
+        get:
+            tags:
+                - query-svc
+            summary: readyz query-svc
+            description: Check if the service is able to take inbound requests.
+            operationId: query-svc#readyz
+            responses:
+                "200":
+                    description: OK response.
+                    content:
+                        text/plain:
+                            schema:
+                                type: string
+                                example: OK
+                                format: binary
+                            example: OK
+                "503":
+                    description: 'NotReady: Service is not ready yet'
+                    content:
+                        application/vnd.goa.error:
+                            schema:
+                                $ref: '#/components/schemas/Error'
+components:
+    schemas:
+        Error:
+            type: object
+            properties:
+                fault:
+                    type: boolean
+                    description: Is the error a server-side fault?
+                    example: false
+                id:
+                    type: string
+                    description: ID is a unique identifier for this particular occurrence of the problem.
+                    example: 123abc
+                message:
+                    type: string
+                    description: Message is a human-readable explanation specific to this occurrence of the problem.
+                    example: parameter 'p' must be an integer
+                name:
+                    type: string
+                    description: Name is the name of this class of errors.
+                    example: bad_request
+                temporary:
+                    type: boolean
+                    description: Is the error temporary?
+                    example: true
+                timeout:
+                    type: boolean
+                    description: Is the error a timeout?
+                    example: true
+            description: Bad request
+            example:
+                fault: true
+                id: 123abc
+                message: parameter 'p' must be an integer
+                name: bad_request
+                temporary: false
+                timeout: true
+            required:
+                - name
+                - id
+                - message
+                - temporary
+                - timeout
+                - fault
+        QueryResourcesResponseBody:
+            type: object
+            properties:
+                page_token:
+                    type: string
+                    description: Opaque token if more results are available
+                    example: '****'
+                resources:
+                    type: array
+                    items:
+                        $ref: '#/components/schemas/Resource'
+                    description: Resources found
+                    example:
+                        - data:
+                            id: "123"
+                            name: My committee
+                            description: a committee
+                          id: "123"
+                          type: committee
+                        - data:
+                            id: "123"
+                            name: My committee
+                            description: a committee
+                          id: "123"
+                          type: committee
+            example:
+                page_token: '****'
+                resources:
+                    - data:
+                        id: "123"
+                        name: My committee
+                        description: a committee
+                      id: "123"
+                      type: committee
+                    - data:
+                        id: "123"
+                        name: My committee
+                        description: a committee
+                      id: "123"
+                      type: committee
+                    - data:
+                        id: "123"
+                        name: My committee
+                        description: a committee
+                      id: "123"
+                      type: committee
+                    - data:
+                        id: "123"
+                        name: My committee
+                        description: a committee
+                      id: "123"
+                      type: committee
+            required:
+                - resources
+        Resource:
+            type: object
+            properties:
+                data:
+                    description: Resource data snapshot
+                    example:
+                        id: "123"
+                        name: My committee
+                        description: a committee
+                id:
+                    type: string
+                    description: Resource ID (within its resource collection)
+                    example: "123"
+                type:
+                    type: string
+                    description: Resource type
+                    example: committee
+            description: A resource is a universal representation of an LFX API resource for indexing.
+            example:
+                data:
+                    id: "123"
+                    name: My committee
+                    description: a committee
+                id: "123"
+                type: committee
+        Sortable:
+            type: object
+            properties:
+                page_token:
+                    type: string
+                    description: Opaque token for pagination
+                    example: '****'
+                sort:
+                    type: string
+                    description: Sort order for results
+                    default: name_asc
+                    example: updated_desc
+                    enum:
+                        - name_asc
+                        - name_desc
+                        - updated_asc
+                        - updated_desc
+            example:
+                page_token: '****'
+                sort: updated_desc
+    securitySchemes:
+        jwt_header_Authorization:
+            type: http
+            description: Heimdall authorization
+            scheme: bearer
+tags:
+    - name: query-svc
+      description: The query service provides resource and user queries.
