@@ -7,3 +7,17 @@ replicaCount: 1
 image:
   tag: "0.1.0"
   repository: linuxfoundation/lfx-query-svc
+
+# ingress is the configuration for the ingress routing
+ingress:
+  hostname: lfx-api.k8s.orb.local
+
+# nats is the configuration for the NATS server
+nats:
+  # url is the URL of the NATS server
+  url: nats://nats.lfx.svc.cluster.local:4222
+
+# opensearch is the configuration for the OpenSearch cluster
+opensearch:
+  # url is the URL of the OpenSearch cluster
+  url: http://opensearch-cluster-master:9200

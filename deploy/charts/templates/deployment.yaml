@@ -22,9 +22,9 @@ spec:
           imagePullPolicy: Never
           env:
             - name: OPENSEARCH_URL
-              value: "http://opensearch-cluster-master:9200"
+              value: {{.Values.opensearch.url}}
             - name: NATS_URL
-              value: "nats://nats.lfx.svc.cluster.local:4222"
+              value: {{.Values.nats.url}}
             - name: PAGE_TOKEN_SECRET
               valueFrom:
                 secretKeyRef:

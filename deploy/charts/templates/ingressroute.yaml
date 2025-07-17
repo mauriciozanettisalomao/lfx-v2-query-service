@@ -13,7 +13,7 @@ spec:
   routes:
     - kind: Rule
       match: >-
-        Host(`lfx-api.k8s.orb.local`) && PathPrefix(`/query/`)
+        Host(`{{.Values.ingress.hostname}}`) && PathPrefix(`/query/`)
       priority: 10
       middlewares:
         - name: heimdall
