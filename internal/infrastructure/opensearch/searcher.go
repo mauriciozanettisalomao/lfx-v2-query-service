@@ -16,6 +16,7 @@ import (
 	"time"
 
 	"github.com/linuxfoundation/lfx-v2-query-service/internal/domain"
+	"github.com/linuxfoundation/lfx-v2-query-service/pkg/errors"
 
 	"github.com/opensearch-project/opensearch-go/v4"
 	"github.com/opensearch-project/opensearch-go/v4/opensearchapi"
@@ -93,7 +94,7 @@ func (os *OpenSearchSearcher) convertResponse(ctx context.Context, response *Sea
 	result := &domain.SearchResult{
 		Resources: make([]domain.Resource, 0, len(response.Hits.Hits)),
 		PageToken: response.PageToken,
-		Total:     response.Hits.Total.Value,
+		Total:     response.Value,
 	}
 
 	for _, hit := range response.Hits.Hits {
@@ -167,8 +168,7 @@ func NewSearcher(ctx context.Context, config Config) (domain.ResourceSearcher, e
 		},
 	})
 	if errpensearchClient != nil {
-		slog.ErrorContext(ctx, "failed to create OpenSearch client", "error", errpensearchClient)
-		return nil, fmt.Errorf("failed to create OpenSearch client: %w", errpensearchClient)
+		return nil, errors.NewServiceUnavailable("failed to create OpenSearch client", errpensearchClient)
 	}
 
 	return &OpenSearchSearcher{

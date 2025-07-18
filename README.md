@@ -18,12 +18,15 @@ The implementation follows the clean architecture principles where:
 ├── deploy/                         # Contains Kubernetes/Helm manifests
 │   ├── k8s/                        # K8s manifests (raw YAML)
 │   └── charts/                     # Helm charts
+├── design/                         # GOA design specification files
+├── gen/                            # GOA generated code (HTTP server, client, OpenAPI)
 ├── cmd/                            # Services (main packages)
 │   └── query_svc/.                 # Query service code
 ├── internal/                       # Internal service packages
 │   ├── domain/                     # Domain logic layer
 │   ├── service/                    # Business logic layer
-│   └── infrastructure/             # Infrastructure layer
+│   ├── infrastructure/             # Infrastructure layer
+│   └── middleware/                 # HTTP middleware components
 └── pkg/                            # Shared packages for internal and external services
 ```
 
@@ -238,11 +241,11 @@ This command generated the basic server structure, which was then customized and
 2. **Regenerate code**: Run `goa gen github.com/linuxfoundation/lfx-v2-query-service/design` after design changes
 3. **Build the project**: 
    ```bash
-   go build ./cmd/query_svc
+   go build cmd
    ```
 4. **Run with mock data** (for development):
    ```bash
-   go run cmd/query_svc/main.go -search-impl=mock
+   SEARCH_SOURCE=mock ACCESS_CONTROL_SOURCE=mock go run ./cmd
    ```
 5. **Run tests**:
    ```bash

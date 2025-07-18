@@ -24,19 +24,24 @@ type QueryResourcesResponseBody struct {
 // QueryResourcesBadRequestResponseBody is the type of the "query-svc" service
 // "query-resources" endpoint HTTP response body for the "BadRequest" error.
 type QueryResourcesBadRequestResponseBody struct {
-	// Name is the name of this class of errors.
-	Name string `form:"name" json:"name" xml:"name"`
-	// ID is a unique identifier for this particular occurrence of the problem.
-	ID string `form:"id" json:"id" xml:"id"`
-	// Message is a human-readable explanation specific to this occurrence of the
-	// problem.
+	// Error message
 	Message string `form:"message" json:"message" xml:"message"`
-	// Is the error temporary?
-	Temporary bool `form:"temporary" json:"temporary" xml:"temporary"`
-	// Is the error a timeout?
-	Timeout bool `form:"timeout" json:"timeout" xml:"timeout"`
-	// Is the error a server-side fault?
-	Fault bool `form:"fault" json:"fault" xml:"fault"`
+}
+
+// QueryResourcesInternalServerErrorResponseBody is the type of the "query-svc"
+// service "query-resources" endpoint HTTP response body for the
+// "InternalServerError" error.
+type QueryResourcesInternalServerErrorResponseBody struct {
+	// Error message
+	Message string `form:"message" json:"message" xml:"message"`
+}
+
+// QueryResourcesServiceUnavailableResponseBody is the type of the "query-svc"
+// service "query-resources" endpoint HTTP response body for the
+// "ServiceUnavailable" error.
+type QueryResourcesServiceUnavailableResponseBody struct {
+	// Error message
+	Message string `form:"message" json:"message" xml:"message"`
 }
 
 // ReadyzNotReadyResponseBody is the type of the "query-svc" service "readyz"
@@ -86,14 +91,29 @@ func NewQueryResourcesResponseBody(res *querysvc.QueryResourcesResult) *QueryRes
 
 // NewQueryResourcesBadRequestResponseBody builds the HTTP response body from
 // the result of the "query-resources" endpoint of the "query-svc" service.
-func NewQueryResourcesBadRequestResponseBody(res *goa.ServiceError) *QueryResourcesBadRequestResponseBody {
+func NewQueryResourcesBadRequestResponseBody(res *querysvc.BadRequestError) *QueryResourcesBadRequestResponseBody {
 	body := &QueryResourcesBadRequestResponseBody{
-		Name:      res.Name,
-		ID:        res.ID,
-		Message:   res.Message,
-		Temporary: res.Temporary,
-		Timeout:   res.Timeout,
-		Fault:     res.Fault,
+		Message: res.Message,
+	}
+	return body
+}
+
+// NewQueryResourcesInternalServerErrorResponseBody builds the HTTP response
+// body from the result of the "query-resources" endpoint of the "query-svc"
+// service.
+func NewQueryResourcesInternalServerErrorResponseBody(res *querysvc.InternalServerError) *QueryResourcesInternalServerErrorResponseBody {
+	body := &QueryResourcesInternalServerErrorResponseBody{
+		Message: res.Message,
+	}
+	return body
+}
+
+// NewQueryResourcesServiceUnavailableResponseBody builds the HTTP response
+// body from the result of the "query-resources" endpoint of the "query-svc"
+// service.
+func NewQueryResourcesServiceUnavailableResponseBody(res *querysvc.ServiceUnavailableError) *QueryResourcesServiceUnavailableResponseBody {
+	body := &QueryResourcesServiceUnavailableResponseBody{
+		Message: res.Message,
 	}
 	return body
 }

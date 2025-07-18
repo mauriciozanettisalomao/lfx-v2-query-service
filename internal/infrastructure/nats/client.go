@@ -6,10 +6,11 @@ package nats
 import (
 	"bytes"
 	"context"
-	"errors"
 	"fmt"
 	"log/slog"
 	"time"
+
+	"github.com/linuxfoundation/lfx-v2-query-service/pkg/errors"
 
 	"github.com/nats-io/nats.go"
 )
@@ -32,22 +33,16 @@ type NATSClientInterface interface {
 func (c *NATSClient) CheckAccess(ctx context.Context, request *AccessCheckNATSRequest) (AccessCheckNATSResponse, error) {
 
 	if request == nil {
-		slog.ErrorContext(ctx, "invalid NATS access check request: request cannot be nil")
 		return nil, fmt.Errorf("invalid NATS access check request: request cannot be nil")
 	}
 
 	if request.Subject == "" || request.Message == nil || len(request.Message) == 0 {
-		slog.ErrorContext(ctx, "invalid NATS access check request",
-			"subject", request.Subject,
-			"message", request.Message,
-		)
 		return nil, fmt.Errorf("invalid NATS access check request: subject and message must be set")
 	}
 
 	// Send the request and wait for response
 	natsResponse, errRequest := c.conn.Request(request.Subject, request.Message, request.Timeout)
 	if errRequest != nil {
-		slog.ErrorContext(ctx, "NATS request failed", "error", errRequest)
 		return nil, fmt.Errorf("NATS request failed: %w", errRequest)
 	}
 
@@ -69,7 +64,7 @@ func (c *NATSClient) CheckAccess(ctx context.Context, request *AccessCheckNATSRe
 			slog.ErrorContext(ctx, "invalid NATS response format",
 				"message", string(line),
 			)
-			return nil, errors.New("failed to process access check")
+			return nil, errors.NewUnexpected("invalid NATS response format")
 		}
 		// Add the response to our map so we can look it up on the corresponding hit.
 		response[string(relationPart)] = string(allowedPart)
@@ -95,7 +90,7 @@ func NewClient(ctx context.Context, config Config) (*NATSClient, error) {
 
 	// Validate configuration
 	if config.URL == "" {
-		return nil, fmt.Errorf("failed to create NATS client: URL cannot be empty")
+		return nil, errors.NewUnexpected("NATS URL is required")
 	}
 
 	// Configure NATS connection options
@@ -118,8 +113,7 @@ func NewClient(ctx context.Context, config Config) (*NATSClient, error) {
 	// Establish connection
 	conn, err := nats.Connect(config.URL, opts...)
 	if err != nil {
-		slog.ErrorContext(ctx, "failed to connect to NATS", "error", err)
-		return nil, fmt.Errorf("failed to create NATS client: %w", err)
+		return nil, errors.NewServiceUnavailable("failed to connect to NATS", err)
 	}
 
 	client := &NATSClient{

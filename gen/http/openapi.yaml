@@ -116,7 +116,21 @@ paths:
                 "400":
                     description: Bad Request response.
                     schema:
-                        $ref: '#/definitions/QuerySvcQueryResourcesBadRequestResponseBody'
+                        $ref: '#/definitions/BadRequestError'
+                        required:
+                            - message
+                "500":
+                    description: Internal Server Error response.
+                    schema:
+                        $ref: '#/definitions/InternalServerError'
+                        required:
+                            - message
+                "503":
+                    description: Service Unavailable response.
+                    schema:
+                        $ref: '#/definitions/ServiceUnavailableError'
+                        required:
+                            - message
             schemes:
                 - http
             security:
@@ -143,49 +157,32 @@ paths:
             schemes:
                 - http
 definitions:
-    QuerySvcQueryResourcesBadRequestResponseBody:
-        title: 'Mediatype identifier: application/vnd.goa.error; view=default'
+    BadRequestError:
+        title: BadRequestError
         type: object
         properties:
-            fault:
-                type: boolean
-                description: Is the error a server-side fault?
-                example: false
-            id:
-                type: string
-                description: ID is a unique identifier for this particular occurrence of the problem.
-                example: 123abc
             message:
                 type: string
-                description: Message is a human-readable explanation specific to this occurrence of the problem.
-                example: parameter 'p' must be an integer
-            name:
-                type: string
-                description: Name is the name of this class of errors.
-                example: bad_request
-            temporary:
-                type: boolean
-                description: Is the error temporary?
-                example: true
-            timeout:
-                type: boolean
-                description: Is the error a timeout?
-                example: false
-        description: Bad request (default view)
+                description: Error message
+                example: The request was invalid.
+        description: Bad request
         example:
-            fault: false
-            id: 123abc
-            message: parameter 'p' must be an integer
-            name: bad_request
-            temporary: true
-            timeout: true
+            message: The request was invalid.
         required:
-            - name
-            - id
             - message
-            - temporary
-            - timeout
-            - fault
+    InternalServerError:
+        title: InternalServerError
+        type: object
+        properties:
+            message:
+                type: string
+                description: Error message
+                example: An internal server error occurred.
+        description: Internal server error
+        example:
+            message: An internal server error occurred.
+        required:
+            - message
     QuerySvcQueryResourcesResponseBody:
         title: QuerySvcQueryResourcesResponseBody
         type: object
@@ -200,6 +197,12 @@ definitions:
                     $ref: '#/definitions/Resource'
                 description: Resources found
                 example:
+                    - data:
+                        id: "123"
+                        name: My committee
+                        description: a committee
+                      id: "123"
+                      type: committee
                     - data:
                         id: "123"
                         name: My committee
@@ -252,19 +255,19 @@ definitions:
             temporary:
                 type: boolean
                 description: Is the error temporary?
-                example: false
+                example: true
             timeout:
                 type: boolean
                 description: Is the error a timeout?
-                example: true
+                example: false
         description: Service is not ready yet (default view)
         example:
-            fault: true
+            fault: false
             id: 123abc
             message: parameter 'p' must be an integer
             name: bad_request
             temporary: true
-            timeout: true
+            timeout: false
         required:
             - name
             - id
@@ -298,6 +301,19 @@ definitions:
                 description: a committee
             id: "123"
             type: committee
+    ServiceUnavailableError:
+        title: ServiceUnavailableError
+        type: object
+        properties:
+            message:
+                type: string
+                description: Error message
+                example: The service is unavailable.
+        description: Service unavailable
+        example:
+            message: The service is unavailable.
+        required:
+            - message
 securityDefinitions:
     jwt_header_Authorization:
         type: apiKey

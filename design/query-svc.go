@@ -4,109 +4,113 @@
 package design
 
 import (
-	. "goa.design/goa/v3/dsl"
+	"goa.design/goa/v3/dsl"
 )
 
-var JWTAuth = JWTSecurity("jwt", func() {
-	Description("Heimdall authorization")
+var JWTAuth = dsl.JWTSecurity("jwt", func() {
+	dsl.Description("Heimdall authorization")
 })
 
-var _ = Service("query-svc", func() {
-	Description("The query service provides resource and user queries.")
+var _ = dsl.Service("query-svc", func() {
+	dsl.Description("The query service provides resource and user queries.")
 
-	Method("query-resources", func() {
-		Description("Locate resources by their type or parent, or use typeahead search to query resources by a display name or similar alias.")
+	dsl.Error("BadRequest", BadRequestError, "Bad request")
+	dsl.Error("InternalServerError", InternalServerError, "Internal server error")
+	dsl.Error("ServiceUnavailable", ServiceUnavailableError, "Service unavailable")
 
-		Security(JWTAuth)
+	dsl.Method("query-resources", func() {
+		dsl.Description("Locate resources by their type or parent, or use typeahead search to query resources by a display name or similar alias.")
 
-		Payload(func() {
-			Extend(Sortable)
-			Token("bearer_token", String, func() {
-				Description("JWT token issued by Heimdall")
-				Example("eyJhbGci...")
+		dsl.Security(JWTAuth)
+
+		dsl.Payload(func() {
+			dsl.Extend(Sortable)
+			dsl.Token("bearer_token", dsl.String, func() {
+				dsl.Description("JWT token issued by Heimdall")
+				dsl.Example("eyJhbGci...")
 			})
-			Attribute("version", String, "Version of the API", func() {
-				Enum("1")
-				Example("1")
+			dsl.Attribute("version", dsl.String, "Version of the API", func() {
+				dsl.Enum("1")
+				dsl.Example("1")
 			})
-			Attribute("name", String, "Resource name or alias; supports typeahead", func() {
-				Example("gov board")
-				MinLength(1)
+			dsl.Attribute("name", dsl.String, "Resource name or alias; supports typeahead", func() {
+				dsl.Example("gov board")
+				dsl.MinLength(1)
 			})
-			Attribute("parent", String, "Parent (for navigation; varies by object type)", func() {
-				Example("project:123")
+			dsl.Attribute("parent", dsl.String, "Parent (for navigation; varies by object type)", func() {
+				dsl.Example("project:123")
 			})
-			Attribute("type", String, "Resource type to search", func() {
-				Example("committee")
+			dsl.Attribute("type", dsl.String, "Resource type to search", func() {
+				dsl.Example("committee")
 			})
-			Attribute("tags", ArrayOf(String), "Tags to search (varies by object type)", func() {
-				Example([]string{"active"})
+			dsl.Attribute("tags", dsl.ArrayOf(dsl.String), "Tags to search (varies by object type)", func() {
+				dsl.Example([]string{"active"})
 			})
-			Required("bearer_token", "version")
+			dsl.Required("bearer_token", "version")
 		})
 
-		Result(func() {
-			Attribute("resources", ArrayOf(Resource), "Resources found", func() {})
-			Attribute("page_token", String, "Opaque token if more results are available", func() {
-				Example("****")
+		dsl.Result(func() {
+			dsl.Attribute("resources", dsl.ArrayOf(Resource), "Resources found", func() {})
+			dsl.Attribute("page_token", dsl.String, "Opaque token if more results are available", func() {
+				dsl.Example("****")
 			})
-			Attribute("cache_control", String, "Cache control header", func() {
-				Example("public, max-age=300")
+			dsl.Attribute("cache_control", dsl.String, "Cache control header", func() {
+				dsl.Example("public, max-age=300")
 			})
-			Required("resources")
+			dsl.Required("resources")
 		})
 
-		Error("BadRequest", ErrorResult, "Bad request")
-
-		HTTP(func() {
-			GET("/query/resources")
-			Param("version:v")
-			Param("name")
-			Param("parent")
-			Param("type")
-			Param("tags")
-			Param("sort")
-			Param("page_token")
-			Header("bearer_token:Authorization")
-			Response(StatusOK, func() {
-				Header("cache_control:Cache-Control")
+		dsl.HTTP(func() {
+			dsl.GET("/query/resources")
+			dsl.Param("version:v")
+			dsl.Param("name")
+			dsl.Param("parent")
+			dsl.Param("type")
+			dsl.Param("tags")
+			dsl.Param("sort")
+			dsl.Param("page_token")
+			dsl.Header("bearer_token:Authorization")
+			dsl.Response(dsl.StatusOK, func() {
+				dsl.Header("cache_control:Cache-Control")
 			})
-			Response("BadRequest", StatusBadRequest)
-		})
-	})
-
-	Method("readyz", func() {
-		Description("Check if the service is able to take inbound requests.")
-		Result(Bytes, func() {
-			Example("OK")
-		})
-		Error("NotReady", func() {
-			Description("Service is not ready yet")
-			Temporary()
-			Fault()
-		})
-		HTTP(func() {
-			GET("/readyz")
-			Response(StatusOK, func() {
-				ContentType("text/plain")
-			})
-			Response("NotReady", StatusServiceUnavailable)
+			dsl.Response("BadRequest", dsl.StatusBadRequest)
+			dsl.Response("InternalServerError", dsl.StatusInternalServerError)
+			dsl.Response("ServiceUnavailable", dsl.StatusServiceUnavailable)
 		})
 	})
 
-	Method("livez", func() {
-		Description("Check if the service is alive.")
-		Result(Bytes, func() {
-			Example("OK")
+	dsl.Method("readyz", func() {
+		dsl.Description("Check if the service is able to take inbound requests.")
+		dsl.Result(dsl.Bytes, func() {
+			dsl.Example("OK")
 		})
-		HTTP(func() {
-			GET("/livez")
-			Response(StatusOK, func() {
-				ContentType("text/plain")
+		dsl.Error("NotReady", func() {
+			dsl.Description("Service is not ready yet")
+			dsl.Temporary()
+			dsl.Fault()
+		})
+		dsl.HTTP(func() {
+			dsl.GET("/readyz")
+			dsl.Response(dsl.StatusOK, func() {
+				dsl.ContentType("text/plain")
+			})
+			dsl.Response("NotReady", dsl.StatusServiceUnavailable)
+		})
+	})
+
+	dsl.Method("livez", func() {
+		dsl.Description("Check if the service is alive.")
+		dsl.Result(dsl.Bytes, func() {
+			dsl.Example("OK")
+		})
+		dsl.HTTP(func() {
+			dsl.GET("/livez")
+			dsl.Response(dsl.StatusOK, func() {
+				dsl.ContentType("text/plain")
 			})
 		})
 	})
 
 	// Serve the file gen/http/openapi3.json for requests sent to /openapi.json.
-	Files("/openapi.json", "gen/http/openapi3.json")
+	dsl.Files("/openapi.json", "gen/http/openapi3.json")
 })

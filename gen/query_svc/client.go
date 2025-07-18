@@ -32,7 +32,9 @@ func NewClient(queryResources, readyz, livez goa.Endpoint) *Client {
 // QueryResources calls the "query-resources" endpoint of the "query-svc"
 // service.
 // QueryResources may return the following errors:
-//   - "BadRequest" (type *goa.ServiceError): Bad request
+//   - "BadRequest" (type *BadRequestError): Bad request
+//   - "InternalServerError" (type *InternalServerError): Internal server error
+//   - "ServiceUnavailable" (type *ServiceUnavailableError): Service unavailable
 //   - error: internal error
 func (c *Client) QueryResources(ctx context.Context, p *QueryResourcesPayload) (res *QueryResourcesResult, err error) {
 	var ires any
@@ -46,6 +48,9 @@ func (c *Client) QueryResources(ctx context.Context, p *QueryResourcesPayload) (
 // Readyz calls the "readyz" endpoint of the "query-svc" service.
 // Readyz may return the following errors:
 //   - "NotReady" (type *goa.ServiceError): Service is not ready yet
+//   - "BadRequest" (type *BadRequestError): Bad request
+//   - "InternalServerError" (type *InternalServerError): Internal server error
+//   - "ServiceUnavailable" (type *ServiceUnavailableError): Service unavailable
 //   - error: internal error
 func (c *Client) Readyz(ctx context.Context) (res []byte, err error) {
 	var ires any
@@ -57,6 +62,11 @@ func (c *Client) Readyz(ctx context.Context) (res []byte, err error) {
 }
 
 // Livez calls the "livez" endpoint of the "query-svc" service.
+// Livez may return the following errors:
+//   - "BadRequest" (type *BadRequestError): Bad request
+//   - "InternalServerError" (type *InternalServerError): Internal server error
+//   - "ServiceUnavailable" (type *ServiceUnavailableError): Service unavailable
+//   - error: internal error
 func (c *Client) Livez(ctx context.Context) (res []byte, err error) {
 	var ires any
 	ires, err = c.LivezEndpoint(ctx, nil)

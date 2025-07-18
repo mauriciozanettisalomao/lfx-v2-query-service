@@ -17,7 +17,7 @@ GOOS := linux
 GOARCH := amd64
 
 # Linting
-GOLANGCI_LINT_VERSION := v1.64.6
+GOLANGCI_LINT_VERSION := v2.2.2
 LINT_TIMEOUT := 10m
 LINT_TOOL=$(shell go env GOPATH)/bin/golangci-lint
 
@@ -27,7 +27,7 @@ LINT_TOOL=$(shell go env GOPATH)/bin/golangci-lint
 setup-dev: ## Setup development tools
 	@echo "Installing development tools..."
 	@echo "Installing golangci-lint $(GOLANGCI_LINT_VERSION)..."
-	go install github.com/golangci/golangci-lint/cmd/golangci-lint@$(GOLANGCI_LINT_VERSION)
+	go install github.com/golangci/golangci-lint/v2/cmd/golangci-lint@$(GOLANGCI_LINT_VERSION)
 
 .PHONY: setup
 setup: ## Setup development environment
@@ -59,7 +59,12 @@ build-local: ## Build the application for local OS
 	@echo "Building application for local development..."
 	go build \
 		-ldflags "-X main.version=$(VERSION) -X main.buildTime=$(BUILD_TIME) -X main.gitCommit=$(GIT_COMMIT)" \
-		-o bin/$(APP_NAME) .
+		-o bin/$(APP_NAME) ./cmd
+
+.PHONY: run-local
+run-local: build-local ## Run the application for local development
+	@echo "Running application for local development..."
+	./bin/$(APP_NAME)
 
 ##@ Docker
 

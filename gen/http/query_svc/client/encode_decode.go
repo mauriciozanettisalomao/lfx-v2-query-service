@@ -77,7 +77,9 @@ func EncodeQueryResourcesRequest(encoder func(*http.Request) goahttp.Encoder) fu
 // query-svc query-resources endpoint. restoreBody controls whether the
 // response body should be restored after having been read.
 // DecodeQueryResourcesResponse may return the following errors:
-//   - "BadRequest" (type *goa.ServiceError): http.StatusBadRequest
+//   - "BadRequest" (type *querysvc.BadRequestError): http.StatusBadRequest
+//   - "InternalServerError" (type *querysvc.InternalServerError): http.StatusInternalServerError
+//   - "ServiceUnavailable" (type *querysvc.ServiceUnavailableError): http.StatusServiceUnavailable
 //   - error: internal error
 func DecodeQueryResourcesResponse(decoder func(*http.Response) goahttp.Decoder, restoreBody bool) func(*http.Response) (any, error) {
 	return func(resp *http.Response) (any, error) {
@@ -130,6 +132,34 @@ func DecodeQueryResourcesResponse(decoder func(*http.Response) goahttp.Decoder, 
 				return nil, goahttp.ErrValidationError("query-svc", "query-resources", err)
 			}
 			return nil, NewQueryResourcesBadRequest(&body)
+		case http.StatusInternalServerError:
+			var (
+				body QueryResourcesInternalServerErrorResponseBody
+				err  error
+			)
+			err = decoder(resp).Decode(&body)
+			if err != nil {
+				return nil, goahttp.ErrDecodingError("query-svc", "query-resources", err)
+			}
+			err = ValidateQueryResourcesInternalServerErrorResponseBody(&body)
+			if err != nil {
+				return nil, goahttp.ErrValidationError("query-svc", "query-resources", err)
+			}
+			return nil, NewQueryResourcesInternalServerError(&body)
+		case http.StatusServiceUnavailable:
+			var (
+				body QueryResourcesServiceUnavailableResponseBody
+				err  error
+			)
+			err = decoder(resp).Decode(&body)
+			if err != nil {
+				return nil, goahttp.ErrDecodingError("query-svc", "query-resources", err)
+			}
+			err = ValidateQueryResourcesServiceUnavailableResponseBody(&body)
+			if err != nil {
+				return nil, goahttp.ErrValidationError("query-svc", "query-resources", err)
+			}
+			return nil, NewQueryResourcesServiceUnavailable(&body)
 		default:
 			body, _ := io.ReadAll(resp.Body)
 			return nil, goahttp.ErrInvalidResponse("query-svc", "query-resources", resp.StatusCode, string(body))

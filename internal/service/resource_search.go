@@ -5,13 +5,13 @@ package service
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"log/slog"
 	"time"
 
 	"github.com/linuxfoundation/lfx-v2-query-service/internal/domain"
 	"github.com/linuxfoundation/lfx-v2-query-service/pkg/constants"
+	"github.com/linuxfoundation/lfx-v2-query-service/pkg/errors"
 )
 
 // ResourceSearch handles resource-related business operations
@@ -34,14 +34,17 @@ func (s *ResourceSearch) QueryResources(ctx context.Context, criteria domain.Sea
 	// like “at least one of these fields must be set"
 	if err := s.validateSearchCriteria(criteria); err != nil {
 		slog.With("error", err).ErrorContext(ctx, "search criteria validation failed")
-		return nil, fmt.Errorf("invalid search criteria: %w", err)
+		return nil, errors.NewValidation(
+			"search criteria validation failed",
+			err,
+		)
 	}
 
 	// Grab the principal which was stored into the context by the security handler.
 	principal, ok := ctx.Value(constants.PrincipalContextID).(string)
 	if !ok {
 		// This should not happen; the Auther always sets this or errors.
-		return nil, errors.New("authenticated principal is missing")
+		return nil, errors.NewValidation("missing principal in context")
 	}
 	if principal == constants.AnonymousPrincipal {
 		// For an anonymous use, we will use the "public:true" OpenSearch term
@@ -98,7 +101,7 @@ func (s *ResourceSearch) QueryResources(ctx context.Context, criteria domain.Sea
 func (s *ResourceSearch) validateSearchCriteria(criteria domain.SearchCriteria) error {
 	// At least one search parameter must be provided
 	if criteria.Name == nil && criteria.Parent == nil && criteria.ResourceType == nil && len(criteria.Tags) == 0 {
-		return fmt.Errorf("at least one search parameter must be provided")
+		return fmt.Errorf("at least one search parameter must be provided: name, parent, type, or tags")
 	}
 
 	return nil

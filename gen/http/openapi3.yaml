@@ -88,7 +88,7 @@ paths:
                     type: array
                     items:
                         type: string
-                        example: Tempore id rerum qui cumque aut.
+                        example: Earum sit dolores numquam aut.
                     description: Tags to search (varies by object type)
                     example:
                         - active
@@ -163,9 +163,27 @@ paths:
                 "400":
                     description: 'BadRequest: Bad request'
                     content:
-                        application/vnd.goa.error:
+                        application/json:
                             schema:
-                                $ref: '#/components/schemas/Error'
+                                $ref: '#/components/schemas/BadRequestError'
+                            example:
+                                message: The request was invalid.
+                "500":
+                    description: 'InternalServerError: Internal server error'
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/InternalServerError'
+                            example:
+                                message: An internal server error occurred.
+                "503":
+                    description: 'ServiceUnavailable: Service unavailable'
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/ServiceUnavailableError'
+                            example:
+                                message: The service is unavailable.
             security:
                 - jwt_header_Authorization: []
     /readyz:
@@ -193,13 +211,24 @@ paths:
                                 $ref: '#/components/schemas/Error'
 components:
     schemas:
+        BadRequestError:
+            type: object
+            properties:
+                message:
+                    type: string
+                    description: Error message
+                    example: The request was invalid.
+            example:
+                message: The request was invalid.
+            required:
+                - message
         Error:
             type: object
             properties:
                 fault:
                     type: boolean
                     description: Is the error a server-side fault?
-                    example: false
+                    example: true
                 id:
                     type: string
                     description: ID is a unique identifier for this particular occurrence of the problem.
@@ -215,12 +244,12 @@ components:
                 temporary:
                     type: boolean
                     description: Is the error temporary?
-                    example: true
+                    example: false
                 timeout:
                     type: boolean
                     description: Is the error a timeout?
-                    example: true
-            description: Bad request
+                    example: false
+            description: Service is not ready yet
             example:
                 fault: true
                 id: 123abc
@@ -235,6 +264,17 @@ components:
                 - temporary
                 - timeout
                 - fault
+        InternalServerError:
+            type: object
+            properties:
+                message:
+                    type: string
+                    description: Error message
+                    example: An internal server error occurred.
+            example:
+                message: An internal server error occurred.
+            required:
+                - message
         QueryResourcesResponseBody:
             type: object
             properties:
@@ -260,21 +300,21 @@ components:
                             description: a committee
                           id: "123"
                           type: committee
+                        - data:
+                            id: "123"
+                            name: My committee
+                            description: a committee
+                          id: "123"
+                          type: committee
+                        - data:
+                            id: "123"
+                            name: My committee
+                            description: a committee
+                          id: "123"
+                          type: committee
             example:
                 page_token: '****'
                 resources:
-                    - data:
-                        id: "123"
-                        name: My committee
-                        description: a committee
-                      id: "123"
-                      type: committee
-                    - data:
-                        id: "123"
-                        name: My committee
-                        description: a committee
-                      id: "123"
-                      type: committee
                     - data:
                         id: "123"
                         name: My committee
@@ -314,6 +354,17 @@ components:
                     description: a committee
                 id: "123"
                 type: committee
+        ServiceUnavailableError:
+            type: object
+            properties:
+                message:
+                    type: string
+                    description: Error message
+                    example: The service is unavailable.
+            example:
+                message: The service is unavailable.
+            required:
+                - message
         Sortable:
             type: object
             properties:

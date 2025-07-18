@@ -4,7 +4,7 @@
 package design
 
 import (
-	. "goa.design/goa/v3/dsl"
+	"goa.design/goa/v3/dsl"
 )
 
 var SortValues = []any{
@@ -19,52 +19,57 @@ var SortValues = []any{
 	"updated_desc",
 }
 
-var Sortable = Type("Sortable", func() {
-	Attribute("sort", String, "Sort order for results", func() {
-		Enum(SortValues...)
-		Default("name_asc")
-		Example("updated_desc")
+var Sortable = dsl.Type("Sortable", func() {
+	dsl.Attribute("sort", dsl.String, "Sort order for results", func() {
+		dsl.Enum(SortValues...)
+		dsl.Default("name_asc")
+		dsl.Example("updated_desc")
 	})
-	Attribute("page_token", String, "Opaque token for pagination", func() {
-		Example("****")
+	dsl.Attribute("page_token", dsl.String, "Opaque token for pagination", func() {
+		dsl.Example("****")
 	})
 })
 
-/*
-var Contact = Type("Contact", func() {
-	Description("A contact is a per-resource representation of a user or bot that is associated with that resource.")
+var Resource = dsl.Type("Resource", func() {
+	dsl.Description("A resource is a universal representation of an LFX API resource for indexing.")
 
-	Attribute("parent_refs", ArrayOf(string), "LFX object references this profile was found on", func() {
-		Example([]string{"committee:123", "meeting:456"})
+	dsl.Attribute("type", dsl.String, "Resource type", func() {
+		dsl.Example("committee")
 	})
-	Attribute("lfx_principal", String, "LFX principal (username)", func() {
-		Example("jane_doe")
+	dsl.Attribute("id", dsl.String, "Resource ID (within its resource collection)", func() {
+		dsl.Example("123")
 	})
-	Attribute("name", String, "Contact full name", func() {
-		Example("Jane Doe")
-	})
-	Attribute("emails", ArrayOf(String), "Contact email addresses", func() {})
-	Attribute("bot", Boolean, "Contact is a bot", func() {})
-	Attribute("profile", Any, "Contact profile data", func() {})
-})
-*/
-
-var Resource = Type("Resource", func() {
-	Description("A resource is a universal representation of an LFX API resource for indexing.")
-
-	Attribute("type", String, "Resource type", func() {
-		Example("committee")
-	})
-	Attribute("id", String, "Resource ID (within its resource collection)", func() {
-		Example("123")
-	})
-	Attribute("data", Any, "Resource data snapshot", func() {
-		Example(CommitteeExampleStub{
+	dsl.Attribute("data", dsl.Any, "Resource data snapshot", func() {
+		dsl.Example(CommitteeExampleStub{
 			ID:          "123",
 			Name:        "My committee",
 			Description: "a committee",
 		})
 	})
+})
+
+// BadRequestError is the DSL type for a bad request error.
+var BadRequestError = dsl.Type("BadRequestError", func() {
+	dsl.Attribute("message", dsl.String, "Error message", func() {
+		dsl.Example("The request was invalid.")
+	})
+	dsl.Required("message")
+})
+
+// InternalServerError is the DSL type for an internal server error.
+var InternalServerError = dsl.Type("InternalServerError", func() {
+	dsl.Attribute("message", dsl.String, "Error message", func() {
+		dsl.Example("An internal server error occurred.")
+	})
+	dsl.Required("message")
+})
+
+// ServiceUnavailableError is the DSL type for a service unavailable error.
+var ServiceUnavailableError = dsl.Type("ServiceUnavailableError", func() {
+	dsl.Attribute("message", dsl.String, "Error message", func() {
+		dsl.Example("The service is unavailable.")
+	})
+	dsl.Required("message")
 })
 
 // Define an example cached LFX resource for the nested "data" attribute for

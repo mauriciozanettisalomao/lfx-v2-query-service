@@ -48,13 +48,11 @@ func (c *httpClient) Search(ctx context.Context, index string, query []byte) (*S
 
 	searchResponse, errSearchResponse := c.client.Search(ctx, &searchRequest)
 	if errSearchResponse != nil {
-		slog.ErrorContext(ctx, "failed to execute search", "error", errSearchResponse)
 		return nil, fmt.Errorf("failed to execute search: %w", errSearchResponse)
 	}
 
 	// Check for errors in the response
 	if searchResponse.Errors {
-		slog.ErrorContext(ctx, "opensearch search returned errors")
 		return nil, fmt.Errorf("opensearch search returned errors")
 	}
 
@@ -79,7 +77,7 @@ func (c *httpClient) Search(ctx context.Context, index string, query []byte) (*S
 		pageToken, errEncodePageToken := paging.EncodePageToken(searchAfter, global.PageTokenSecret(ctx))
 		if errEncodePageToken != nil {
 			slog.ErrorContext(ctx, "failed to encode page token", "error", errEncodePageToken)
-			return nil, fmt.Errorf("failed to encode page token: %w", errEncodePageToken)
+			return nil, errEncodePageToken
 		}
 		result.PageToken = &pageToken
 		slog.DebugContext(ctx, "pagination token generated",

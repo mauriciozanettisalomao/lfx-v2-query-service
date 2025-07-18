@@ -5,7 +5,6 @@ package querysvcapi
 
 import (
 	"context"
-	"fmt"
 	"log/slog"
 
 	querysvc "github.com/linuxfoundation/lfx-v2-query-service/gen/query_svc"
@@ -53,13 +52,13 @@ func (s *querySvcsrvc) QueryResources(ctx context.Context, p *querysvc.QueryReso
 	criteria, errCriteria := s.payloadToCriteria(ctx, p)
 	if errCriteria != nil {
 		slog.ErrorContext(ctx, "failed to convert payload to criteria", "error", errCriteria)
-		return nil, fmt.Errorf("failed to convert payload to criteria: %w", errCriteria)
+		return nil, wrapError(ctx, errCriteria)
 	}
 
 	// Execute search using the service layer
-	result, err := s.resourceService.QueryResources(ctx, criteria)
-	if err != nil {
-		return nil, fmt.Errorf("resource search failed: %w", err)
+	result, errQueryResources := s.resourceService.QueryResources(ctx, criteria)
+	if errQueryResources != nil {
+		return nil, wrapError(ctx, errQueryResources)
 	}
 
 	// Convert domain result to response
@@ -107,10 +106,10 @@ func (s *querySvcsrvc) payloadToCriteria(ctx context.Context, p *querysvc.QueryR
 	}
 
 	if criteria.PageToken != nil {
-		pageToken, err := paging.DecodePageToken(ctx, *criteria.PageToken, global.PageTokenSecret(ctx))
-		if err != nil {
-			slog.ErrorContext(ctx, "failed to decode page token", "error", err)
-			return criteria, fmt.Errorf("failed to decode page token: %w", err)
+		pageToken, errPageToken := paging.DecodePageToken(ctx, *criteria.PageToken, global.PageTokenSecret(ctx))
+		if errPageToken != nil {
+			slog.ErrorContext(ctx, "failed to decode page token", "error", errPageToken)
+			return criteria, wrapError(ctx, errPageToken)
 		}
 		criteria.SearchAfter = &pageToken
 		slog.DebugContext(ctx, "decoded page token",

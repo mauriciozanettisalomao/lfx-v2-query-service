@@ -117,7 +117,7 @@ func EncodeQueryResourcesError(encoder func(context.Context, http.ResponseWriter
 		}
 		switch en.GoaErrorName() {
 		case "BadRequest":
-			var res *goa.ServiceError
+			var res *querysvc.BadRequestError
 			errors.As(v, &res)
 			enc := encoder(ctx, w)
 			var body any
@@ -128,6 +128,32 @@ func EncodeQueryResourcesError(encoder func(context.Context, http.ResponseWriter
 			}
 			w.Header().Set("goa-error", res.GoaErrorName())
 			w.WriteHeader(http.StatusBadRequest)
+			return enc.Encode(body)
+		case "InternalServerError":
+			var res *querysvc.InternalServerError
+			errors.As(v, &res)
+			enc := encoder(ctx, w)
+			var body any
+			if formatter != nil {
+				body = formatter(ctx, res)
+			} else {
+				body = NewQueryResourcesInternalServerErrorResponseBody(res)
+			}
+			w.Header().Set("goa-error", res.GoaErrorName())
+			w.WriteHeader(http.StatusInternalServerError)
+			return enc.Encode(body)
+		case "ServiceUnavailable":
+			var res *querysvc.ServiceUnavailableError
+			errors.As(v, &res)
+			enc := encoder(ctx, w)
+			var body any
+			if formatter != nil {
+				body = formatter(ctx, res)
+			} else {
+				body = NewQueryResourcesServiceUnavailableResponseBody(res)
+			}
+			w.Header().Set("goa-error", res.GoaErrorName())
+			w.WriteHeader(http.StatusServiceUnavailable)
 			return enc.Encode(body)
 		default:
 			return encodeError(ctx, w, v)

@@ -47,6 +47,16 @@ const ServiceName = "query-svc"
 // MethodKey key.
 var MethodNames = [3]string{"query-resources", "readyz", "livez"}
 
+type BadRequestError struct {
+	// Error message
+	Message string
+}
+
+type InternalServerError struct {
+	// Error message
+	Message string
+}
+
 // QueryResourcesPayload is the payload type of the query-svc service
 // query-resources method.
 type QueryResourcesPayload struct {
@@ -89,9 +99,60 @@ type Resource struct {
 	Data any
 }
 
-// MakeBadRequest builds a goa.ServiceError from an error.
-func MakeBadRequest(err error) *goa.ServiceError {
-	return goa.NewServiceError(err, "BadRequest", false, false, false)
+type ServiceUnavailableError struct {
+	// Error message
+	Message string
+}
+
+// Error returns an error description.
+func (e *BadRequestError) Error() string {
+	return ""
+}
+
+// ErrorName returns "BadRequestError".
+//
+// Deprecated: Use GoaErrorName - https://github.com/goadesign/goa/issues/3105
+func (e *BadRequestError) ErrorName() string {
+	return e.GoaErrorName()
+}
+
+// GoaErrorName returns "BadRequestError".
+func (e *BadRequestError) GoaErrorName() string {
+	return "BadRequest"
+}
+
+// Error returns an error description.
+func (e *InternalServerError) Error() string {
+	return ""
+}
+
+// ErrorName returns "InternalServerError".
+//
+// Deprecated: Use GoaErrorName - https://github.com/goadesign/goa/issues/3105
+func (e *InternalServerError) ErrorName() string {
+	return e.GoaErrorName()
+}
+
+// GoaErrorName returns "InternalServerError".
+func (e *InternalServerError) GoaErrorName() string {
+	return "InternalServerError"
+}
+
+// Error returns an error description.
+func (e *ServiceUnavailableError) Error() string {
+	return ""
+}
+
+// ErrorName returns "ServiceUnavailableError".
+//
+// Deprecated: Use GoaErrorName - https://github.com/goadesign/goa/issues/3105
+func (e *ServiceUnavailableError) ErrorName() string {
+	return e.GoaErrorName()
+}
+
+// GoaErrorName returns "ServiceUnavailableError".
+func (e *ServiceUnavailableError) GoaErrorName() string {
+	return "ServiceUnavailable"
 }
 
 // MakeNotReady builds a goa.ServiceError from an error.

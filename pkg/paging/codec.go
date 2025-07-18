@@ -8,11 +8,12 @@ import (
 	"crypto/rand"
 	"encoding/base64"
 	"encoding/json"
-	"errors"
+	"fmt"
 	"io"
 	"log/slog"
 
 	"github.com/linuxfoundation/lfx-v2-query-service/pkg/constants"
+	"github.com/linuxfoundation/lfx-v2-query-service/pkg/errors"
 	"golang.org/x/crypto/nacl/secretbox"
 )
 
@@ -26,25 +27,28 @@ func DecodePageToken(ctx context.Context, encoded string, secretKey *[32]byte) (
 
 	encrypted, err := base64.RawURLEncoding.DecodeString(encoded)
 	if err != nil {
-		return "", errors.New("corrupted page token")
+		return "", errors.NewValidation("invalid encoded page token", err)
 	}
 
 	if len(encrypted) < constants.NonceSize+secretbox.Overhead {
-		return "", errors.New("invalid page token length")
+		return "", errors.NewValidation(
+			"invalid page token length",
+			fmt.Errorf("expected at least %d bytes, got %d", constants.NonceSize+secretbox.Overhead, len(encrypted)),
+		)
 	}
 
 	var decryptNonce [constants.NonceSize]byte
 	copy(decryptNonce[:], encrypted[:constants.NonceSize])
 	decrypted, ok := secretbox.Open(nil, encrypted[constants.NonceSize:], &decryptNonce, secretKey)
 	if !ok {
-		return "", errors.New("invalid page token signature")
+		return "", errors.NewValidation("failed to decrypt page token")
 	}
 
 	// JSON re-marshal to normalize structure.
 	searchAfterMsg := json.RawMessage(string(decrypted))
 	searchAfterData, err := json.Marshal(searchAfterMsg)
 	if err != nil {
-		return "", errors.New("malformed page token")
+		return "", errors.NewValidation("failed to marshal search_after data", err)
 	}
 
 	slog.DebugContext(ctx, "decoded page token successfully",
@@ -59,12 +63,13 @@ func DecodePageToken(ctx context.Context, encoded string, secretKey *[32]byte) (
 func EncodePageToken(searchAfter any, secretKey *[32]byte) (string, error) {
 	encodedSearchAfter, err := json.Marshal(searchAfter)
 	if err != nil {
-		return "", errors.New("unrecoverable pagination error: failed to encode")
+		return "", errors.NewUnexpected("failed to marshal search_after data", err)
+
 	}
 
 	var nonce [constants.NonceSize]byte
 	if _, err := io.ReadFull(rand.Reader, nonce[:]); err != nil {
-		return "", errors.New("unrecoverable pagination error: failed to generate nonce")
+		return "", errors.NewUnexpected("failed to generate nonce for page token", err)
 	}
 
 	encrypted := secretbox.Seal(nonce[:], encodedSearchAfter, &nonce, secretKey)
