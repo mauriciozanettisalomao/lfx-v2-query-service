@@ -54,15 +54,15 @@ test: ## Run tests
 	@echo "Running tests..."
 	go test -v -race -coverprofile=coverage.out ./...
 
-.PHONY: build-local
-build-local: ## Build the application for local OS
+.PHONY: build
+build: ## Build the application for local OS
 	@echo "Building application for local development..."
 	go build \
 		-ldflags "-X main.version=$(VERSION) -X main.buildTime=$(BUILD_TIME) -X main.gitCommit=$(GIT_COMMIT)" \
 		-o bin/$(APP_NAME) ./cmd
 
-.PHONY: run-local
-run-local: build-local ## Run the application for local development
+.PHONY: run
+run: build-local ## Run the application for local development
 	@echo "Running application for local development..."
 	./bin/$(APP_NAME)
 
