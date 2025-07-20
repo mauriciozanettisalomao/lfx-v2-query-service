@@ -27,6 +27,7 @@ type NATSClient struct {
 type NATSClientInterface interface {
 	CheckAccess(ctx context.Context, request *AccessCheckNATSRequest) (AccessCheckNATSResponse, error)
 	Close() error
+	IsReady(ctx context.Context) error
 }
 
 // CheckAccess sends an access control request via NATS and waits for the response
@@ -77,6 +78,17 @@ func (c *NATSClient) CheckAccess(ctx context.Context, request *AccessCheckNATSRe
 func (c *NATSClient) Close() error {
 	if c.conn != nil {
 		c.conn.Close()
+	}
+	return nil
+}
+
+// IsReady checks if the NATS client is ready
+func (c *NATSClient) IsReady(ctx context.Context) error {
+	if c.conn == nil {
+		return errors.NewServiceUnavailable("NATS client is not initialized or not connected")
+	}
+	if !c.conn.IsConnected() || c.conn.IsDraining() {
+		return errors.NewServiceUnavailable("NATS client is not ready, connection is not established or is draining")
 	}
 	return nil
 }

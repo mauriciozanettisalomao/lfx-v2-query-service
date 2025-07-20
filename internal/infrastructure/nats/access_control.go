@@ -52,6 +52,13 @@ func (n *NATSAccessControlChecker) Close() error {
 	return n.client.Close()
 }
 
+func (n *NATSAccessControlChecker) IsReady(ctx context.Context) error {
+	if err := n.client.IsReady(ctx); err != nil {
+		return err
+	}
+	return nil
+}
+
 // convertFromNATSResponse converts NATS response to domain response
 func (n *NATSAccessControlChecker) convertFromNATSResponse(response AccessCheckNATSResponse) domain.AccessCheckResult {
 	return domain.AccessCheckResult(response)

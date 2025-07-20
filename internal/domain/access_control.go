@@ -17,6 +17,9 @@ type AccessControlChecker interface {
 
 	// Close gracefully closes the access control checker connection
 	Close() error
+
+	// IsReady checks if the access control service is ready to process requests
+	IsReady(ctx context.Context) error
 }
 
 // AccessCheckResult contains the results of access verification

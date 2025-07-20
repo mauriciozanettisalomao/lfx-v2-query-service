@@ -13,6 +13,9 @@ import (
 type ResourceSearcher interface {
 	// QueryResources searches for resources based on the provided criteria
 	QueryResources(ctx context.Context, criteria SearchCriteria) (*SearchResult, error)
+
+	// IsReady checks if the search service is ready
+	IsReady(ctx context.Context) error
 }
 
 // SearchCriteria encapsulates all possible search parameters

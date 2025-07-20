@@ -11,6 +11,7 @@ import (
 	"net/http"
 
 	"github.com/linuxfoundation/lfx-v2-query-service/pkg/constants"
+	"github.com/linuxfoundation/lfx-v2-query-service/pkg/errors"
 	"github.com/linuxfoundation/lfx-v2-query-service/pkg/global"
 	"github.com/linuxfoundation/lfx-v2-query-service/pkg/paging"
 	"github.com/opensearch-project/opensearch-go/v4/opensearchapi"
@@ -87,4 +88,31 @@ func (c *httpClient) Search(ctx context.Context, index string, query []byte) (*S
 	}
 
 	return result, nil
+}
+
+func (c *httpClient) IsReady(ctx context.Context) error {
+	pingReq := &opensearchapi.PingReq{
+		Params: opensearchapi.PingParams{
+			ErrorTrace: false,
+		},
+	}
+
+	resp, err := c.client.Ping(ctx, pingReq)
+	if err != nil {
+		return errors.NewServiceUnavailable("opensearch client is not ready", err)
+	}
+	defer func() {
+		if resp.Body != nil {
+			errClose := resp.Body.Close()
+			if errClose != nil {
+				slog.ErrorContext(ctx, "failed to close response body", "error", errClose)
+			}
+		}
+	}()
+
+	if resp.StatusCode != http.StatusOK {
+		slog.ErrorContext(ctx, "opensearch is not ready", "status_code", resp.StatusCode)
+		return errors.NewServiceUnavailable("opensearch is not ready", fmt.Errorf("status code: %d", resp.StatusCode))
+	}
+	return nil
 }

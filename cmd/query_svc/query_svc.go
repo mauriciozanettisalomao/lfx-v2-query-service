@@ -68,14 +68,21 @@ func (s *querySvcsrvc) QueryResources(ctx context.Context, p *querysvc.QueryReso
 
 // Check if the service is able to take inbound requests.
 func (s *querySvcsrvc) Readyz(ctx context.Context) (res []byte, err error) {
-	slog.DebugContext(ctx, "querySvc.readyz")
-	return
+	errIsReady := s.resourceService.IsReady(ctx)
+	if errIsReady != nil {
+		slog.ErrorContext(ctx, "querySvc.readyz failed", "error", errIsReady)
+		return nil, wrapError(ctx, errIsReady)
+	}
+	return []byte("OK\n"), nil
 }
 
 // Check if the service is alive.
 func (s *querySvcsrvc) Livez(ctx context.Context) (res []byte, err error) {
-	slog.DebugContext(ctx, "querySvc.livez")
-	return
+	// This always returns as long as the service is still running. As this
+	// endpoint is expected to be used as a Kubernetes liveness check, this
+	// service must likewise self-detect non-recoverable errors and
+	// self-terminate.
+	return []byte("OK\n"), nil
 }
 
 // payloadToCriteria converts the generated payload to domain search criteria

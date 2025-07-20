@@ -33,7 +33,7 @@ func (s *ResourceSearch) QueryResources(ctx context.Context, criteria domain.Sea
 	// It seems that Goa v3 does not natively support complex conditional validations
 	// like “at least one of these fields must be set"
 	if err := s.validateSearchCriteria(criteria); err != nil {
-		slog.With("error", err).ErrorContext(ctx, "search criteria validation failed")
+		slog.ErrorContext(ctx, "search criteria validation failed", "error", err)
 		return nil, errors.NewValidation(
 			"search criteria validation failed",
 			err,
@@ -189,6 +189,18 @@ func (s *ResourceSearch) CheckAccess(ctx context.Context, principal string, reso
 
 	return resources, nil
 
+}
+
+func (s *ResourceSearch) IsReady(ctx context.Context) error {
+	if err := s.resourceSearcher.IsReady(ctx); err != nil {
+		return err
+	}
+
+	if err := s.accessChecker.IsReady(ctx); err != nil {
+		return err
+	}
+
+	return nil
 }
 
 // NewResourceSearch creates a new ResourceSearch instance

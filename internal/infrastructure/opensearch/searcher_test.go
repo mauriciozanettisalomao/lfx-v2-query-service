@@ -39,6 +39,10 @@ func (m *MockOpenSearchClient) SetSearchError(err error) {
 	m.searchError = err
 }
 
+func (m *MockOpenSearchClient) IsReady(ctx context.Context) error {
+	return nil
+}
+
 func TestOpenSearchSearcherQueryResources(t *testing.T) {
 	tests := []struct {
 		name           string

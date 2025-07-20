@@ -39,6 +39,7 @@ type OpenSearchSearcher struct {
 // This allows for easy mocking and testing
 type OpenSearchClientRetriever interface {
 	Search(ctx context.Context, index string, query []byte) (*SearchResponse, error)
+	IsReady(ctx context.Context) error
 }
 
 // QueryResources implements the ResourceSearcher interface
@@ -143,6 +144,15 @@ func (os *OpenSearchSearcher) convertHit(hit Hit) (domain.Resource, error) {
 	}
 
 	return resource, nil
+}
+
+func (o *OpenSearchSearcher) IsReady(ctx context.Context) error {
+	if err := o.client.IsReady(ctx); err != nil {
+		slog.ErrorContext(ctx, "opensearch client is not ready", "error", err)
+		return err
+	}
+	return nil
+
 }
 
 // NewSearcher returns a new OpenSearchSearcher implementation

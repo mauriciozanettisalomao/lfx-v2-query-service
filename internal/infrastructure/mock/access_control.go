@@ -83,6 +83,11 @@ func (m *MockAccessControlChecker) Close() error {
 	return nil
 }
 
+// IsReady implements the AccessControlChecker interface (always ready for mock)
+func (m *MockAccessControlChecker) IsReady(ctx context.Context) error {
+	return nil
+}
+
 // isRequestDenied checks if the request is explicitly denied
 func (m *MockAccessControlChecker) isRequestDenied(request string) bool {
 	for _, deniedID := range m.DeniedResourceIDs {

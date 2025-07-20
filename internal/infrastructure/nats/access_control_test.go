@@ -18,6 +18,7 @@ type MockNATSClient struct {
 	checkAccessResponse AccessCheckNATSResponse
 	checkAccessError    error
 	closeError          error
+	isReadyError        error
 }
 
 func NewMockNATSClient() *MockNATSClient {
@@ -35,6 +36,10 @@ func (m *MockNATSClient) Close() error {
 	return m.closeError
 }
 
+func (m *MockNATSClient) IsReady(ctx context.Context) error {
+	return m.isReadyError
+}
+
 func (m *MockNATSClient) SetCheckAccessResponse(response AccessCheckNATSResponse) {
 	m.checkAccessResponse = response
 }
@@ -45,6 +50,10 @@ func (m *MockNATSClient) SetCheckAccessError(err error) {
 
 func (m *MockNATSClient) SetCloseError(err error) {
 	m.closeError = err
+}
+
+func (m *MockNATSClient) SetIsReadyError(err error) {
+	m.isReadyError = err
 }
 
 func TestNATSAccessControlChecker_CheckAccess(t *testing.T) {
@@ -306,6 +315,67 @@ func TestNATSAccessControlChecker_convertFromNATSResponse(t *testing.T) {
 
 			// Verify
 			assertion.Equal(tc.expectedResult, result)
+		})
+	}
+}
+
+func TestNATSAccessControlChecker_IsReady(t *testing.T) {
+	tests := []struct {
+		name           string
+		setupMock      func(*MockNATSClient)
+		expectedError  bool
+		expectedErrMsg string
+	}{
+		{
+			name: "successful ready check",
+			setupMock: func(mock *MockNATSClient) {
+				// No error on IsReady
+			},
+			expectedError: false,
+		},
+		{
+			name: "ready check with error",
+			setupMock: func(mock *MockNATSClient) {
+				mock.SetIsReadyError(errors.New("NATS server not available"))
+			},
+			expectedError:  true,
+			expectedErrMsg: "NATS server not available",
+		},
+		{
+			name: "ready check with connection timeout",
+			setupMock: func(mock *MockNATSClient) {
+				mock.SetIsReadyError(errors.New("connection timeout"))
+			},
+			expectedError:  true,
+			expectedErrMsg: "connection timeout",
+		},
+	}
+
+	assertion := assert.New(t)
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			// Setup mock
+			mockClient := NewMockNATSClient()
+			tc.setupMock(mockClient)
+
+			// Create access control checker
+			checker := &NATSAccessControlChecker{
+				client: mockClient,
+			}
+
+			// Execute
+			ctx := context.Background()
+			err := checker.IsReady(ctx)
+
+			// Verify
+			if tc.expectedError {
+				assertion.Error(err)
+				assertion.Contains(err.Error(), tc.expectedErrMsg)
+				return
+			}
+
+			assertion.NoError(err)
 		})
 	}
 }

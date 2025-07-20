@@ -215,6 +215,11 @@ func (m *MockResourceSearcher) QueryResources(ctx context.Context, criteria doma
 	return result, nil
 }
 
+// IsReady implements the ResourceSearcher interface (always ready for mock)
+func (m *MockResourceSearcher) IsReady(ctx context.Context) error {
+	return nil
+}
+
 // sortResources sorts the resources based on the sort criteria
 func (m *MockResourceSearcher) sortResources(resources []domain.Resource, sort string) {
 	// This is a simplified sorting implementation
