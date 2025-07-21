@@ -10,7 +10,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/linuxfoundation/lfx-v2-query-service/internal/domain"
+	"github.com/linuxfoundation/lfx-v2-query-service/internal/domain/model"
 )
 
 // MockAccessControlChecker provides a mock implementation of AccessControlChecker for testing
@@ -28,7 +28,7 @@ type MockAccessControlChecker struct {
 }
 
 // CheckAccess implements the AccessControlChecker interface with mock behavior
-func (m *MockAccessControlChecker) CheckAccess(ctx context.Context, subj string, data []byte, timeout time.Duration) (domain.AccessCheckResult, error) {
+func (m *MockAccessControlChecker) CheckAccess(ctx context.Context, subj string, data []byte, timeout time.Duration) (model.AccessCheckResult, error) {
 	slog.DebugContext(ctx, "executing mock access control check",
 		"subject", subj,
 		"timeout", timeout,
@@ -36,7 +36,7 @@ func (m *MockAccessControlChecker) CheckAccess(ctx context.Context, subj string,
 		"public_only", m.PublicResourcesOnly,
 	)
 
-	result := make(domain.AccessCheckResult)
+	result := make(model.AccessCheckResult)
 
 	// Parse the input data - expecting line-separated permission requests
 	lines := bytes.Split(data, []byte("\n"))

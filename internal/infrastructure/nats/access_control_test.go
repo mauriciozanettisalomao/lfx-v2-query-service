@@ -9,7 +9,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/linuxfoundation/lfx-v2-query-service/internal/domain"
+	"github.com/linuxfoundation/lfx-v2-query-service/internal/domain/model"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -65,7 +65,7 @@ func TestNATSAccessControlChecker_CheckAccess(t *testing.T) {
 		setupMock      func(*MockNATSClient)
 		expectedError  bool
 		expectedErrMsg string
-		expectedResult domain.AccessCheckResult
+		expectedResult model.AccessCheckResult
 	}{
 		{
 			name:    "successful access check with allowed permissions",
@@ -80,7 +80,7 @@ func TestNATSAccessControlChecker_CheckAccess(t *testing.T) {
 				})
 			},
 			expectedError: false,
-			expectedResult: domain.AccessCheckResult{
+			expectedResult: model.AccessCheckResult{
 				"view":   "allowed",
 				"edit":   "allowed",
 				"delete": "denied",
@@ -99,7 +99,7 @@ func TestNATSAccessControlChecker_CheckAccess(t *testing.T) {
 				})
 			},
 			expectedError: false,
-			expectedResult: domain.AccessCheckResult{
+			expectedResult: model.AccessCheckResult{
 				"view":   "denied",
 				"edit":   "denied",
 				"delete": "denied",
@@ -114,7 +114,7 @@ func TestNATSAccessControlChecker_CheckAccess(t *testing.T) {
 				mock.SetCheckAccessResponse(AccessCheckNATSResponse{})
 			},
 			expectedError:  false,
-			expectedResult: domain.AccessCheckResult{},
+			expectedResult: model.AccessCheckResult{},
 		},
 		{
 			name:    "NATS client error",
@@ -171,7 +171,7 @@ func TestNATSAccessControlChecker_CheckAccess(t *testing.T) {
 				})
 			},
 			expectedError: false,
-			expectedResult: domain.AccessCheckResult{
+			expectedResult: model.AccessCheckResult{
 				"view": "allowed",
 			},
 		},
@@ -263,7 +263,7 @@ func TestNATSAccessControlChecker_convertFromNATSResponse(t *testing.T) {
 	tests := []struct {
 		name           string
 		natsResponse   AccessCheckNATSResponse
-		expectedResult domain.AccessCheckResult
+		expectedResult model.AccessCheckResult
 	}{
 		{
 			name: "convert response with multiple permissions",
@@ -273,7 +273,7 @@ func TestNATSAccessControlChecker_convertFromNATSResponse(t *testing.T) {
 				"delete": "denied",
 				"admin":  "denied",
 			},
-			expectedResult: domain.AccessCheckResult{
+			expectedResult: model.AccessCheckResult{
 				"view":   "allowed",
 				"edit":   "allowed",
 				"delete": "denied",
@@ -285,19 +285,19 @@ func TestNATSAccessControlChecker_convertFromNATSResponse(t *testing.T) {
 			natsResponse: AccessCheckNATSResponse{
 				"view": "allowed",
 			},
-			expectedResult: domain.AccessCheckResult{
+			expectedResult: model.AccessCheckResult{
 				"view": "allowed",
 			},
 		},
 		{
 			name:           "convert empty response",
 			natsResponse:   AccessCheckNATSResponse{},
-			expectedResult: domain.AccessCheckResult{},
+			expectedResult: model.AccessCheckResult{},
 		},
 		{
 			name:           "convert nil response",
 			natsResponse:   nil,
-			expectedResult: domain.AccessCheckResult(nil),
+			expectedResult: model.AccessCheckResult(nil),
 		},
 	}
 

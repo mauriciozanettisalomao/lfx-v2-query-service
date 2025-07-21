@@ -1,13 +1,13 @@
 // Copyright The Linux Foundation and each contributor to LFX.
 // SPDX-License-Identifier: MIT
 
-package service
+package usecase
 
 import (
 	"context"
 	"testing"
 
-	"github.com/linuxfoundation/lfx-v2-query-service/internal/domain"
+	"github.com/linuxfoundation/lfx-v2-query-service/internal/domain/model"
 	"github.com/linuxfoundation/lfx-v2-query-service/internal/infrastructure/mock"
 	"github.com/linuxfoundation/lfx-v2-query-service/pkg/constants"
 	"github.com/stretchr/testify/assert"
@@ -16,7 +16,7 @@ import (
 func TestResourceSearchQueryResources(t *testing.T) {
 	tests := []struct {
 		name                 string
-		criteria             domain.SearchCriteria
+		criteria             model.SearchCriteria
 		principal            string
 		setupMocks           func(*mock.MockResourceSearcher, *mock.MockAccessControlChecker)
 		expectedError        bool
@@ -25,16 +25,16 @@ func TestResourceSearchQueryResources(t *testing.T) {
 	}{
 		{
 			name: "successful search with authenticated user - public resources",
-			criteria: domain.SearchCriteria{
+			criteria: model.SearchCriteria{
 				Name: stringPtr("test"),
 			},
 			principal: "user123",
 			setupMocks: func(searcher *mock.MockResourceSearcher, accessChecker *mock.MockAccessControlChecker) {
-				searcher.AddResource(domain.Resource{
+				searcher.AddResource(model.Resource{
 					Type: "project",
 					ID:   "test-project",
 					Data: map[string]any{"name": "Test Project"},
-					TransactionBodyStub: domain.TransactionBodyStub{
+					TransactionBodyStub: model.TransactionBodyStub{
 						ObjectRef:           "project:test-project",
 						ObjectType:          "project",
 						ObjectID:            "test-project",
@@ -51,16 +51,16 @@ func TestResourceSearchQueryResources(t *testing.T) {
 		},
 		{
 			name: "successful search with anonymous user",
-			criteria: domain.SearchCriteria{
+			criteria: model.SearchCriteria{
 				Name: stringPtr("test"),
 			},
 			principal: constants.AnonymousPrincipal,
 			setupMocks: func(searcher *mock.MockResourceSearcher, accessChecker *mock.MockAccessControlChecker) {
-				searcher.AddResource(domain.Resource{
+				searcher.AddResource(model.Resource{
 					Type: "project",
 					ID:   "test-project",
 					Data: map[string]any{"name": "Test Project"},
-					TransactionBodyStub: domain.TransactionBodyStub{
+					TransactionBodyStub: model.TransactionBodyStub{
 						ObjectRef:  "project:test-project",
 						ObjectType: "project",
 						ObjectID:   "test-project",
@@ -74,7 +74,7 @@ func TestResourceSearchQueryResources(t *testing.T) {
 		},
 		{
 			name:     "invalid search criteria - empty criteria",
-			criteria: domain.SearchCriteria{
+			criteria: model.SearchCriteria{
 				// All fields empty
 			},
 			principal: "user123",
@@ -87,7 +87,7 @@ func TestResourceSearchQueryResources(t *testing.T) {
 		},
 		{
 			name: "missing principal in context",
-			criteria: domain.SearchCriteria{
+			criteria: model.SearchCriteria{
 				Name: stringPtr("test"),
 			},
 			principal: "", // Empty principal to trigger error
@@ -100,7 +100,7 @@ func TestResourceSearchQueryResources(t *testing.T) {
 		},
 		{
 			name: "searcher returns error",
-			criteria: domain.SearchCriteria{
+			criteria: model.SearchCriteria{
 				Name: stringPtr("test"),
 			},
 			principal: "user123",
@@ -114,16 +114,16 @@ func TestResourceSearchQueryResources(t *testing.T) {
 		},
 		{
 			name: "access control check fails",
-			criteria: domain.SearchCriteria{
+			criteria: model.SearchCriteria{
 				Name: stringPtr("test"),
 			},
 			principal: "user123",
 			setupMocks: func(searcher *mock.MockResourceSearcher, accessChecker *mock.MockAccessControlChecker) {
-				searcher.AddResource(domain.Resource{
+				searcher.AddResource(model.Resource{
 					Type: "project",
 					ID:   "test-project",
 					Data: map[string]any{"name": "Test Project"},
-					TransactionBodyStub: domain.TransactionBodyStub{
+					TransactionBodyStub: model.TransactionBodyStub{
 						ObjectRef:           "project:test-project",
 						ObjectType:          "project",
 						ObjectID:            "test-project",
@@ -189,40 +189,40 @@ func TestResourceSearchQueryResources(t *testing.T) {
 func TestResourceSearchValidateSearchCriteria(t *testing.T) {
 	tests := []struct {
 		name        string
-		criteria    domain.SearchCriteria
+		criteria    model.SearchCriteria
 		expectError bool
 	}{
 		{
 			name: "valid criteria with name",
-			criteria: domain.SearchCriteria{
+			criteria: model.SearchCriteria{
 				Name: stringPtr("test"),
 			},
 			expectError: false,
 		},
 		{
 			name: "valid criteria with parent",
-			criteria: domain.SearchCriteria{
+			criteria: model.SearchCriteria{
 				Parent: stringPtr("parent-id"),
 			},
 			expectError: false,
 		},
 		{
 			name: "valid criteria with resource type",
-			criteria: domain.SearchCriteria{
+			criteria: model.SearchCriteria{
 				ResourceType: stringPtr("project"),
 			},
 			expectError: false,
 		},
 		{
 			name: "valid criteria with tags",
-			criteria: domain.SearchCriteria{
+			criteria: model.SearchCriteria{
 				Tags: []string{"tag1", "tag2"},
 			},
 			expectError: false,
 		},
 		{
 			name: "valid criteria with multiple fields",
-			criteria: domain.SearchCriteria{
+			criteria: model.SearchCriteria{
 				Name:         stringPtr("test"),
 				ResourceType: stringPtr("project"),
 				Tags:         []string{"tag1"},
@@ -231,14 +231,14 @@ func TestResourceSearchValidateSearchCriteria(t *testing.T) {
 		},
 		{
 			name:     "invalid criteria - all fields empty",
-			criteria: domain.SearchCriteria{
+			criteria: model.SearchCriteria{
 				// All fields empty
 			},
 			expectError: true,
 		},
 		{
 			name: "invalid criteria - empty tags array",
-			criteria: domain.SearchCriteria{
+			criteria: model.SearchCriteria{
 				Tags: []string{},
 			},
 			expectError: true,
@@ -270,7 +270,7 @@ func TestResourceSearchBuildMessage(t *testing.T) {
 	tests := []struct {
 		name                    string
 		principal               string
-		searchResult            *domain.SearchResult
+		searchResult            *model.SearchResult
 		expectedPublicCount     int
 		expectedNeedCheckCount  int
 		expectedMessageContains []string
@@ -278,13 +278,13 @@ func TestResourceSearchBuildMessage(t *testing.T) {
 		{
 			name:      "only public resources",
 			principal: "user123",
-			searchResult: &domain.SearchResult{
-				Resources: []domain.Resource{
+			searchResult: &model.SearchResult{
+				Resources: []model.Resource{
 					{
 						Type: "project",
 						ID:   "public-project",
 						Data: map[string]any{"name": "Public Project"},
-						TransactionBodyStub: domain.TransactionBodyStub{
+						TransactionBodyStub: model.TransactionBodyStub{
 							ObjectRef:  "project:public-project",
 							ObjectType: "project",
 							ObjectID:   "public-project",
@@ -300,13 +300,13 @@ func TestResourceSearchBuildMessage(t *testing.T) {
 		{
 			name:      "only private resources",
 			principal: "user123",
-			searchResult: &domain.SearchResult{
-				Resources: []domain.Resource{
+			searchResult: &model.SearchResult{
+				Resources: []model.Resource{
 					{
 						Type: "project",
 						ID:   "private-project",
 						Data: map[string]any{"name": "Private Project"},
-						TransactionBodyStub: domain.TransactionBodyStub{
+						TransactionBodyStub: model.TransactionBodyStub{
 							ObjectRef:           "project:private-project",
 							ObjectType:          "project",
 							ObjectID:            "private-project",
@@ -324,13 +324,13 @@ func TestResourceSearchBuildMessage(t *testing.T) {
 		{
 			name:      "mixed public and private resources",
 			principal: "user123",
-			searchResult: &domain.SearchResult{
-				Resources: []domain.Resource{
+			searchResult: &model.SearchResult{
+				Resources: []model.Resource{
 					{
 						Type: "project",
 						ID:   "public-project",
 						Data: map[string]any{"name": "Public Project"},
-						TransactionBodyStub: domain.TransactionBodyStub{
+						TransactionBodyStub: model.TransactionBodyStub{
 							ObjectRef:  "project:public-project",
 							ObjectType: "project",
 							ObjectID:   "public-project",
@@ -341,7 +341,7 @@ func TestResourceSearchBuildMessage(t *testing.T) {
 						Type: "project",
 						ID:   "private-project",
 						Data: map[string]any{"name": "Private Project"},
-						TransactionBodyStub: domain.TransactionBodyStub{
+						TransactionBodyStub: model.TransactionBodyStub{
 							ObjectRef:           "project:private-project",
 							ObjectType:          "project",
 							ObjectID:            "private-project",
@@ -359,13 +359,13 @@ func TestResourceSearchBuildMessage(t *testing.T) {
 		{
 			name:      "duplicate resources filtered out",
 			principal: "user123",
-			searchResult: &domain.SearchResult{
-				Resources: []domain.Resource{
+			searchResult: &model.SearchResult{
+				Resources: []model.Resource{
 					{
 						Type: "project",
 						ID:   "duplicate-project",
 						Data: map[string]any{"name": "Duplicate Project"},
-						TransactionBodyStub: domain.TransactionBodyStub{
+						TransactionBodyStub: model.TransactionBodyStub{
 							ObjectRef:  "project:duplicate-project",
 							ObjectType: "project",
 							ObjectID:   "duplicate-project",
@@ -376,7 +376,7 @@ func TestResourceSearchBuildMessage(t *testing.T) {
 						Type: "project",
 						ID:   "duplicate-project",
 						Data: map[string]any{"name": "Duplicate Project"},
-						TransactionBodyStub: domain.TransactionBodyStub{
+						TransactionBodyStub: model.TransactionBodyStub{
 							ObjectRef:  "project:duplicate-project",
 							ObjectType: "project",
 							ObjectID:   "duplicate-project",
@@ -392,13 +392,13 @@ func TestResourceSearchBuildMessage(t *testing.T) {
 		{
 			name:      "resource missing access check info",
 			principal: "user123",
-			searchResult: &domain.SearchResult{
-				Resources: []domain.Resource{
+			searchResult: &model.SearchResult{
+				Resources: []model.Resource{
 					{
 						Type: "project",
 						ID:   "invalid-project",
 						Data: map[string]any{"name": "Invalid Project"},
-						TransactionBodyStub: domain.TransactionBodyStub{
+						TransactionBodyStub: model.TransactionBodyStub{
 							ObjectRef:  "project:invalid-project",
 							ObjectType: "project",
 							ObjectID:   "invalid-project",
@@ -457,7 +457,7 @@ func TestResourceSearchCheckAccess(t *testing.T) {
 	tests := []struct {
 		name               string
 		principal          string
-		resources          []domain.Resource
+		resources          []model.Resource
 		message            []byte
 		setupAccessChecker func(*mock.MockAccessControlChecker)
 		expectedResources  int
@@ -466,13 +466,13 @@ func TestResourceSearchCheckAccess(t *testing.T) {
 		{
 			name:      "access granted for all resources",
 			principal: "user123",
-			resources: []domain.Resource{
+			resources: []model.Resource{
 				{
 					Type:      "project",
 					ID:        "test-project",
 					Data:      map[string]any{"name": "Test Project"},
 					NeedCheck: true,
-					TransactionBodyStub: domain.TransactionBodyStub{
+					TransactionBodyStub: model.TransactionBodyStub{
 						ObjectRef:           "project:test-project",
 						ObjectType:          "project",
 						ObjectID:            "test-project",
@@ -492,13 +492,13 @@ func TestResourceSearchCheckAccess(t *testing.T) {
 		{
 			name:      "access denied for all resources",
 			principal: "user123",
-			resources: []domain.Resource{
+			resources: []model.Resource{
 				{
 					Type:      "project",
 					ID:        "test-project",
 					Data:      map[string]any{"name": "Test Project"},
 					NeedCheck: true,
-					TransactionBodyStub: domain.TransactionBodyStub{
+					TransactionBodyStub: model.TransactionBodyStub{
 						ObjectRef:           "project:test-project",
 						ObjectType:          "project",
 						ObjectID:            "test-project",
@@ -517,13 +517,13 @@ func TestResourceSearchCheckAccess(t *testing.T) {
 		{
 			name:      "mixed access results",
 			principal: "user123",
-			resources: []domain.Resource{
+			resources: []model.Resource{
 				{
 					Type:      "project",
 					ID:        "allowed-project",
 					Data:      map[string]any{"name": "Allowed Project"},
 					NeedCheck: true,
-					TransactionBodyStub: domain.TransactionBodyStub{
+					TransactionBodyStub: model.TransactionBodyStub{
 						ObjectRef:           "project:allowed-project",
 						ObjectType:          "project",
 						ObjectID:            "allowed-project",
@@ -536,7 +536,7 @@ func TestResourceSearchCheckAccess(t *testing.T) {
 					ID:        "denied-project",
 					Data:      map[string]any{"name": "Denied Project"},
 					NeedCheck: true,
-					TransactionBodyStub: domain.TransactionBodyStub{
+					TransactionBodyStub: model.TransactionBodyStub{
 						ObjectRef:           "project:denied-project",
 						ObjectType:          "project",
 						ObjectID:            "denied-project",
@@ -557,7 +557,7 @@ func TestResourceSearchCheckAccess(t *testing.T) {
 		{
 			name:      "empty resources list",
 			principal: "user123",
-			resources: []domain.Resource{},
+			resources: []model.Resource{},
 			message:   []byte(""),
 			setupAccessChecker: func(checker *mock.MockAccessControlChecker) {
 				checker.DefaultResult = "allowed"
@@ -568,13 +568,13 @@ func TestResourceSearchCheckAccess(t *testing.T) {
 		{
 			name:      "public resources should be included without access check",
 			principal: "user123",
-			resources: []domain.Resource{
+			resources: []model.Resource{
 				{
 					Type:      "project",
 					ID:        "public-project",
 					Data:      map[string]any{"name": "Public Project"},
 					NeedCheck: false,
-					TransactionBodyStub: domain.TransactionBodyStub{
+					TransactionBodyStub: model.TransactionBodyStub{
 						ObjectRef:  "project:public-project",
 						ObjectType: "project",
 						ObjectID:   "public-project",
@@ -625,25 +625,25 @@ func TestResourceSearchCheckAccess(t *testing.T) {
 func TestNewResourceSearch(t *testing.T) {
 	tests := []struct {
 		name         string
-		setupMocks   func() (domain.ResourceSearcher, domain.AccessControlChecker)
+		setupMocks   func() (*mock.MockResourceSearcher, *mock.MockAccessControlChecker)
 		expectNonNil bool
 		expectType   string
 	}{
 		{
 			name: "creates new resource search with valid dependencies",
-			setupMocks: func() (domain.ResourceSearcher, domain.AccessControlChecker) {
+			setupMocks: func() (*mock.MockResourceSearcher, *mock.MockAccessControlChecker) {
 				return mock.NewMockResourceSearcher(), mock.NewMockAccessControlChecker()
 			},
 			expectNonNil: true,
-			expectType:   "*service.ResourceSearch",
+			expectType:   "*usecase.ResourceSearch",
 		},
 		{
 			name: "creates new resource search with nil dependencies",
-			setupMocks: func() (domain.ResourceSearcher, domain.AccessControlChecker) {
+			setupMocks: func() (*mock.MockResourceSearcher, *mock.MockAccessControlChecker) {
 				return nil, nil
 			},
 			expectNonNil: true,
-			expectType:   "*service.ResourceSearch",
+			expectType:   "*usecase.ResourceSearch",
 		},
 	}
 
@@ -687,14 +687,14 @@ func TestResourceSearchQueryResourcesEdgeCases(t *testing.T) {
 		}
 
 		// Add test data
-		mockSearcher.AddResource(domain.Resource{
+		mockSearcher.AddResource(model.Resource{
 			Type: "project",
 			ID:   "complex-project",
 			Data: map[string]any{
 				"name": "Complex Project",
 				"tags": []string{"active", "governance"},
 			},
-			TransactionBodyStub: domain.TransactionBodyStub{
+			TransactionBodyStub: model.TransactionBodyStub{
 				ObjectRef:  "project:complex-project",
 				ObjectType: "project",
 				ObjectID:   "complex-project",
@@ -702,7 +702,7 @@ func TestResourceSearchQueryResourcesEdgeCases(t *testing.T) {
 			},
 		})
 
-		criteria := domain.SearchCriteria{
+		criteria := model.SearchCriteria{
 			Name:         stringPtr("Complex"),
 			ResourceType: stringPtr("project"),
 			Tags:         []string{"active"},
@@ -732,7 +732,7 @@ func TestResourceSearchQueryResourcesEdgeCases(t *testing.T) {
 			t.Fatal("failed to create ResourceSearch service")
 		}
 
-		criteria := domain.SearchCriteria{
+		criteria := model.SearchCriteria{
 			Name:      stringPtr("test"),
 			PageSize:  5,
 			PageToken: stringPtr("test-token"),

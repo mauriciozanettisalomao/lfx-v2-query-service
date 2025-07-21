@@ -10,7 +10,7 @@ import (
 	"fmt"
 	"testing"
 
-	"github.com/linuxfoundation/lfx-v2-query-service/internal/domain"
+	"github.com/linuxfoundation/lfx-v2-query-service/internal/domain/model"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -46,7 +46,7 @@ func (m *MockOpenSearchClient) IsReady(ctx context.Context) error {
 func TestOpenSearchSearcherQueryResources(t *testing.T) {
 	tests := []struct {
 		name           string
-		criteria       domain.SearchCriteria
+		criteria       model.SearchCriteria
 		setupMock      func(*MockOpenSearchClient)
 		expectedError  bool
 		expectedCount  int
@@ -54,7 +54,7 @@ func TestOpenSearchSearcherQueryResources(t *testing.T) {
 	}{
 		{
 			name: "successful search with single result",
-			criteria: domain.SearchCriteria{
+			criteria: model.SearchCriteria{
 				Name: stringPtr("test project"),
 			},
 			setupMock: func(mock *MockOpenSearchClient) {
@@ -90,7 +90,7 @@ func TestOpenSearchSearcherQueryResources(t *testing.T) {
 		},
 		{
 			name: "successful search with multiple results",
-			criteria: domain.SearchCriteria{
+			criteria: model.SearchCriteria{
 				ResourceType: stringPtr("project"),
 			},
 			setupMock: func(mock *MockOpenSearchClient) {
@@ -127,7 +127,7 @@ func TestOpenSearchSearcherQueryResources(t *testing.T) {
 		},
 		{
 			name: "successful search with no results",
-			criteria: domain.SearchCriteria{
+			criteria: model.SearchCriteria{
 				Name: stringPtr("nonexistent"),
 			},
 			setupMock: func(mock *MockOpenSearchClient) {
@@ -143,7 +143,7 @@ func TestOpenSearchSearcherQueryResources(t *testing.T) {
 		},
 		{
 			name: "search with client error",
-			criteria: domain.SearchCriteria{
+			criteria: model.SearchCriteria{
 				Name: stringPtr("test"),
 			},
 			setupMock: func(mock *MockOpenSearchClient) {
@@ -154,7 +154,7 @@ func TestOpenSearchSearcherQueryResources(t *testing.T) {
 		},
 		{
 			name: "search with invalid source data",
-			criteria: domain.SearchCriteria{
+			criteria: model.SearchCriteria{
 				Name: stringPtr("test"),
 			},
 			setupMock: func(mock *MockOpenSearchClient) {
@@ -211,13 +211,13 @@ func TestOpenSearchSearcherQueryResources(t *testing.T) {
 func TestOpenSearchSearcherRender(t *testing.T) {
 	tests := []struct {
 		name           string
-		criteria       domain.SearchCriteria
+		criteria       model.SearchCriteria
 		expectedError  bool
 		expectedFields []string
 	}{
 		{
 			name: "render query with name only",
-			criteria: domain.SearchCriteria{
+			criteria: model.SearchCriteria{
 				Name: stringPtr("test project"),
 			},
 			expectedError:  false,
@@ -225,7 +225,7 @@ func TestOpenSearchSearcherRender(t *testing.T) {
 		},
 		{
 			name: "render query with resource type",
-			criteria: domain.SearchCriteria{
+			criteria: model.SearchCriteria{
 				ResourceType: stringPtr("project"),
 			},
 			expectedError:  false,
@@ -233,7 +233,7 @@ func TestOpenSearchSearcherRender(t *testing.T) {
 		},
 		{
 			name: "render query with tags",
-			criteria: domain.SearchCriteria{
+			criteria: model.SearchCriteria{
 				Tags: []string{"active", "governance"},
 			},
 			expectedError:  false,
@@ -241,7 +241,7 @@ func TestOpenSearchSearcherRender(t *testing.T) {
 		},
 		{
 			name: "render query with multiple criteria",
-			criteria: domain.SearchCriteria{
+			criteria: model.SearchCriteria{
 				Name:         stringPtr("test"),
 				ResourceType: stringPtr("project"),
 				Tags:         []string{"active"},
@@ -254,7 +254,7 @@ func TestOpenSearchSearcherRender(t *testing.T) {
 		},
 		{
 			name: "render query with empty criteria",
-			criteria: domain.SearchCriteria{
+			criteria: model.SearchCriteria{
 				PageSize: 20,
 			},
 			expectedError:  false,
@@ -617,7 +617,7 @@ func TestOpenSearchSearcherIntegration(t *testing.T) {
 
 		// Execute search
 		ctx := context.Background()
-		criteria := domain.SearchCriteria{
+		criteria := model.SearchCriteria{
 			Name:         stringPtr("Integration"),
 			ResourceType: stringPtr("project"),
 			Tags:         []string{"testing"},

@@ -9,7 +9,8 @@ import (
 	"log/slog"
 	"time"
 
-	"github.com/linuxfoundation/lfx-v2-query-service/internal/domain"
+	"github.com/linuxfoundation/lfx-v2-query-service/internal/domain/model"
+	"github.com/linuxfoundation/lfx-v2-query-service/internal/domain/port"
 )
 
 // NATSAccessControlChecker implements the AccessControlChecker interface for NATS
@@ -18,7 +19,7 @@ type NATSAccessControlChecker struct {
 }
 
 // CheckAccess implements the AccessControlChecker interface
-func (n *NATSAccessControlChecker) CheckAccess(ctx context.Context, subj string, data []byte, timeout time.Duration) (domain.AccessCheckResult, error) {
+func (n *NATSAccessControlChecker) CheckAccess(ctx context.Context, subj string, data []byte, timeout time.Duration) (model.AccessCheckResult, error) {
 	slog.DebugContext(ctx, "executing NATS access control check",
 		"subject", subj,
 		"timeout", timeout,
@@ -60,12 +61,12 @@ func (n *NATSAccessControlChecker) IsReady(ctx context.Context) error {
 }
 
 // convertFromNATSResponse converts NATS response to domain response
-func (n *NATSAccessControlChecker) convertFromNATSResponse(response AccessCheckNATSResponse) domain.AccessCheckResult {
-	return domain.AccessCheckResult(response)
+func (n *NATSAccessControlChecker) convertFromNATSResponse(response AccessCheckNATSResponse) model.AccessCheckResult {
+	return model.AccessCheckResult(response)
 }
 
 // NewAccessControlChecker creates a new NATS access control checker
-func NewAccessControlChecker(ctx context.Context, config Config) (domain.AccessControlChecker, error) {
+func NewAccessControlChecker(ctx context.Context, config Config) (port.AccessControlChecker, error) {
 	slog.InfoContext(ctx, "creating NATS access control checker",
 		"url", config.URL,
 	)

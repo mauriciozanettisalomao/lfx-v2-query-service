@@ -15,7 +15,8 @@ import (
 	"text/template"
 	"time"
 
-	"github.com/linuxfoundation/lfx-v2-query-service/internal/domain"
+	"github.com/linuxfoundation/lfx-v2-query-service/internal/domain/model"
+	"github.com/linuxfoundation/lfx-v2-query-service/internal/domain/port"
 	"github.com/linuxfoundation/lfx-v2-query-service/pkg/errors"
 
 	"github.com/opensearch-project/opensearch-go/v4"
@@ -43,7 +44,7 @@ type OpenSearchClientRetriever interface {
 }
 
 // QueryResources implements the ResourceSearcher interface
-func (os *OpenSearchSearcher) QueryResources(ctx context.Context, criteria domain.SearchCriteria) (*domain.SearchResult, error) {
+func (os *OpenSearchSearcher) QueryResources(ctx context.Context, criteria model.SearchCriteria) (*model.SearchResult, error) {
 	slog.DebugContext(ctx, "executing opensearch query for criteria",
 		"criteria", criteria,
 	)
@@ -73,7 +74,7 @@ func (os *OpenSearchSearcher) QueryResources(ctx context.Context, criteria domai
 }
 
 // Render generates the OpenSearch query based on the provided search criteria
-func (os *OpenSearchSearcher) Render(ctx context.Context, criteria domain.SearchCriteria) ([]byte, error) {
+func (os *OpenSearchSearcher) Render(ctx context.Context, criteria model.SearchCriteria) ([]byte, error) {
 	var buf bytes.Buffer
 	if err := queryResourceTemplate.Execute(&buf, criteria); err != nil {
 		slog.ErrorContext(ctx, "failed to render query template", "error", err)
@@ -90,10 +91,10 @@ func (os *OpenSearchSearcher) Render(ctx context.Context, criteria domain.Search
 }
 
 // convertResponse converts OpenSearch response to domain objects
-func (os *OpenSearchSearcher) convertResponse(ctx context.Context, response *SearchResponse) (*domain.SearchResult, error) {
+func (os *OpenSearchSearcher) convertResponse(ctx context.Context, response *SearchResponse) (*model.SearchResult, error) {
 
-	result := &domain.SearchResult{
-		Resources: make([]domain.Resource, 0, len(response.Hits.Hits)),
+	result := &model.SearchResult{
+		Resources: make([]model.Resource, 0, len(response.Hits.Hits)),
 		PageToken: response.PageToken,
 		Total:     response.Value,
 	}
@@ -112,8 +113,8 @@ func (os *OpenSearchSearcher) convertResponse(ctx context.Context, response *Sea
 }
 
 // convertHit converts a single OpenSearch hit to a domain resource
-func (os *OpenSearchSearcher) convertHit(hit Hit) (domain.Resource, error) {
-	resource := domain.Resource{
+func (os *OpenSearchSearcher) convertHit(hit Hit) (model.Resource, error) {
+	resource := model.Resource{
 		ID: hit.ID,
 	}
 
@@ -156,7 +157,7 @@ func (o *OpenSearchSearcher) IsReady(ctx context.Context) error {
 }
 
 // NewSearcher returns a new OpenSearchSearcher implementation
-func NewSearcher(ctx context.Context, config Config) (domain.ResourceSearcher, error) {
+func NewSearcher(ctx context.Context, config Config) (port.ResourceSearcher, error) {
 
 	if config.URL == "" {
 		slog.ErrorContext(ctx, "opensearch URL is required")

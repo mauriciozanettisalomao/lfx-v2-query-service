@@ -21,10 +21,12 @@ The implementation follows the clean architecture principles where:
 ├── design/                         # GOA design specification files
 ├── gen/                            # GOA generated code (HTTP server, client, OpenAPI)
 ├── cmd/                            # Services (main packages)
-│   └── query_svc/.                 # Query service code
+│   └── query_svc/                  # Query service implementation
 ├── internal/                       # Internal service packages
 │   ├── domain/                     # Domain logic layer
-│   ├── service/                    # Business logic layer
+│   │   ├── model/                  # Domain models and entities
+│   │   └── port/                   # Domain interfaces/ports
+│   ├── usecase/                    # Business logic/use cases layer
 │   ├── infrastructure/             # Infrastructure layer
 │   └── middleware/                 # HTTP middleware components
 └── pkg/                            # Shared packages for internal and external services
@@ -33,8 +35,17 @@ The implementation follows the clean architecture principles where:
 ## Key Components
 
 ### Domain Layer (`internal/domain/`)
+#### Model (`internal/domain/model/`)
+- **Domain Models**: Core business entities and data structures
+- **Value Objects**: Immutable objects that represent domain concepts
+
+#### Ports (`internal/domain/port/`)
 - **ResourceSearcher Interface**: Defines the contract for resource search operations
 - **AccessControlChecker Interface**: Defines the contract for access control operations
+
+### Use Case Layer (`internal/usecase/`)
+- **Business Logic**: Application-specific business rules and operations
+- **Use Case Orchestration**: Coordinates between domain models and infrastructure
 
 ### Service Layer (`internal/service/`)
 - **ResourceService**: Contains business logic and validation

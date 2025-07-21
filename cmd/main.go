@@ -18,7 +18,7 @@ import (
 
 	querysvcapi "github.com/linuxfoundation/lfx-v2-query-service/cmd/query_svc"
 	querysvc "github.com/linuxfoundation/lfx-v2-query-service/gen/query_svc"
-	"github.com/linuxfoundation/lfx-v2-query-service/internal/domain"
+	"github.com/linuxfoundation/lfx-v2-query-service/internal/domain/port"
 	"github.com/linuxfoundation/lfx-v2-query-service/internal/infrastructure/mock"
 	"github.com/linuxfoundation/lfx-v2-query-service/internal/infrastructure/nats"
 	"github.com/linuxfoundation/lfx-v2-query-service/internal/infrastructure/opensearch"
@@ -142,10 +142,10 @@ func main() {
 	slog.InfoContext(ctx, "exited")
 }
 
-func searcherImpl(ctx context.Context) domain.ResourceSearcher {
+func searcherImpl(ctx context.Context) port.ResourceSearcher {
 
 	var (
-		resourceSearcher domain.ResourceSearcher
+		resourceSearcher port.ResourceSearcher
 		err              error
 	)
 
@@ -190,10 +190,10 @@ func searcherImpl(ctx context.Context) domain.ResourceSearcher {
 
 }
 
-func accessControlCheckerImpl(ctx context.Context) domain.AccessControlChecker {
+func accessControlCheckerImpl(ctx context.Context) port.AccessControlChecker {
 
 	var (
-		accessControlChecker domain.AccessControlChecker
+		accessControlChecker port.AccessControlChecker
 		err                  error
 	)
 

@@ -1,7 +1,7 @@
 // Copyright The Linux Foundation and each contributor to LFX.
 // SPDX-License-Identifier: MIT
 
-package service
+package usecase
 
 import (
 	"context"
@@ -9,20 +9,32 @@ import (
 	"log/slog"
 	"time"
 
-	"github.com/linuxfoundation/lfx-v2-query-service/internal/domain"
+	"github.com/linuxfoundation/lfx-v2-query-service/internal/domain/model"
+	"github.com/linuxfoundation/lfx-v2-query-service/internal/domain/port"
 	"github.com/linuxfoundation/lfx-v2-query-service/pkg/constants"
 	"github.com/linuxfoundation/lfx-v2-query-service/pkg/errors"
 )
 
+// ResourceSearcher defines the interface for resource search operations
+// This abstraction allows different search implementations (OpenSearch, etc.)
+// without the domain layer knowing about specific implementations
+type ResourceSearcher interface {
+	// QueryResources searches for resources based on the provided criteria
+	QueryResources(ctx context.Context, criteria model.SearchCriteria) (*model.SearchResult, error)
+
+	// IsReady checks if the search service is ready
+	IsReady(ctx context.Context) error
+}
+
 // ResourceSearch handles resource-related business operations
 // It depends on abstractions (interfaces) rather than concrete implementations
 type ResourceSearch struct {
-	resourceSearcher domain.ResourceSearcher
-	accessChecker    domain.AccessControlChecker
+	resourceSearcher port.ResourceSearcher
+	accessChecker    port.AccessControlChecker
 }
 
 // QueryResources performs resource search with business logic validation
-func (s *ResourceSearch) QueryResources(ctx context.Context, criteria domain.SearchCriteria) (*domain.SearchResult, error) {
+func (s *ResourceSearch) QueryResources(ctx context.Context, criteria model.SearchCriteria) (*model.SearchResult, error) {
 
 	slog.DebugContext(ctx, "starting resource search",
 		"name", criteria.Name,
@@ -68,7 +80,7 @@ func (s *ResourceSearch) QueryResources(ctx context.Context, criteria domain.Sea
 
 	messageCheckAccess := s.BuildMessage(ctx, principal, result)
 
-	searchResult := &domain.SearchResult{
+	searchResult := &model.SearchResult{
 		PageToken: result.PageToken,
 	}
 
@@ -98,7 +110,7 @@ func (s *ResourceSearch) QueryResources(ctx context.Context, criteria domain.Sea
 }
 
 // validateSearchCriteria validates the search criteria according to business rules
-func (s *ResourceSearch) validateSearchCriteria(criteria domain.SearchCriteria) error {
+func (s *ResourceSearch) validateSearchCriteria(criteria model.SearchCriteria) error {
 	// At least one search parameter must be provided
 	if criteria.Name == nil && criteria.Parent == nil && criteria.ResourceType == nil && len(criteria.Tags) == 0 {
 		return fmt.Errorf("at least one search parameter must be provided: name, parent, type, or tags")
@@ -107,7 +119,7 @@ func (s *ResourceSearch) validateSearchCriteria(criteria domain.SearchCriteria) 
 	return nil
 }
 
-func (s *ResourceSearch) BuildMessage(ctx context.Context, principal string, result *domain.SearchResult) []byte {
+func (s *ResourceSearch) BuildMessage(ctx context.Context, principal string, result *model.SearchResult) []byte {
 
 	// avoid duplicate resource references in the result
 	seenRefs := make(map[string]struct{}, len(result.Resources))
@@ -150,7 +162,7 @@ func (s *ResourceSearch) BuildMessage(ctx context.Context, principal string, res
 	return accessCheckMessage
 }
 
-func (s *ResourceSearch) CheckAccess(ctx context.Context, principal string, resourceList []domain.Resource, accessCheckMessage []byte) ([]domain.Resource, error) {
+func (s *ResourceSearch) CheckAccess(ctx context.Context, principal string, resourceList []model.Resource, accessCheckMessage []byte) ([]model.Resource, error) {
 
 	var accessCheckResponses map[string]string
 	if len(accessCheckMessage) > 0 {
@@ -172,7 +184,7 @@ func (s *ResourceSearch) CheckAccess(ctx context.Context, principal string, reso
 		accessCheckResponses = accessCheckResult
 	}
 
-	var resources []domain.Resource
+	var resources []model.Resource
 	// ensuring the original order of resources
 	for _, resource := range resourceList {
 		addToList := false
@@ -204,7 +216,7 @@ func (s *ResourceSearch) IsReady(ctx context.Context) error {
 }
 
 // NewResourceSearch creates a new ResourceSearch instance
-func NewResourceSearch(resourceSearcher domain.ResourceSearcher, accessChecker domain.AccessControlChecker) domain.ResourceSearcher {
+func NewResourceSearch(resourceSearcher port.ResourceSearcher, accessChecker port.AccessControlChecker) ResourceSearcher {
 	return &ResourceSearch{
 		resourceSearcher: resourceSearcher,
 		accessChecker:    accessChecker,

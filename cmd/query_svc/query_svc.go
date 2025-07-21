@@ -8,8 +8,9 @@ import (
 	"log/slog"
 
 	querysvc "github.com/linuxfoundation/lfx-v2-query-service/gen/query_svc"
-	"github.com/linuxfoundation/lfx-v2-query-service/internal/domain"
-	"github.com/linuxfoundation/lfx-v2-query-service/internal/service"
+	"github.com/linuxfoundation/lfx-v2-query-service/internal/domain/model"
+	"github.com/linuxfoundation/lfx-v2-query-service/internal/domain/port"
+	"github.com/linuxfoundation/lfx-v2-query-service/internal/usecase"
 	"github.com/linuxfoundation/lfx-v2-query-service/pkg/constants"
 	"github.com/linuxfoundation/lfx-v2-query-service/pkg/global"
 	"github.com/linuxfoundation/lfx-v2-query-service/pkg/log"
@@ -20,7 +21,7 @@ import (
 
 // query-svc service implementation using clean architecture.
 type querySvcsrvc struct {
-	resourceService domain.ResourceSearcher
+	resourceService usecase.ResourceSearcher
 }
 
 // JWTAuth implements the authorization logic for service "query-svc" for the
@@ -86,9 +87,9 @@ func (s *querySvcsrvc) Livez(ctx context.Context) (res []byte, err error) {
 }
 
 // payloadToCriteria converts the generated payload to domain search criteria
-func (s *querySvcsrvc) payloadToCriteria(ctx context.Context, p *querysvc.QueryResourcesPayload) (domain.SearchCriteria, error) {
+func (s *querySvcsrvc) payloadToCriteria(ctx context.Context, p *querysvc.QueryResourcesPayload) (model.SearchCriteria, error) {
 
-	criteria := domain.SearchCriteria{
+	criteria := model.SearchCriteria{
 		Name:         p.Name,
 		Parent:       p.Parent,
 		ResourceType: p.Type,
@@ -129,7 +130,7 @@ func (s *querySvcsrvc) payloadToCriteria(ctx context.Context, p *querysvc.QueryR
 }
 
 // domainResultToResponse converts domain search result to generated response
-func (s *querySvcsrvc) domainResultToResponse(result *domain.SearchResult) *querysvc.QueryResourcesResult {
+func (s *querySvcsrvc) domainResultToResponse(result *model.SearchResult) *querysvc.QueryResourcesResult {
 	response := &querysvc.QueryResourcesResult{
 		Resources:    make([]*querysvc.Resource, len(result.Resources)),
 		PageToken:    result.PageToken,
@@ -148,8 +149,8 @@ func (s *querySvcsrvc) domainResultToResponse(result *domain.SearchResult) *quer
 }
 
 // NewQuerySvc returns the query-svc service implementation.
-func NewQuerySvc(resourceSearcher domain.ResourceSearcher, accessControlChecker domain.AccessControlChecker) querysvc.Service {
-	resourceService := service.NewResourceSearch(resourceSearcher, accessControlChecker)
+func NewQuerySvc(resourceSearcher port.ResourceSearcher, accessControlChecker port.AccessControlChecker) querysvc.Service {
+	resourceService := usecase.NewResourceSearch(resourceSearcher, accessControlChecker)
 	return &querySvcsrvc{
 		resourceService: resourceService,
 	}

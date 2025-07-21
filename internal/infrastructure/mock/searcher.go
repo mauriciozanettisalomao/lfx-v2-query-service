@@ -8,19 +8,19 @@ import (
 	"log/slog"
 	"strings"
 
-	"github.com/linuxfoundation/lfx-v2-query-service/internal/domain"
+	"github.com/linuxfoundation/lfx-v2-query-service/internal/domain/model"
 )
 
 // MockResourceSearcher is a mock implementation of ResourceSearcher for testing
 // This demonstrates how the clean architecture allows easy swapping of implementations
 type MockResourceSearcher struct {
-	resources []domain.Resource
+	resources []model.Resource
 }
 
 // NewMockResourceSearcher creates a new mock searcher with some sample data
 func NewMockResourceSearcher() *MockResourceSearcher {
 	return &MockResourceSearcher{
-		resources: []domain.Resource{
+		resources: []model.Resource{
 			{
 				Type: "committee",
 				ID:   "123",
@@ -30,7 +30,7 @@ func NewMockResourceSearcher() *MockResourceSearcher {
 					"status":      "active",
 					"tags":        []string{"active", "governance"},
 				},
-				TransactionBodyStub: domain.TransactionBodyStub{
+				TransactionBodyStub: model.TransactionBodyStub{
 					ObjectRef:            "committee:123",
 					ObjectType:           "committee",
 					ObjectID:             "123",
@@ -52,7 +52,7 @@ func NewMockResourceSearcher() *MockResourceSearcher {
 					"status":      "active",
 					"tags":        []string{"active", "platform"},
 				},
-				TransactionBodyStub: domain.TransactionBodyStub{
+				TransactionBodyStub: model.TransactionBodyStub{
 					ObjectRef:            "project:456",
 					ObjectType:           "project",
 					ObjectID:             "456",
@@ -73,7 +73,7 @@ func NewMockResourceSearcher() *MockResourceSearcher {
 					"status":      "active",
 					"tags":        []string{"active", "security"},
 				},
-				TransactionBodyStub: domain.TransactionBodyStub{
+				TransactionBodyStub: model.TransactionBodyStub{
 					ObjectRef:            "committee:567",
 					ObjectType:           "committee",
 					ObjectID:             "567",
@@ -94,7 +94,7 @@ func NewMockResourceSearcher() *MockResourceSearcher {
 					"status":      "active",
 					"tags":        []string{"active", "governance"},
 				},
-				TransactionBodyStub: domain.TransactionBodyStub{
+				TransactionBodyStub: model.TransactionBodyStub{
 					ObjectRef:            "meeting:101",
 					ObjectType:           "meeting",
 					ObjectID:             "101",
@@ -116,7 +116,7 @@ func NewMockResourceSearcher() *MockResourceSearcher {
 					"status":      "active",
 					"tags":        []string{"active", "security", "private"},
 				},
-				TransactionBodyStub: domain.TransactionBodyStub{
+				TransactionBodyStub: model.TransactionBodyStub{
 					ObjectRef:            "project:789",
 					ObjectType:           "project",
 					ObjectID:             "789",
@@ -133,10 +133,10 @@ func NewMockResourceSearcher() *MockResourceSearcher {
 }
 
 // QueryResources implements the ResourceSearcher interface with mock data
-func (m *MockResourceSearcher) QueryResources(ctx context.Context, criteria domain.SearchCriteria) (*domain.SearchResult, error) {
+func (m *MockResourceSearcher) QueryResources(ctx context.Context, criteria model.SearchCriteria) (*model.SearchResult, error) {
 	slog.DebugContext(ctx, "executing mock search", "criteria", criteria)
 
-	var filteredResources []domain.Resource
+	var filteredResources []model.Resource
 
 	// Filter by type
 	if criteria.ResourceType != nil {
@@ -151,7 +151,7 @@ func (m *MockResourceSearcher) QueryResources(ctx context.Context, criteria doma
 
 	// Filter by name (case-insensitive substring search)
 	if criteria.Name != nil {
-		var nameFilteredResources []domain.Resource
+		var nameFilteredResources []model.Resource
 		searchName := strings.ToLower(*criteria.Name)
 
 		for _, resource := range filteredResources {
@@ -163,7 +163,7 @@ func (m *MockResourceSearcher) QueryResources(ctx context.Context, criteria doma
 						nameMatch = true
 					}
 				}
-				
+
 				// For projects, also check slug field
 				if !nameMatch && resource.Type == "project" {
 					if slug, ok := data["slug"].(string); ok {
@@ -172,7 +172,7 @@ func (m *MockResourceSearcher) QueryResources(ctx context.Context, criteria doma
 						}
 					}
 				}
-				
+
 				if nameMatch {
 					nameFilteredResources = append(nameFilteredResources, resource)
 				}
@@ -183,7 +183,7 @@ func (m *MockResourceSearcher) QueryResources(ctx context.Context, criteria doma
 
 	// Filter by tags
 	if len(criteria.Tags) > 0 {
-		var tagFilteredResources []domain.Resource
+		var tagFilteredResources []model.Resource
 
 		for _, resource := range filteredResources {
 			if data, ok := resource.Data.(map[string]interface{}); ok {
@@ -207,7 +207,7 @@ func (m *MockResourceSearcher) QueryResources(ctx context.Context, criteria doma
 	// Sort results (simplified implementation)
 	m.sortResources(filteredResources, criteria.SortBy)
 
-	result := &domain.SearchResult{
+	result := &model.SearchResult{
 		Resources: filteredResources,
 	}
 
@@ -221,7 +221,7 @@ func (m *MockResourceSearcher) IsReady(ctx context.Context) error {
 }
 
 // sortResources sorts the resources based on the sort criteria
-func (m *MockResourceSearcher) sortResources(resources []domain.Resource, sort string) {
+func (m *MockResourceSearcher) sortResources(resources []model.Resource, sort string) {
 	// This is a simplified sorting implementation
 	// In a real implementation, you'd use proper sorting algorithms
 
@@ -235,7 +235,7 @@ func (m *MockResourceSearcher) sortResources(resources []domain.Resource, sort s
 }
 
 // AddResource adds a resource to the mock data (useful for testing)
-func (m *MockResourceSearcher) AddResource(resource domain.Resource) {
+func (m *MockResourceSearcher) AddResource(resource model.Resource) {
 	// Ensure the resource has proper access control fields if not already set
 	if resource.ObjectRef == "" {
 		resource.ObjectRef = resource.Type + ":" + resource.ID
@@ -246,7 +246,7 @@ func (m *MockResourceSearcher) AddResource(resource domain.Resource) {
 	if resource.ObjectID == "" {
 		resource.ObjectID = resource.ID
 	}
-	
+
 	// Set default access control values if not specified
 	if resource.AccessCheckObject == "" && resource.AccessCheckRelation == "" {
 		// Default to requiring access check with reasonable defaults
@@ -254,12 +254,12 @@ func (m *MockResourceSearcher) AddResource(resource domain.Resource) {
 		resource.AccessCheckRelation = "viewer"
 		resource.NeedCheck = true
 	}
-	
+
 	m.resources = append(m.resources, resource)
 }
 
 // NewResourceWithDefaults creates a new resource with proper default access control fields
-func NewResourceWithDefaults(resourceType, id string, data map[string]any, isPublic bool) domain.Resource {
+func NewResourceWithDefaults(resourceType, id string, data map[string]any, isPublic bool) model.Resource {
 	// For projects, ensure slug is included if not present
 	if resourceType == "project" {
 		if _, hasSlug := data["slug"]; !hasSlug {
@@ -270,12 +270,12 @@ func NewResourceWithDefaults(resourceType, id string, data map[string]any, isPub
 			}
 		}
 	}
-	
-	resource := domain.Resource{
+
+	resource := model.Resource{
 		Type: resourceType,
 		ID:   id,
 		Data: data,
-		TransactionBodyStub: domain.TransactionBodyStub{
+		TransactionBodyStub: model.TransactionBodyStub{
 			ObjectRef:            resourceType + ":" + id,
 			ObjectType:           resourceType,
 			ObjectID:             id,
@@ -287,7 +287,7 @@ func NewResourceWithDefaults(resourceType, id string, data map[string]any, isPub
 		},
 		NeedCheck: !isPublic,
 	}
-	
+
 	// If not public, set appropriate access check defaults
 	if !isPublic {
 		switch resourceType {
@@ -301,13 +301,13 @@ func NewResourceWithDefaults(resourceType, id string, data map[string]any, isPub
 			resource.AccessCheckRelation = "viewer"
 		}
 	}
-	
+
 	return resource
 }
 
 // ClearResources clears all resources (useful for testing)
 func (m *MockResourceSearcher) ClearResources() {
-	m.resources = []domain.Resource{}
+	m.resources = []model.Resource{}
 }
 
 // GetResourceCount returns the total number of resources
