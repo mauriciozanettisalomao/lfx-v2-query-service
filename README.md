@@ -104,9 +104,9 @@ SEARCH_SOURCE=mock ACCESS_CONTROL_SOURCE=mock go run cmd/main.go -p 3000
 # Using OpenSearch and NATS (production-like setup)
 SEARCH_SOURCE=opensearch \
 ACCESS_CONTROL_SOURCE=nats \
-OPENSEARCH_URL=http://localhost:9200 \
+OPENSEARCH_URL={{placeholder}} \
 OPENSEARCH_INDEX=resources \
-NATS_URL=nats://localhost:4222 \
+NATS_URL={{placeholder}} \
 go run cmd/main.go
 ```
 
@@ -116,14 +116,14 @@ go run cmd/main.go
 - `SEARCH_SOURCE`: Choose between "mock" or "opensearch" (default: "opensearch")
 
 **OpenSearch Configuration:**
-- `OPENSEARCH_URL`: OpenSearch URL (default: "http://localhost:9200")
+- `OPENSEARCH_URL`: OpenSearch URL (default: `http://localhost:9200`)
 - `OPENSEARCH_INDEX`: OpenSearch index name (default: "resources")
 
 **Access Control Implementation:**
 - `ACCESS_CONTROL_SOURCE`: Choose between "mock" or "nats" (default: "nats")
 
 **NATS Configuration:**
-- `NATS_URL`: NATS server URL (default: "nats://localhost:4222")
+- `NATS_URL`: NATS server URL (default: `nats://localhost:4222`)
 - `NATS_TIMEOUT`: Request timeout duration (default: "10s")
 - `NATS_MAX_RECONNECT`: Maximum reconnection attempts (default: "3")
 - `NATS_RECONNECT_WAIT`: Time between reconnection attempts (default: "2s")
