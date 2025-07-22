@@ -45,9 +45,10 @@ apigen: deps #@ Generate API code using Goa
 	goa gen github.com/linuxfoundation/lfx-v2-query-service/design
 
 .PHONY: lint
-lint: ## Run golangci-lint with default settings
+lint: ## Run golangci-lint (local Go linting)
 	@echo "Running golangci-lint..."
-	@$(LINT_TOOL) run --config=.golangci.yml ./... && echo "==> Lint OK"
+	@which golangci-lint >/dev/null 2>&1 || (echo "Installing golangci-lint..." && go install github.com/golangci/golangci-lint/cmd/golangci-lint@latest)
+	@golangci-lint run ./... && echo "==> Lint OK"
 
 .PHONY: test
 test: ## Run tests

@@ -26,7 +26,9 @@ DISABLE_ERRORS_LINTERS:
   - REPOSITORY_DEVSKIM
 YAML_YAMLLINT_CONFIG_FILE: .yamllint
 REPOSITORY_KICS_ARGUMENTS: >-
-  scan --no-progress --exclude-severities="medium,low,info,trace" --exclude-paths="./gen/*"
+  scan --no-progress
+  --exclude-severities="medium,low,info,trace"
+  --exclude-paths="./gen/*"
 SPELL_CSPELL_ANALYZE_FILE_NAMES: false
 # Make sure Vale is setup to run with the styles it needs.
 SPELL_VALE_PRE_COMMANDS:
@@ -40,3 +42,5 @@ API_SPECTRAL_FILTER_REGEX_EXCLUDE: "gen/"
 FILTER_REGEX_EXCLUDE: '(templates/.*\.yml|templates/.*\.yaml)'
 KUBERNETES_DIRECTORY: deploy/charts/templates
 KUBERNETES_HELM_ARGUMENTS: deploy/charts
+# Gitleaks configuration to use our ignore file
+REPOSITORY_GITLEAKS_CONFIG_FILE: ".gitleaksignore"
