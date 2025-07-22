@@ -71,6 +71,9 @@ func (s *ResourceSearch) QueryResources(ctx context.Context, criteria model.Sear
 	// Delegate to the search implementation
 	result, err := s.resourceSearcher.QueryResources(ctx, criteria)
 	if err != nil {
+		slog.ErrorContext(ctx, "search operation failed while executing query resources",
+			"error", err,
+		)
 		return nil, fmt.Errorf("search operation failed: %w", err)
 	}
 

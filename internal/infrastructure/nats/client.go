@@ -10,6 +10,7 @@ import (
 	"log/slog"
 	"time"
 
+	"github.com/linuxfoundation/lfx-v2-query-service/pkg/constants"
 	"github.com/linuxfoundation/lfx-v2-query-service/pkg/errors"
 
 	"github.com/nats-io/nats.go"
@@ -107,7 +108,7 @@ func NewClient(ctx context.Context, config Config) (*NATSClient, error) {
 
 	// Configure NATS connection options
 	opts := []nats.Option{
-		nats.Name("lfx-v2-query-service"),
+		nats.Name(constants.ServiceName),
 		nats.Timeout(config.Timeout),
 		nats.MaxReconnects(config.MaxReconnect),
 		nats.ReconnectWait(config.ReconnectWait),
