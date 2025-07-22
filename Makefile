@@ -92,6 +92,14 @@ helm-render: ## Render Helm templates
 	@echo "Rendering Helm templates..."
 	helm template lfx-query-svc deploy/charts --set image.tag=$(DOCKER_TAG)
 
-.PHONY: helm-deploy
-helm-deploy: ## Deploy application using Helm
-	helm upgrade --install lfx-query-svc deploy/charts --set image.tag=$(DOCKER_TAG)
+.PHONY: helm-install
+helm-install: # Install Helm chart
+	@echo "==> Installing Helm chart..."
+	helm upgrade --install $(HELM_RELEASE_NAME) $(HELM_CHART_PATH) --namespace $(HELM_NAMESPACE)
+	@echo "==> Helm chart installed: $(HELM_RELEASE_NAME)"
+
+.PHONY: helm-uninstall
+helm-uninstall: # Uninstall Helm chart
+	@echo "==> Uninstalling Helm chart..."
+	helm uninstall $(HELM_RELEASE_NAME) --namespace $(HELM_NAMESPACE)
+	@echo "==> Helm chart uninstalled: $(HELM_RELEASE_NAME)"
