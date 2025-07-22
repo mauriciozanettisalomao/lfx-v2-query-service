@@ -46,6 +46,10 @@ func BuildQueryResourcesPayload(querySvcQueryResourcesVersion string, querySvcQu
 	{
 		if querySvcQueryResourcesParent != "" {
 			parent = &querySvcQueryResourcesParent
+			err = goa.MergeErrors(err, goa.ValidatePattern("parent", *parent, "^[a-zA-Z]+:[a-zA-Z0-9_-]+$"))
+			if err != nil {
+				return nil, err
+			}
 		}
 	}
 	var type_ *string

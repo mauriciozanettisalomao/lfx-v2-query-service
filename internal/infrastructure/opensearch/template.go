@@ -23,10 +23,10 @@ const queryResourceSource = `{
           }
         }
         {{- end }}
-        {{- if .ParentRef }},
+        {{- if .Parent }},
         {
           "term": {
-            "parent_refs": {{ .ParentRef | quote }}
+            "parent_refs": {{ .Parent | quote }}
           }
         }
         {{- end }}

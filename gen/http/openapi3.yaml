@@ -70,6 +70,7 @@ paths:
                     type: string
                     description: Parent (for navigation; varies by object type)
                     example: project:123
+                    pattern: ^[a-zA-Z]+:[a-zA-Z0-9_-]+$
                   example: project:123
                 - name: type
                   in: query
