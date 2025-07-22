@@ -12,7 +12,7 @@ DOCKER_IMAGE := $(DOCKER_REGISTRY)/$(APP_NAME)
 DOCKER_TAG := $(VERSION)
 
 # Helm variables
-HELM_CHART_PATH=./deploy/charts
+HELM_CHART_PATH=./charts/lfx-v2-query-service
 HELM_RELEASE_NAME=lfx-v2-query-svc
 HELM_NAMESPACE=lfx
 
@@ -88,7 +88,7 @@ docker-run: ## Run Docker container locally
 		--name $(APP_NAME) \
 		-p 8080:8080 \
 		-e OPENSEARCH_URL=http://opensearch-cluster-master.lfx.svc.cluster.local:9200 \
-		-e NATS_URL=nats://nats.lfx.svc.cluster.local:4222 \
+		-e NATS_URL=nats://lfx-platform-nats.lfx.svc.cluster.local:4222 \
 		$(DOCKER_IMAGE):$(DOCKER_TAG)
 
 ##@ Helm/Kubernetes

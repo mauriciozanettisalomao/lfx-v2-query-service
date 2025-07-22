@@ -15,7 +15,7 @@ ingress:
 # nats is the configuration for the NATS server
 nats:
   # url is the URL of the NATS server
-  url: nats://nats.lfx.svc.cluster.local:4222
+  url: nats://lfx-platform-nats.lfx.svc.cluster.local:4222
 
 # opensearch is the configuration for the OpenSearch cluster
 opensearch:
