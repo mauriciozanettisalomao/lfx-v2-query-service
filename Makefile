@@ -11,6 +11,11 @@ DOCKER_REGISTRY := linuxfoundation## container registry ghcr.io/ ???
 DOCKER_IMAGE := $(DOCKER_REGISTRY)/$(APP_NAME)
 DOCKER_TAG := $(VERSION)
 
+# Helm variables
+HELM_CHART_PATH=./deploy/charts
+HELM_RELEASE_NAME=lfx-v2-query-svc
+HELM_NAMESPACE=lfx
+
 # Go
 GO_VERSION := 1.24.2
 GOOS := linux
@@ -45,9 +50,10 @@ apigen: deps #@ Generate API code using Goa
 	goa gen github.com/linuxfoundation/lfx-v2-query-service/design
 
 .PHONY: lint
-lint: ## Run golangci-lint with default settings
+lint: ## Run golangci-lint (local Go linting)
 	@echo "Running golangci-lint..."
-	@$(LINT_TOOL) run --config=.golangci.yml ./... && echo "==> Lint OK"
+	@which golangci-lint >/dev/null 2>&1 || (echo "Installing golangci-lint..." && go install github.com/golangci/golangci-lint/cmd/golangci-lint@latest)
+	@golangci-lint run ./... && echo "==> Lint OK"
 
 .PHONY: test
 test: ## Run tests
@@ -62,7 +68,7 @@ build: ## Build the application for local OS
 		-o bin/$(APP_NAME) ./cmd
 
 .PHONY: run
-run: build-local ## Run the application for local development
+run: build ## Run the application for local development
 	@echo "Running application for local development..."
 	./bin/$(APP_NAME)
 
@@ -86,12 +92,23 @@ docker-run: ## Run Docker container locally
 		$(DOCKER_IMAGE):$(DOCKER_TAG)
 
 ##@ Helm/Kubernetes
+# Install Helm chart
+.PHONY: helm-install
+helm-install:
+	@echo "==> Installing Helm chart..."
+	helm upgrade --install $(HELM_RELEASE_NAME) $(HELM_CHART_PATH) --namespace $(HELM_NAMESPACE) --set image.tag=$(DOCKER_TAG)
+	@echo "==> Helm chart installed: $(HELM_RELEASE_NAME)"
 
-.PHONY: helm-render
-helm-render: ## Render Helm templates
-	@echo "Rendering Helm templates..."
-	helm template lfx-query-svc deploy/charts --set image.tag=$(DOCKER_TAG)
+# Print templates for Helm chart
+.PHONY: helm-templates
+helm-templates:
+	@echo "==> Printing templates for Helm chart..."
+	helm template $(HELM_RELEASE_NAME) $(HELM_CHART_PATH) --namespace $(HELM_NAMESPACE) --set image.tag=$(DOCKER_TAG)
+	@echo "==> Templates printed for Helm chart: $(HELM_RELEASE_NAME)"
 
-.PHONY: helm-deploy
-helm-deploy: ## Deploy application using Helm
-	helm upgrade --install lfx-query-svc deploy/charts --set image.tag=$(DOCKER_TAG)
+# Uninstall Helm chart
+.PHONY: helm-uninstall
+helm-uninstall:
+	@echo "==> Uninstalling Helm chart..."
+	helm uninstall $(HELM_RELEASE_NAME) --namespace $(HELM_NAMESPACE)
+	@echo "==> Helm chart uninstalled: $(HELM_RELEASE_NAME)"
