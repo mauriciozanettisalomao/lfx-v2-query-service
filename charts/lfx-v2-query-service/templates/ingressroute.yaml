@@ -16,7 +16,9 @@ spec:
         Host(`{{.Values.ingress.hostname}}`) && PathPrefix(`/query/`)
       priority: 10
       middlewares:
+        {{- if .Values.heimdall.enabled }}
         - name: heimdall
+        {{- end }}
       services:
         - kind: Service
           name: query-svc
