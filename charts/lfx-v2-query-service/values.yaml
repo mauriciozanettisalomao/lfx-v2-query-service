@@ -21,3 +21,8 @@ nats:
 opensearch:
   # url is the URL of the OpenSearch cluster
   url: http://opensearch-cluster-master:9200
+
+authelia:
+  # enabled is a boolean to determine if the Authelia authenticator is enabled
+  # Note: Disabling Authelia should only be used for local development
+  enabled: true
