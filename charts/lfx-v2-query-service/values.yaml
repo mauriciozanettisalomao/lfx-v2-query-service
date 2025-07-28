@@ -29,4 +29,8 @@ authelia:
 
 # heimdall is the configuration for the heimdall middleware
 heimdall:
+  # enabled is a boolean to determine if the heimdall middleware is enabled
+  # If disabled, there will be no authorization check on the query routes
   enabled: true
+  # url is the URL of the heimdall server
+  url: http://heimdall.lfx.svc.cluster.local:4456

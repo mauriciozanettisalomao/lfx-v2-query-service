@@ -181,7 +181,10 @@ func NewSearcher(ctx context.Context, config Config) (port.ResourceSearcher, err
 	if errpensearchClient != nil {
 		return nil, errors.NewServiceUnavailable("failed to create OpenSearch client", errpensearchClient)
 	}
-	slog.InfoContext(ctx, "created OpenSearch client created successfully")
+	slog.InfoContext(ctx, "created OpenSearch client created successfully",
+		"url", config.URL,
+		"index", config.Index,
+	)
 
 	return &OpenSearchSearcher{
 		client: &httpClient{

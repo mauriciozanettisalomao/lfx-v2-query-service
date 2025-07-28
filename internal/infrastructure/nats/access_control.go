@@ -33,7 +33,10 @@ func (n *NATSAccessControlChecker) CheckAccess(ctx context.Context, subj string,
 		Timeout: timeout,
 	})
 	if err != nil {
-		slog.ErrorContext(ctx, "NATS access control check failed", "error", err)
+		slog.ErrorContext(ctx, "NATS access control check failed",
+			"error", err,
+			"subject", subj,
+		)
 		return nil, fmt.Errorf("NATS access control check failed: %w", err)
 	}
 
