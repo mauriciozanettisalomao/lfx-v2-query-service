@@ -6,7 +6,7 @@ replicaCount: 1
 # Override from CLI/CI: --set image.tag=<git-sha>, etc.
 image:
   tag: "0.1.0"
-  repository: linuxfoundation/lfx-query-svc
+  repository: linuxfoundation/lfx-v2-query-service
 
 # ingress is the configuration for the ingress routing
 ingress:
@@ -32,3 +32,7 @@ heimdall:
   # enabled is a boolean to determine if the heimdall middleware is enabled
   # If disabled, there will be no authorization check on the query routes
   enabled: true
+
+# pageTokenSecret is the secret used for page token encryption
+# If not provided, a random 32-character secret will be generated
+# pageTokenSecret: "your-custom-secret-here"
