@@ -7,7 +7,7 @@ metadata:
   name: query-svc
   namespace: lfx
 spec:
-  replicas: {{ .Values.replicaCount }} 
+  replicas: {{ .Values.replicaCount }}
   selector:
     matchLabels:
       app: query-svc
@@ -19,7 +19,6 @@ spec:
       containers:
         - name: app
           image: {{ .Values.image.repository }}:{{ .Values.image.tag }}
-          imagePullPolicy: Never
           env:
             - name: OPENSEARCH_URL
               value: {{.Values.opensearch.url}}
