@@ -5,7 +5,7 @@ package constants
 
 const (
 	// AccessCheckSubject is the subject used for access control checks
-	AccessCheckSubject = "dev.lfx.access_check.request"
+	AccessCheckSubject = "lfx.access_check.request"
 	// AnonymousPrincipal is the identifier for anonymous users
 	AnonymousPrincipal = `_anonymous`
 	// PrincipalAttribute is the attribute used to indicate the principal in the logging context

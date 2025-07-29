@@ -5,6 +5,7 @@ HTTP service for LFX API consumers to perform access-controlled queries for LFX 
 ## Architecture Overview
 
 The implementation follows the clean architecture principles where:
+
 - **Domain Layer**: Contains business logic and interfaces
 - **Service Layer**: Orchestrates business operations
 - **Infrastructure Layer**: Implements external dependencies
@@ -15,9 +16,7 @@ The implementation follows the clean architecture principles where:
 ```
 ├── .github/                        # Github files
 │   └── workflows/                  # Github Action workflow files
-├── deploy/                         # Contains Kubernetes/Helm manifests
-│   ├── k8s/                        # K8s manifests (raw YAML)
-│   └── charts/                     # Helm charts
+├── charts/                         # Helm charts
 ├── design/                         # GOA design specification files
 ├── gen/                            # GOA generated code (HTTP server, client, OpenAPI)
 ├── cmd/                            # Services (main packages)
@@ -35,30 +34,36 @@ The implementation follows the clean architecture principles where:
 ## Key Components
 
 ### Domain Layer (`internal/domain/`)
+
+- **ResourceService**: Contains business logic and validation
+
 #### Model (`internal/domain/model/`)
+
 - **Domain Models**: Core business entities and data structures
 - **Value Objects**: Immutable objects that represent domain concepts
 
 #### Ports (`internal/domain/port/`)
+
 - **ResourceSearcher Interface**: Defines the contract for resource search operations
 - **AccessControlChecker Interface**: Defines the contract for access control operations
 
 ### Use Case Layer (`internal/usecase/`)
+
 - **Business Logic**: Application-specific business rules and operations
 - **Use Case Orchestration**: Coordinates between domain models and infrastructure
-
-### Service Layer (`internal/service/`)
-- **ResourceService**: Contains business logic and validation
 
 ### Infrastructure Layer (`internal/infrastructure/`)
 
 #### OpenSearch Implementation
+
 The OpenSearch implementation includes query templates, a searcher, and a client for interacting with the OpenSearch cluster.
 
 #### NATS Implementation
+
 The NATS implementation consists of a client, access control logic, and request/response models for messaging and access control.
 
 ## Dependency Injection
+
 Dependency injection is performed in `cmd/main.go`, where the concrete implementations for resource search and access control are selected based on configuration and then injected into the service constructor.
 
 ## Benefits of This Architecture
@@ -82,6 +87,7 @@ make docker-build
 ### Running with Docker
 
 #### Basic Docker Run
+
 ```bash
 make docker-run
 ```
@@ -91,6 +97,7 @@ make docker-run
 ### Running Locally
 
 #### With Mock Implementation (Default for Development)
+
 ```bash
 # Using mock implementations
 SEARCH_SOURCE=mock ACCESS_CONTROL_SOURCE=mock go run cmd/main.go
@@ -100,6 +107,7 @@ SEARCH_SOURCE=mock ACCESS_CONTROL_SOURCE=mock go run cmd/main.go -p 3000
 ```
 
 #### With OpenSearch and NATS
+
 ```bash
 # Using OpenSearch and NATS (production-like setup)
 SEARCH_SOURCE=opensearch \
@@ -113,22 +121,27 @@ go run cmd/main.go
 ### Available Environment Variables
 
 **Search Implementation:**
+
 - `SEARCH_SOURCE`: Choose between "mock" or "opensearch" (default: "opensearch")
 
 **OpenSearch Configuration:**
+
 - `OPENSEARCH_URL`: OpenSearch URL (default: `http://localhost:9200`)
 - `OPENSEARCH_INDEX`: OpenSearch index name (default: "resources")
 
 **Access Control Implementation:**
+
 - `ACCESS_CONTROL_SOURCE`: Choose between "mock" or "nats" (default: "nats")
 
 **NATS Configuration:**
+
 - `NATS_URL`: NATS server URL (default: `nats://localhost:4222`)
 - `NATS_TIMEOUT`: Request timeout duration (default: "10s")
 - `NATS_MAX_RECONNECT`: Maximum reconnection attempts (default: "3")
 - `NATS_RECONNECT_WAIT`: Time between reconnection attempts (default: "2s")
 
 **Server Configuration:**
+
 - `-p`: HTTP port (default: "8080")
 - `-bind`: Interface to bind on (default: "*")
 - `-d`: Enable debug logging
@@ -142,6 +155,7 @@ GET /query/resources?name=committee&type=committee&v=1
 ```
 
 **Parameters:**
+
 - `name`: Resource name or alias (supports typeahead search)
 - `type`: Resource type to filter by
 - `parent`: Parent resource for hierarchical queries
@@ -151,6 +165,7 @@ GET /query/resources?name=committee&type=committee&v=1
 - `v`: API version (required)
 
 **Response:**
+
 ```json
 {
   "resources": [
@@ -216,6 +231,7 @@ go install goa.design/goa/v3/cmd/goa@latest
 ```
 
 Verify the installation:
+
 ```bash
 goa version
 ```
@@ -231,6 +247,7 @@ goa gen github.com/linuxfoundation/lfx-v2-query-service/design
 ```
 
 This command generates:
+
 - HTTP server and client code
 - OpenAPI specification
 - Service interfaces and types
@@ -250,15 +267,20 @@ This command generated the basic server structure, which was then customized and
 
 1. **Make design changes**: Edit files in the `design/` directory
 2. **Regenerate code**: Run `goa gen github.com/linuxfoundation/lfx-v2-query-service/design` after design changes
-3. **Build the project**: 
+3. **Build the project**:
+
    ```bash
    go build cmd
    ```
+
 4. **Run with mock data** (for development):
+
    ```bash
    SEARCH_SOURCE=mock ACCESS_CONTROL_SOURCE=mock go run ./cmd
    ```
+
 5. **Run tests**:
+
    ```bash
    go test ./...
    ```

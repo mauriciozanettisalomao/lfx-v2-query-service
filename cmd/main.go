@@ -171,7 +171,10 @@ func searcherImpl(ctx context.Context) port.ResourceSearcher {
 		resourceSearcher = mock.NewMockResourceSearcher()
 
 	case "opensearch":
-		slog.InfoContext(ctx, "initializing opensearch resource searcher")
+		slog.InfoContext(ctx, "initializing opensearch resource searcher",
+			"url", opensearchURL,
+			"index", opensearchIndex,
+		)
 		opensearchConfig := opensearch.Config{
 			URL:   opensearchURL,
 			Index: opensearchIndex,

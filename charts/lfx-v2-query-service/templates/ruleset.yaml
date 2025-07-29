@@ -15,7 +15,6 @@ spec:
         routes:
           - path: /query/resources
       execute:
-      execute:
         {{- if .Values.authelia.enabled }}
         - authenticator: authelia
         - contextualizer: authelia_userinfo
