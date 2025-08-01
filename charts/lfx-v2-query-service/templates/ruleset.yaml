@@ -5,7 +5,7 @@ apiVersion: heimdall.dadrus.github.com/v1alpha4
 kind: RuleSet
 metadata:
   name: lfx-v2-query-service
-  namespace: lfx
+  namespace: {{ .Release.Namespace }}
 spec:
   rules:
     - id: "rule:lfx:lfx-v2-query-service"
@@ -15,11 +15,9 @@ spec:
         routes:
           - path: /query/resources
       execute:
-        {{- if .Values.authelia.enabled }}
-        - authenticator: authelia
-        {{- end }}
         - authenticator: anonymous_authenticator
         {{- if .Values.authelia.enabled }}
+        - authenticator: authelia
         - contextualizer: authelia_userinfo
         {{- end }}
         - authorizer: allow_all

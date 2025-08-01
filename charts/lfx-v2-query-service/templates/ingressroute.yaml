@@ -5,7 +5,7 @@ apiVersion: traefik.io/v1alpha1
 kind: IngressRoute
 metadata:
   name: lfx-v2-query-service
-  namespace: lfx
+  namespace: {{ .Release.Namespace }}
 spec:
   entryPoints:
     - web

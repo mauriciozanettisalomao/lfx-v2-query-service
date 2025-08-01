@@ -5,7 +5,7 @@ apiVersion: v1
 kind: Service
 metadata:
   name: lfx-v2-query-service
-  namespace: lfx
+  namespace: {{ .Release.Namespace }}
 
 spec:
   ports:

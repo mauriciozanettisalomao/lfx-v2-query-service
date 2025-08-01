@@ -5,7 +5,7 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: lfx-v2-query-service
-  namespace: lfx
+  namespace: {{ .Release.Namespace }}
 spec:
   replicas: {{ .Values.replicaCount }}
   selector:
@@ -28,11 +28,11 @@ spec:
             - name: PAGE_TOKEN_SECRET
               valueFrom:
                 secretKeyRef:
-                  name: lfx-v2-query-service-secrets
+                  name: {{ .Values.secret.name }}
                   key: PAGE_TOKEN_SECRET
           envFrom:
             - secretRef:
-                name: lfx-v2-query-service-secrets
+                name: {{ .Values.secret.name }}
           ports:
             - containerPort: 8080
               name: web
