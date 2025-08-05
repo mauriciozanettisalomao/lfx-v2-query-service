@@ -16,7 +16,7 @@ app:
   # logAddSource is a boolean to determine if the log source should be added
   logAddSource: true
   # audience is the JWT audience required for this authentication with this app
-  audience: http://lfx-api.k8s.orb.local
+  audience: lfx-v2-project-service
 
 # ingress is the configuration for the ingress routing
 ingress:
