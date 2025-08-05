@@ -34,7 +34,7 @@ spec:
             - secretRef:
                 name: {{ .Values.secret.name }}
           ports:
-            - containerPort: 8080
+            - containerPort: {{ .Values.service.port }}
               name: web
           livenessProbe:
             httpGet:

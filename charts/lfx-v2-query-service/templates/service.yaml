@@ -10,7 +10,7 @@ metadata:
 spec:
   ports:
     - name: web
-      port: 80
+      port: {{ .Values.service.port }}
       targetPort: web
 
   selector:
