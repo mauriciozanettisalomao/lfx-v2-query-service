@@ -9,6 +9,15 @@ image:
   tag: ""
   pullPolicy: IfNotPresent
 
+# app is the configuration for the application
+app:
+  # logLevel is the log level (debug, info, warn, error)
+  logLevel: debug
+  # logAddSource is a boolean to determine if the log source should be added
+  logAddSource: true
+  # audience is the JWT audience required for this authentication with this app
+  audience: http://lfx-api.k8s.orb.local
+
 # ingress is the configuration for the ingress routing
 ingress:
   hostname: lfx-api.k8s.orb.local
@@ -33,6 +42,9 @@ heimdall:
   # enabled is a boolean to determine if the heimdall middleware is enabled
   # If disabled, there will be no authorization check on the query routes
   enabled: true
+  url: http://lfx-platform-heimdall.lfx.svc.cluster.local:4456
+  # jwksUrl is the JWKS URL for JWT verification (note: uses port 4457)
+  jwksUrl: http://lfx-platform-heimdall.lfx.svc.cluster.local:4457/.well-known/jwks
 
 # secret is the configuration for the Kubernetes Secret
 secret:

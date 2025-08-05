@@ -18,10 +18,11 @@ import (
 )
 
 const (
-	// PS256 is the default for Heimdall's JWT finalizer.
-	signatureAlgorithm = validator.PS256
+	// PS512 is the default for Heimdall's JWT finalizer.
+	signatureAlgorithm = validator.PS512
 	defaultIssuer      = "heimdall"
-	defaultAudience    = "lfx-v2-query-service"
+	defaultAudience    = "http://lfx-api.k8s.orb.local"
+	defaultJWKSURL     = "http://heimdall:4457/.well-known/jwks"
 )
 
 var (
@@ -53,7 +54,7 @@ func SetupJWTAuth(ctx context.Context) {
 	// Set up Heimdall JWKS key provider.
 	jwksEnv := os.Getenv("JWKS_URL")
 	if jwksEnv == "" {
-		jwksEnv = "http://heimdall:4457/.well-known/jwks"
+		jwksEnv = defaultJWKSURL
 	}
 	jwksURL, err := url.Parse(jwksEnv)
 	if err != nil {
@@ -80,6 +81,7 @@ func SetupJWTAuth(ctx context.Context) {
 	if audience == "" {
 		audience = defaultAudience
 	}
+
 	jwtValidator, err = validator.New(
 		provider.KeyFunc,
 		signatureAlgorithm,

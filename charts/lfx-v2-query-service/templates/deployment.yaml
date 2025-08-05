@@ -21,6 +21,14 @@ spec:
           image: {{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion }}
           imagePullPolicy: {{ .Values.image.pullPolicy }}
           env:
+            - name: LOG_LEVEL
+              value: {{ .Values.app.logLevel }}
+            - name: LOG_ADD_SOURCE
+              value: {{ .Values.app.logAddSource | quote }}
+            - name: AUDIENCE
+              value: {{ .Values.app.audience }}
+            - name: JWKS_URL
+              value: {{ .Values.heimdall.jwksUrl }}
             - name: OPENSEARCH_URL
               value: {{.Values.opensearch.url}}
             - name: NATS_URL
