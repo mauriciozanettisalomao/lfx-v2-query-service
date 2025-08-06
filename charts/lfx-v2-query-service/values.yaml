@@ -56,3 +56,6 @@ secret:
   # pageTokenSecret is the secret used for page token encryption
   # If not provided, a random 32-character secret will be generated
   # pageTokenSecret: "your-custom-secret-here"
+
+jwks:
+  url: http://lfx-platform-heimdall:4457/.well-known/jwks

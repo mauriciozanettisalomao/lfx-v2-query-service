@@ -30,6 +30,8 @@ spec:
                 secretKeyRef:
                   name: {{ .Values.secret.name }}
                   key: PAGE_TOKEN_SECRET
+            - name: JWKS_URL
+              value: {{ .Values.jwks.url }}
           envFrom:
             - secretRef:
                 name: {{ .Values.secret.name }}
