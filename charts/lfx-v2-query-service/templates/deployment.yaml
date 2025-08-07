@@ -32,6 +32,8 @@ spec:
                   key: PAGE_TOKEN_SECRET
             - name: JWKS_URL
               value: {{ .Values.jwks.url }}
+            - name: JWT_SIGNATURE_ALGORITHM
+              value: {{ .Values.jwt.signatureAlgorithm | default "PS256" }}
           envFrom:
             - secretRef:
                 name: {{ .Values.secret.name }}
