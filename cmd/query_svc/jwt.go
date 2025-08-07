@@ -19,9 +19,10 @@ import (
 
 const (
 	// PS256 is the default for Heimdall's JWT finalizer.
-	signatureAlgorithm = validator.PS256
-	defaultIssuer      = "heimdall"
-	defaultAudience    = "lfx-v2-query-service"
+	ps256           = validator.PS256
+	rs256           = validator.RS256
+	defaultIssuer   = "heimdall"
+	defaultAudience = "lfx-v2-query-service"
 )
 
 var (
@@ -75,6 +76,10 @@ func SetupJWTAuth(ctx context.Context) {
 	}
 	provider := jwks.NewCachingProvider(issuer, 5*time.Minute, jwks.WithCustomJWKSURI(jwksURL))
 
+	signatureAlgorithm := ps256
+	if os.Getenv("JWT_SIGNATURE_ALGORITHM") == "RS256" {
+		signatureAlgorithm = rs256
+	}
 	// Set up the JWT validator.
 	audience := os.Getenv("AUDIENCE")
 	if audience == "" {
