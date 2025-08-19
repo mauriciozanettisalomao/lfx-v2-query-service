@@ -47,7 +47,7 @@ func handleHTTPServer(ctx context.Context, host string, querySvcEndpoints *query
 
 	koDatapath := os.Getenv("KO_DATA_PATH")
 	if koDatapath == "" {
-		koDatapath = "./gen/http/"
+		koDatapath = "./gen/http"
 	}
 	koHttpDir := http.Dir(koDatapath)
 	// Wrap the endpoints with the transport specific layers. The generated
