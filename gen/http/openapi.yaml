@@ -1,6 +1,7 @@
 swagger: "2.0"
 info:
-    title: ""
+    title: LFX V2 - Query Service
+    description: Query indexed resources
     version: 0.0.1
 host: localhost:80
 consumes:
@@ -12,6 +13,58 @@ produces:
     - application/xml
     - application/gob
 paths:
+    /_query/openapi.json:
+        get:
+            tags:
+                - query-svc
+            summary: Download gen/http/openapi.json
+            operationId: query-svc#/_query/openapi.json
+            responses:
+                "200":
+                    description: File downloaded
+                    schema:
+                        type: file
+            schemes:
+                - http
+    /_query/openapi.yaml:
+        get:
+            tags:
+                - query-svc
+            summary: Download gen/http/openapi.yaml
+            operationId: query-svc#/_query/openapi.yaml
+            responses:
+                "200":
+                    description: File downloaded
+                    schema:
+                        type: file
+            schemes:
+                - http
+    /_query/openapi3.json:
+        get:
+            tags:
+                - query-svc
+            summary: Download gen/http/openapi3.json
+            operationId: query-svc#/_query/openapi3.json
+            responses:
+                "200":
+                    description: File downloaded
+                    schema:
+                        type: file
+            schemes:
+                - http
+    /_query/openapi3.yaml:
+        get:
+            tags:
+                - query-svc
+            summary: Download gen/http/openapi3.yaml
+            operationId: query-svc#/_query/openapi3.yaml
+            responses:
+                "200":
+                    description: File downloaded
+                    schema:
+                        type: file
+            schemes:
+                - http
     /livez:
         get:
             tags:
@@ -27,19 +80,6 @@ paths:
                     schema:
                         type: string
                         format: byte
-            schemes:
-                - http
-    /openapi.json:
-        get:
-            tags:
-                - query-svc
-            summary: Download gen/http/openapi3.json
-            operationId: query-svc#/openapi.json
-            responses:
-                "200":
-                    description: File downloaded
-                    schema:
-                        type: file
             schemes:
                 - http
     /query/resources:
@@ -210,15 +250,21 @@ definitions:
                         description: a committee
                       id: "123"
                       type: committee
-                    - data:
-                        id: "123"
-                        name: My committee
-                        description: a committee
-                      id: "123"
-                      type: committee
         example:
             page_token: '****'
             resources:
+                - data:
+                    id: "123"
+                    name: My committee
+                    description: a committee
+                  id: "123"
+                  type: committee
+                - data:
+                    id: "123"
+                    name: My committee
+                    description: a committee
+                  id: "123"
+                  type: committee
                 - data:
                     id: "123"
                     name: My committee
@@ -268,7 +314,7 @@ definitions:
             message: parameter 'p' must be an integer
             name: bad_request
             temporary: true
-            timeout: false
+            timeout: true
         required:
             - name
             - id

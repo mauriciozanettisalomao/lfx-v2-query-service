@@ -9,6 +9,11 @@ image:
   tag: ""
   pullPolicy: IfNotPresent
 
+# app is the configuration for the application
+app:
+  # use_oidc_contextualizer is a boolean to determine if the OIDC contextualizer should be used
+  use_oidc_contextualizer: true
+
 # traefik is the configuration for Traefik Gateway API routing
 traefik:
   # gateway specifies the platform Gateway to attach to
