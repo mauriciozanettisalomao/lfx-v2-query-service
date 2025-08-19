@@ -7,6 +7,11 @@ import (
 	"goa.design/goa/v3/dsl"
 )
 
+var _ = dsl.API("lfx-v2-query-service", func() {
+	dsl.Title("LFX V2 - Query Service")
+	dsl.Description("Query indexed resources")
+})
+
 var JWTAuth = dsl.JWTSecurity("jwt", func() {
 	dsl.Description("Heimdall authorization")
 })

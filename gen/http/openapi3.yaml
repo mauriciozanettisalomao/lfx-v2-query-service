@@ -1,10 +1,11 @@
 openapi: 3.0.3
 info:
-    title: Goa API
+    title: LFX V2 - Query Service
+    description: Query indexed resources
     version: 0.0.1
 servers:
     - url: http://localhost:80
-      description: Default server for query-svc
+      description: Default server for lfx-v2-query-service
 paths:
     /_query/openapi.json:
         get:
@@ -116,7 +117,7 @@ paths:
                     type: array
                     items:
                         type: string
-                        example: Earum sit dolores numquam aut.
+                        example: Sint commodi.
                     description: Tags to search (varies by object type)
                     example:
                         - active
@@ -164,12 +165,6 @@ paths:
                             example:
                                 page_token: '****'
                                 resources:
-                                    - data:
-                                        id: "123"
-                                        name: My committee
-                                        description: a committee
-                                      id: "123"
-                                      type: committee
                                     - data:
                                         id: "123"
                                         name: My committee
@@ -272,14 +267,14 @@ components:
                 temporary:
                     type: boolean
                     description: Is the error temporary?
-                    example: false
+                    example: true
                 timeout:
                     type: boolean
                     description: Is the error a timeout?
                     example: false
             description: Service is not ready yet
             example:
-                fault: true
+                fault: false
                 id: 123abc
                 message: parameter 'p' must be an integer
                 name: bad_request
@@ -328,21 +323,15 @@ components:
                             description: a committee
                           id: "123"
                           type: committee
-                        - data:
-                            id: "123"
-                            name: My committee
-                            description: a committee
-                          id: "123"
-                          type: committee
-                        - data:
-                            id: "123"
-                            name: My committee
-                            description: a committee
-                          id: "123"
-                          type: committee
             example:
                 page_token: '****'
                 resources:
+                    - data:
+                        id: "123"
+                        name: My committee
+                        description: a committee
+                      id: "123"
+                      type: committee
                     - data:
                         id: "123"
                         name: My committee
