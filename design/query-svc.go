@@ -113,5 +113,8 @@ var _ = dsl.Service("query-svc", func() {
 	})
 
 	// Serve the file gen/http/openapi3.json for requests sent to /openapi.json.
-	dsl.Files("/openapi.json", "gen/http/openapi3.json")
+	dsl.Files("/_query/openapi.json", "gen/http/openapi.json")
+	dsl.Files("/_query/openapi.yaml", "gen/http/openapi.yaml")
+	dsl.Files("/_query/openapi3.json", "gen/http/openapi3.json")
+	dsl.Files("/_query/openapi3.yaml", "gen/http/openapi3.yaml")
 })

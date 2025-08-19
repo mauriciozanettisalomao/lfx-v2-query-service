@@ -7,6 +7,7 @@ import (
 	"context"
 	"log/slog"
 	"net/http"
+	"os"
 	"sync"
 	"time"
 
@@ -44,6 +45,11 @@ func handleHTTPServer(ctx context.Context, host string, querySvcEndpoints *query
 		}
 	}
 
+	koDatapath := os.Getenv("KO_DATA_PATH")
+	if koDatapath == "" {
+		koDatapath = "./gen/http/"
+	}
+	koHttpDir := http.Dir(koDatapath)
 	// Wrap the endpoints with the transport specific layers. The generated
 	// server packages contains code generated from the design which maps
 	// the service input and output data structures to HTTP requests and
@@ -53,7 +59,7 @@ func handleHTTPServer(ctx context.Context, host string, querySvcEndpoints *query
 	)
 	{
 		eh := errorHandler(ctx)
-		querySvcServer = querysvcsvr.New(querySvcEndpoints, mux, dec, enc, eh, nil, nil)
+		querySvcServer = querysvcsvr.New(querySvcEndpoints, mux, dec, enc, eh, nil, koHttpDir, koHttpDir, koHttpDir, koHttpDir)
 	}
 
 	// Configure the mux.

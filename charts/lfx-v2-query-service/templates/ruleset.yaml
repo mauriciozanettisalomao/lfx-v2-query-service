@@ -8,6 +8,26 @@ metadata:
   namespace: {{ .Release.Namespace }}
 spec:
   rules:
+    - id: "rule:lfx:lfx-v2-query-service:openapi:get"
+      match:
+        methods:
+          - GET
+        routes:
+          - path: /_query/openapi.json
+          - path: /_query/openapi.yaml
+          - path: /_query/openapi3.json
+          - path: /_query/openapi3.yaml
+      execute:
+        - authenticator: oidc
+        - authenticator: anonymous_authenticator
+        {{- if .Values.app.use_oidc_contextualizer }}
+        - contextualizer: oidc_contextualizer
+        {{- end }}
+        - authorizer: allow_all
+        - finalizer: create_jwt
+          config:
+            values:
+              aud: lfx-v2-query-service
     - id: "rule:lfx:lfx-v2-query-service"
       match:
         methods:
@@ -15,10 +35,10 @@ spec:
         routes:
           - path: /query/resources
       execute:
+        - authenticator: oidc
         - authenticator: anonymous_authenticator
-        {{- if .Values.authelia.enabled }}
-        - authenticator: authelia
-        - contextualizer: authelia_userinfo
+        {{- if .Values.app.use_oidc_contextualizer }}
+        - contextualizer: oidc_contextualizer
         {{- end }}
         - authorizer: allow_all
         - finalizer: create_jwt

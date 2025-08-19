@@ -6,6 +6,42 @@ servers:
     - url: http://localhost:80
       description: Default server for query-svc
 paths:
+    /_query/openapi.json:
+        get:
+            tags:
+                - query-svc
+            summary: Download gen/http/openapi.json
+            operationId: query-svc#/_query/openapi.json
+            responses:
+                "200":
+                    description: File downloaded
+    /_query/openapi.yaml:
+        get:
+            tags:
+                - query-svc
+            summary: Download gen/http/openapi.yaml
+            operationId: query-svc#/_query/openapi.yaml
+            responses:
+                "200":
+                    description: File downloaded
+    /_query/openapi3.json:
+        get:
+            tags:
+                - query-svc
+            summary: Download gen/http/openapi3.json
+            operationId: query-svc#/_query/openapi3.json
+            responses:
+                "200":
+                    description: File downloaded
+    /_query/openapi3.yaml:
+        get:
+            tags:
+                - query-svc
+            summary: Download gen/http/openapi3.yaml
+            operationId: query-svc#/_query/openapi3.yaml
+            responses:
+                "200":
+                    description: File downloaded
     /livez:
         get:
             tags:
@@ -23,15 +59,6 @@ paths:
                                 example: OK
                                 format: binary
                             example: OK
-    /openapi.json:
-        get:
-            tags:
-                - query-svc
-            summary: Download gen/http/openapi3.json
-            operationId: query-svc#/openapi.json
-            responses:
-                "200":
-                    description: File downloaded
     /query/resources:
         get:
             tags:
