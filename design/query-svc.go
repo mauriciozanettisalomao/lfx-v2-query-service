@@ -87,6 +87,7 @@ var _ = dsl.Service("query-svc", func() {
 
 	dsl.Method("readyz", func() {
 		dsl.Description("Check if the service is able to take inbound requests.")
+		dsl.Meta("swagger:generate", "false")
 		dsl.Result(dsl.Bytes, func() {
 			dsl.Example("OK")
 		})
@@ -106,6 +107,7 @@ var _ = dsl.Service("query-svc", func() {
 
 	dsl.Method("livez", func() {
 		dsl.Description("Check if the service is alive.")
+		dsl.Meta("swagger:generate", "false")
 		dsl.Result(dsl.Bytes, func() {
 			dsl.Example("OK")
 		})
