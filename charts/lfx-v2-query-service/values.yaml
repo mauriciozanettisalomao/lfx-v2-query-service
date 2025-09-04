@@ -68,4 +68,3 @@ jwks:
   url: http://lfx-platform-heimdall:4457/.well-known/jwks
 jwt:
   signatureAlgorithm: PS256
-
