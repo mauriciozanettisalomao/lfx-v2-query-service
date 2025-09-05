@@ -43,8 +43,9 @@ metadata:
   namespace: {{ .Release.Namespace }}
 spec:
   rateLimit:
-    # Global rate limiting across all users (shared Clearbit API quota)
     period: {{ .Values.orgSearch.rateLimit.period }}
     average: {{ .Values.orgSearch.rateLimit.requestsPerMinute }}
     burst: {{ .Values.orgSearch.rateLimit.burstSize }}
+    sourceCriterion:
+      requestHeaderName: Authorization
 {{- end }}
