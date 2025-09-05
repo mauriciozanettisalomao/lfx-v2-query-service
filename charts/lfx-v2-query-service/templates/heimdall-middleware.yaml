@@ -33,3 +33,18 @@ spec:
     authResponseHeaders:
       - Authorization
 {{- end }}
+---
+{{- if .Values.orgSearch.rateLimit.enabled }}
+# Rate limiting middleware for organization search endpoint
+apiVersion: traefik.io/v1alpha1
+kind: Middleware
+metadata:
+  name: org-search-rate-limit
+  namespace: {{ .Release.Namespace }}
+spec:
+  rateLimit:
+    # Global rate limiting across all users (shared Clearbit API quota)
+    period: {{ .Values.orgSearch.rateLimit.period }}
+    average: {{ .Values.orgSearch.rateLimit.requestsPerMinute }}
+    burst: {{ .Values.orgSearch.rateLimit.burstSize }}
+{{- end }}
