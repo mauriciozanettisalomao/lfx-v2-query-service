@@ -13,6 +13,24 @@ image:
 app:
   # use_oidc_contextualizer is a boolean to determine if the OIDC contextualizer should be used
   use_oidc_contextualizer: true
+  # environment is the configuration for the application environment
+  environment:
+    OPENSEARCH_URL:
+      value: http://opensearch-cluster-master:9200
+    NATS_URL:
+      value: nats://lfx-platform-nats.lfx.svc.cluster.local:4222
+    JWKS_URL:
+      value: http://lfx-platform-heimdall:4457/.well-known/jwks
+    JWT_SIGNATURE_ALGORITHM:
+      value: PS256
+    PAGE_TOKEN_SECRET:
+      valueFrom:
+        secretKeyRef:
+          name: lfx-v2-query-service-secrets
+          key: PAGE_TOKEN_SECRET
+    # CLEARBIT_CREDENTIAL is optional
+    CLEARBIT_CREDENTIAL:
+      value: null
 
 # traefik is the configuration for Traefik Gateway API routing
 traefik:
@@ -32,6 +50,18 @@ lfx:
 service:
   # port is the service port
   port: 8080
+
+# serviceAccount is the configuration for the Kubernetes service account
+serviceAccount:
+  # create specifies whether a service account should be created
+  create: true
+  # name is the name of the service account to use.
+  # If not set and create is true, a name is generated using the fullname template
+  name: ""
+  # annotations to add to the service account
+  annotations: {}
+  # automountServiceAccountToken is a boolean to determine if the service account token should be automatically mounted
+  automountServiceAccountToken: true
 
 # nats is the configuration for the NATS server
 nats:
