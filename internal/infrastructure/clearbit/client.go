@@ -61,7 +61,7 @@ func (c *Client) makeRequest(ctx context.Context, url string) (*ClearbitCompany,
 		// Handle specific Clearbit API errors
 		if httpErr, ok := err.(*httpclient.RetryableError); ok {
 			switch httpErr.StatusCode {
-			case 404:
+			case http.StatusNotFound:
 				return nil, errors.NewNotFound("company not found")
 			default:
 				return nil, errors.NewUnexpected("unexpected error", err)
@@ -80,7 +80,22 @@ func (c *Client) makeRequest(ctx context.Context, url string) (*ClearbitCompany,
 
 // IsReady checks if the Clearbit API is reachable
 func (c *Client) IsReady(ctx context.Context) error {
-	return nil // for now, we'll assume the API is ready
+
+	// curl -v --location 'https://company.clearbit.com' \
+	//< HTTP/2 200
+	//Welcome to the Company API.
+
+	resp, err := c.httpClient.Request(ctx, http.MethodGet, c.config.BaseURL, nil, nil)
+	if err != nil {
+		return errors.NewUnexpected("failed to check if Clearbit API is reachable", err)
+	}
+
+	if resp.StatusCode != http.StatusOK {
+		return errors.NewUnexpected("clearbit API is not reachable", fmt.Errorf("status code: %d", resp.StatusCode))
+	}
+
+	return nil
+
 }
 
 // NewClient creates a new Clearbit API client

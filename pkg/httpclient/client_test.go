@@ -42,7 +42,10 @@ func TestClient_Get_Success(t *testing.T) {
 		}
 
 		w.WriteHeader(http.StatusOK)
-		w.Write([]byte(`{"message": "success"}`))
+		_, err := w.Write([]byte(`{"message": "success"}`))
+		if err != nil {
+			t.Errorf("Expected no error, got %v", err)
+		}
 	}))
 	defer server.Close()
 
@@ -79,7 +82,10 @@ func TestClient_Get_NotFound(t *testing.T) {
 	// Create a test server that returns 404
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusNotFound)
-		w.Write([]byte(`{"error": "not found"}`))
+		_, err := w.Write([]byte(`{"error": "not found"}`))
+		if err != nil {
+			t.Errorf("Expected no error, got %v", err)
+		}
 	}))
 	defer server.Close()
 
@@ -129,12 +135,18 @@ func TestClient_Retry_ServerError(t *testing.T) {
 		callCount++
 		if callCount <= 2 {
 			w.WriteHeader(http.StatusInternalServerError)
-			w.Write([]byte(`{"error": "server error"}`))
+			_, err := w.Write([]byte(`{"error": "server error"}`))
+			if err != nil {
+				t.Errorf("Expected no error, got %v", err)
+			}
 			return
 		}
 
 		w.WriteHeader(http.StatusOK)
-		w.Write([]byte(`{"message": "success"}`))
+		_, err := w.Write([]byte(`{"message": "success"}`))
+		if err != nil {
+			t.Errorf("Expected no error, got %v", err)
+		}
 	}))
 	defer server.Close()
 
@@ -176,7 +188,10 @@ func TestClient_Post(t *testing.T) {
 		}
 
 		w.WriteHeader(http.StatusCreated)
-		w.Write([]byte(`{"created": true}`))
+		_, err := w.Write([]byte(`{"created": true}`))
+		if err != nil {
+			t.Errorf("Expected no error, got %v", err)
+		}
 	}))
 	defer server.Close()
 

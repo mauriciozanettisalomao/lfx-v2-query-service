@@ -8,6 +8,10 @@ import (
 	"time"
 )
 
+var (
+	defaultBaseURL = "https://company.clearbit.com"
+)
+
 // Config holds the configuration for Clearbit API client
 type Config struct {
 	// APIKey is the Clearbit API key for authentication
@@ -45,7 +49,7 @@ func NewConfig(apiKey, baseURL, timeout string, maxRetries int, retryDelay strin
 
 	// Set defaults for optional parameters
 	if baseURL == "" {
-		return Config{}, fmt.Errorf("base URL is required for Clearbit configuration")
+		baseURL = defaultBaseURL
 	}
 
 	if timeout == "" {

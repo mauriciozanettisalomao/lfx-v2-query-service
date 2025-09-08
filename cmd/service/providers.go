@@ -164,7 +164,7 @@ func OrganizationSearcherImpl(ctx context.Context) port.OrganizationSearcher {
 
 	case "clearbit":
 		// Parse Clearbit environment variables
-		clearbitAPIKey := os.Getenv("CLEARBIT_API_KEY")
+		clearbitAPIKey := os.Getenv("CLEARBIT_CREDENTIAL")
 		clearbitBaseURL := os.Getenv("CLEARBIT_BASE_URL")
 		clearbitTimeout := os.Getenv("CLEARBIT_TIMEOUT")
 
