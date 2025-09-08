@@ -17,21 +17,21 @@ spec:
     - path:
         type: Exact
         value: /query/orgs
-    filters:
-    # Organization search endpoint (with rate limiting + authentication)
-    {{- if .Values.orgSearch.rateLimit.enabled }}
-    - type: ExtensionRef
-      extensionRef:
-        group: traefik.io
-        kind: Middleware
-        name: org-search-rate-limit
-    {{- end }}
     {{- if .Values.heimdall.enabled }}
-    - type: ExtensionRef
-      extensionRef:
-        group: traefik.io
-        kind: Middleware
-        name: heimdall
+    filters:
+      - type: ExtensionRef
+        extensionRef:
+          group: traefik.io
+          kind: Middleware
+          name: heimdall
+      {{- if .Values.orgSearch.rateLimit.enabled }}
+      # Organization search endpoint (with rate limiting + authentication)
+      - type: ExtensionRef
+        extensionRef:
+          group: traefik.io
+          kind: Middleware
+          name: org-search-rate-limit
+      {{- end }}
     {{- end }}
     backendRefs:
     - name: lfx-v2-query-service
