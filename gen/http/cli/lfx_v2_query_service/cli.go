@@ -22,7 +22,7 @@ import (
 //
 //	command (subcommand1|subcommand2|...)
 func UsageCommands() string {
-	return `query-svc (query-resources|readyz|livez)
+	return `query-svc (query-resources|query-orgs|readyz|livez)
 `
 }
 
@@ -56,12 +56,19 @@ func ParseEndpoint(
 		querySvcQueryResourcesPageTokenFlag   = querySvcQueryResourcesFlags.String("page-token", "", "")
 		querySvcQueryResourcesBearerTokenFlag = querySvcQueryResourcesFlags.String("bearer-token", "REQUIRED", "")
 
+		querySvcQueryOrgsFlags           = flag.NewFlagSet("query-orgs", flag.ExitOnError)
+		querySvcQueryOrgsVersionFlag     = querySvcQueryOrgsFlags.String("version", "REQUIRED", "")
+		querySvcQueryOrgsNameFlag        = querySvcQueryOrgsFlags.String("name", "", "")
+		querySvcQueryOrgsDomainFlag      = querySvcQueryOrgsFlags.String("domain", "", "")
+		querySvcQueryOrgsBearerTokenFlag = querySvcQueryOrgsFlags.String("bearer-token", "REQUIRED", "")
+
 		querySvcReadyzFlags = flag.NewFlagSet("readyz", flag.ExitOnError)
 
 		querySvcLivezFlags = flag.NewFlagSet("livez", flag.ExitOnError)
 	)
 	querySvcFlags.Usage = querySvcUsage
 	querySvcQueryResourcesFlags.Usage = querySvcQueryResourcesUsage
+	querySvcQueryOrgsFlags.Usage = querySvcQueryOrgsUsage
 	querySvcReadyzFlags.Usage = querySvcReadyzUsage
 	querySvcLivezFlags.Usage = querySvcLivezUsage
 
@@ -102,6 +109,9 @@ func ParseEndpoint(
 			case "query-resources":
 				epf = querySvcQueryResourcesFlags
 
+			case "query-orgs":
+				epf = querySvcQueryOrgsFlags
+
 			case "readyz":
 				epf = querySvcReadyzFlags
 
@@ -136,6 +146,9 @@ func ParseEndpoint(
 			case "query-resources":
 				endpoint = c.QueryResources()
 				data, err = querysvcc.BuildQueryResourcesPayload(*querySvcQueryResourcesVersionFlag, *querySvcQueryResourcesNameFlag, *querySvcQueryResourcesParentFlag, *querySvcQueryResourcesTypeFlag, *querySvcQueryResourcesTagsFlag, *querySvcQueryResourcesSortFlag, *querySvcQueryResourcesPageTokenFlag, *querySvcQueryResourcesBearerTokenFlag)
+			case "query-orgs":
+				endpoint = c.QueryOrgs()
+				data, err = querysvcc.BuildQueryOrgsPayload(*querySvcQueryOrgsVersionFlag, *querySvcQueryOrgsNameFlag, *querySvcQueryOrgsDomainFlag, *querySvcQueryOrgsBearerTokenFlag)
 			case "readyz":
 				endpoint = c.Readyz()
 			case "livez":
@@ -159,6 +172,7 @@ Usage:
 
 COMMAND:
     query-resources: Locate resources by their type or parent, or use typeahead search to query resources by a display name or similar alias.
+    query-orgs: Locate a single organization by name or domain.
     readyz: Check if the service is able to take inbound requests.
     livez: Check if the service is alive.
 
@@ -183,6 +197,20 @@ Example:
     %[1]s query-svc query-resources --version "1" --name "gov board" --parent "project:123" --type "committee" --tags '[
       "active"
    ]' --sort "updated_desc" --page-token "****" --bearer-token "eyJhbGci..."
+`, os.Args[0])
+}
+
+func querySvcQueryOrgsUsage() {
+	fmt.Fprintf(os.Stderr, `%[1]s [flags] query-svc query-orgs -version STRING -name STRING -domain STRING -bearer-token STRING
+
+Locate a single organization by name or domain.
+    -version STRING: 
+    -name STRING: 
+    -domain STRING: 
+    -bearer-token STRING: 
+
+Example:
+    %[1]s query-svc query-orgs --version "1" --name "The Linux Foundation" --domain "linuxfoundation.org" --bearer-token "eyJhbGci..."
 `, os.Args[0])
 }
 

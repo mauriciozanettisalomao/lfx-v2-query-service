@@ -72,6 +72,26 @@ var ServiceUnavailableError = dsl.Type("ServiceUnavailableError", func() {
 	dsl.Required("message")
 })
 
+var Organization = dsl.Type("Organization", func() {
+	dsl.Description("An organization is a universal representation of an LFX API organization.")
+
+	dsl.Attribute("name", dsl.String, "Organization name", func() {
+		dsl.Example("Linux Foundation")
+	})
+	dsl.Attribute("domain", dsl.String, "Organization domain", func() {
+		dsl.Example("linuxfoundation.org")
+	})
+	dsl.Attribute("industry", dsl.String, "Organization industry classification", func() {
+		dsl.Example("Non-Profit")
+	})
+	dsl.Attribute("sector", dsl.String, "Business sector classification", func() {
+		dsl.Example("Technology")
+	})
+	dsl.Attribute("employees", dsl.String, "Employee count or range", func() {
+		dsl.Example("100-499")
+	})
+})
+
 // Define an example cached LFX resource for the nested "data" attribute for
 // resource searches. This example happens to be a committee to match the
 // example value of "committee" for the "type" attribute of Resource.

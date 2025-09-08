@@ -19,6 +19,8 @@ type Service interface {
 	// Locate resources by their type or parent, or use typeahead search to query
 	// resources by a display name or similar alias.
 	QueryResources(context.Context, *QueryResourcesPayload) (res *QueryResourcesResult, err error)
+	// Locate a single organization by name or domain.
+	QueryOrgs(context.Context, *QueryOrgsPayload) (res *Organization, err error)
 	// Check if the service is able to take inbound requests.
 	Readyz(context.Context) (res []byte, err error)
 	// Check if the service is alive.
@@ -45,7 +47,7 @@ const ServiceName = "query-svc"
 // MethodNames lists the service method names as defined in the design. These
 // are the same values that are set in the endpoint request contexts under the
 // MethodKey key.
-var MethodNames = [3]string{"query-resources", "readyz", "livez"}
+var MethodNames = [4]string{"query-resources", "query-orgs", "readyz", "livez"}
 
 type BadRequestError struct {
 	// Error message
@@ -57,10 +59,37 @@ type InternalServerError struct {
 	Message string
 }
 
+// Organization is the result type of the query-svc service query-orgs method.
+type Organization struct {
+	// Organization name
+	Name *string
+	// Organization domain
+	Domain *string
+	// Organization industry classification
+	Industry *string
+	// Business sector classification
+	Sector *string
+	// Employee count or range
+	Employees *string
+}
+
+// QueryOrgsPayload is the payload type of the query-svc service query-orgs
+// method.
+type QueryOrgsPayload struct {
+	// Token
+	BearerToken string
+	// Version of the API
+	Version string
+	// Organization name
+	Name *string
+	// Organization domain or website URL
+	Domain *string
+}
+
 // QueryResourcesPayload is the payload type of the query-svc service
 // query-resources method.
 type QueryResourcesPayload struct {
-	// JWT token issued by Heimdall
+	// Token
 	BearerToken string
 	// Version of the API
 	Version string

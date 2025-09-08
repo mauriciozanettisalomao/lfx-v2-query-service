@@ -21,6 +21,10 @@ type Client struct {
 	// query-resources endpoint.
 	QueryResourcesDoer goahttp.Doer
 
+	// QueryOrgs Doer is the HTTP client used to make requests to the query-orgs
+	// endpoint.
+	QueryOrgsDoer goahttp.Doer
+
 	// Readyz Doer is the HTTP client used to make requests to the readyz endpoint.
 	ReadyzDoer goahttp.Doer
 
@@ -48,6 +52,7 @@ func NewClient(
 ) *Client {
 	return &Client{
 		QueryResourcesDoer:  doer,
+		QueryOrgsDoer:       doer,
 		ReadyzDoer:          doer,
 		LivezDoer:           doer,
 		RestoreResponseBody: restoreBody,
@@ -77,6 +82,30 @@ func (c *Client) QueryResources() goa.Endpoint {
 		resp, err := c.QueryResourcesDoer.Do(req)
 		if err != nil {
 			return nil, goahttp.ErrRequestError("query-svc", "query-resources", err)
+		}
+		return decodeResponse(resp)
+	}
+}
+
+// QueryOrgs returns an endpoint that makes HTTP requests to the query-svc
+// service query-orgs server.
+func (c *Client) QueryOrgs() goa.Endpoint {
+	var (
+		encodeRequest  = EncodeQueryOrgsRequest(c.encoder)
+		decodeResponse = DecodeQueryOrgsResponse(c.decoder, c.RestoreResponseBody)
+	)
+	return func(ctx context.Context, v any) (any, error) {
+		req, err := c.BuildQueryOrgsRequest(ctx, v)
+		if err != nil {
+			return nil, err
+		}
+		err = encodeRequest(req, v)
+		if err != nil {
+			return nil, err
+		}
+		resp, err := c.QueryOrgsDoer.Do(req)
+		if err != nil {
+			return nil, goahttp.ErrRequestError("query-svc", "query-orgs", err)
 		}
 		return decodeResponse(resp)
 	}

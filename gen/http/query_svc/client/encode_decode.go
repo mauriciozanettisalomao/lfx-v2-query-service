@@ -167,6 +167,133 @@ func DecodeQueryResourcesResponse(decoder func(*http.Response) goahttp.Decoder, 
 	}
 }
 
+// BuildQueryOrgsRequest instantiates a HTTP request object with method and
+// path set to call the "query-svc" service "query-orgs" endpoint
+func (c *Client) BuildQueryOrgsRequest(ctx context.Context, v any) (*http.Request, error) {
+	u := &url.URL{Scheme: c.scheme, Host: c.host, Path: QueryOrgsQuerySvcPath()}
+	req, err := http.NewRequest("GET", u.String(), nil)
+	if err != nil {
+		return nil, goahttp.ErrInvalidURL("query-svc", "query-orgs", u.String(), err)
+	}
+	if ctx != nil {
+		req = req.WithContext(ctx)
+	}
+
+	return req, nil
+}
+
+// EncodeQueryOrgsRequest returns an encoder for requests sent to the query-svc
+// query-orgs server.
+func EncodeQueryOrgsRequest(encoder func(*http.Request) goahttp.Encoder) func(*http.Request, any) error {
+	return func(req *http.Request, v any) error {
+		p, ok := v.(*querysvc.QueryOrgsPayload)
+		if !ok {
+			return goahttp.ErrInvalidType("query-svc", "query-orgs", "*querysvc.QueryOrgsPayload", v)
+		}
+		{
+			head := p.BearerToken
+			if !strings.Contains(head, " ") {
+				req.Header.Set("Authorization", "Bearer "+head)
+			} else {
+				req.Header.Set("Authorization", head)
+			}
+		}
+		values := req.URL.Query()
+		values.Add("v", p.Version)
+		if p.Name != nil {
+			values.Add("name", *p.Name)
+		}
+		if p.Domain != nil {
+			values.Add("domain", *p.Domain)
+		}
+		req.URL.RawQuery = values.Encode()
+		return nil
+	}
+}
+
+// DecodeQueryOrgsResponse returns a decoder for responses returned by the
+// query-svc query-orgs endpoint. restoreBody controls whether the response
+// body should be restored after having been read.
+// DecodeQueryOrgsResponse may return the following errors:
+//   - "BadRequest" (type *querysvc.BadRequestError): http.StatusBadRequest
+//   - "InternalServerError" (type *querysvc.InternalServerError): http.StatusInternalServerError
+//   - "ServiceUnavailable" (type *querysvc.ServiceUnavailableError): http.StatusServiceUnavailable
+//   - error: internal error
+func DecodeQueryOrgsResponse(decoder func(*http.Response) goahttp.Decoder, restoreBody bool) func(*http.Response) (any, error) {
+	return func(resp *http.Response) (any, error) {
+		if restoreBody {
+			b, err := io.ReadAll(resp.Body)
+			if err != nil {
+				return nil, err
+			}
+			resp.Body = io.NopCloser(bytes.NewBuffer(b))
+			defer func() {
+				resp.Body = io.NopCloser(bytes.NewBuffer(b))
+			}()
+		} else {
+			defer resp.Body.Close()
+		}
+		switch resp.StatusCode {
+		case http.StatusOK:
+			var (
+				body QueryOrgsResponseBody
+				err  error
+			)
+			err = decoder(resp).Decode(&body)
+			if err != nil {
+				return nil, goahttp.ErrDecodingError("query-svc", "query-orgs", err)
+			}
+			res := NewQueryOrgsOrganizationOK(&body)
+			return res, nil
+		case http.StatusBadRequest:
+			var (
+				body QueryOrgsBadRequestResponseBody
+				err  error
+			)
+			err = decoder(resp).Decode(&body)
+			if err != nil {
+				return nil, goahttp.ErrDecodingError("query-svc", "query-orgs", err)
+			}
+			err = ValidateQueryOrgsBadRequestResponseBody(&body)
+			if err != nil {
+				return nil, goahttp.ErrValidationError("query-svc", "query-orgs", err)
+			}
+			return nil, NewQueryOrgsBadRequest(&body)
+		case http.StatusInternalServerError:
+			var (
+				body QueryOrgsInternalServerErrorResponseBody
+				err  error
+			)
+			err = decoder(resp).Decode(&body)
+			if err != nil {
+				return nil, goahttp.ErrDecodingError("query-svc", "query-orgs", err)
+			}
+			err = ValidateQueryOrgsInternalServerErrorResponseBody(&body)
+			if err != nil {
+				return nil, goahttp.ErrValidationError("query-svc", "query-orgs", err)
+			}
+			return nil, NewQueryOrgsInternalServerError(&body)
+		case http.StatusServiceUnavailable:
+			var (
+				body QueryOrgsServiceUnavailableResponseBody
+				err  error
+			)
+			err = decoder(resp).Decode(&body)
+			if err != nil {
+				return nil, goahttp.ErrDecodingError("query-svc", "query-orgs", err)
+			}
+			err = ValidateQueryOrgsServiceUnavailableResponseBody(&body)
+			if err != nil {
+				return nil, goahttp.ErrValidationError("query-svc", "query-orgs", err)
+			}
+			return nil, NewQueryOrgsServiceUnavailable(&body)
+		default:
+			body, _ := io.ReadAll(resp.Body)
+			return nil, goahttp.ErrInvalidResponse("query-svc", "query-orgs", resp.StatusCode, string(body))
+		}
+	}
+}
+
 // BuildReadyzRequest instantiates a HTTP request object with method and path
 // set to call the "query-svc" service "readyz" endpoint
 func (c *Client) BuildReadyzRequest(ctx context.Context, v any) (*http.Request, error) {

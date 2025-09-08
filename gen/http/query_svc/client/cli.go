@@ -101,3 +101,52 @@ func BuildQueryResourcesPayload(querySvcQueryResourcesVersion string, querySvcQu
 
 	return v, nil
 }
+
+// BuildQueryOrgsPayload builds the payload for the query-svc query-orgs
+// endpoint from CLI flags.
+func BuildQueryOrgsPayload(querySvcQueryOrgsVersion string, querySvcQueryOrgsName string, querySvcQueryOrgsDomain string, querySvcQueryOrgsBearerToken string) (*querysvc.QueryOrgsPayload, error) {
+	var err error
+	var version string
+	{
+		version = querySvcQueryOrgsVersion
+		if !(version == "1") {
+			err = goa.MergeErrors(err, goa.InvalidEnumValueError("version", version, []any{"1"}))
+		}
+		if err != nil {
+			return nil, err
+		}
+	}
+	var name *string
+	{
+		if querySvcQueryOrgsName != "" {
+			name = &querySvcQueryOrgsName
+			if utf8.RuneCountInString(*name) < 1 {
+				err = goa.MergeErrors(err, goa.InvalidLengthError("name", *name, utf8.RuneCountInString(*name), 1, true))
+			}
+			if err != nil {
+				return nil, err
+			}
+		}
+	}
+	var domain *string
+	{
+		if querySvcQueryOrgsDomain != "" {
+			domain = &querySvcQueryOrgsDomain
+			err = goa.MergeErrors(err, goa.ValidatePattern("domain", *domain, "^[a-zA-Z0-9][a-zA-Z0-9-_.]*[a-zA-Z0-9]*\\.[a-zA-Z]{2,}$"))
+			if err != nil {
+				return nil, err
+			}
+		}
+	}
+	var bearerToken string
+	{
+		bearerToken = querySvcQueryOrgsBearerToken
+	}
+	v := &querysvc.QueryOrgsPayload{}
+	v.Version = version
+	v.Name = name
+	v.Domain = domain
+	v.BearerToken = bearerToken
+
+	return v, nil
+}

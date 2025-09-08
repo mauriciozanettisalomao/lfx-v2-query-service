@@ -21,6 +21,21 @@ type QueryResourcesResponseBody struct {
 	PageToken *string `form:"page_token,omitempty" json:"page_token,omitempty" xml:"page_token,omitempty"`
 }
 
+// QueryOrgsResponseBody is the type of the "query-svc" service "query-orgs"
+// endpoint HTTP response body.
+type QueryOrgsResponseBody struct {
+	// Organization name
+	Name *string `form:"name,omitempty" json:"name,omitempty" xml:"name,omitempty"`
+	// Organization domain
+	Domain *string `form:"domain,omitempty" json:"domain,omitempty" xml:"domain,omitempty"`
+	// Organization industry classification
+	Industry *string `form:"industry,omitempty" json:"industry,omitempty" xml:"industry,omitempty"`
+	// Business sector classification
+	Sector *string `form:"sector,omitempty" json:"sector,omitempty" xml:"sector,omitempty"`
+	// Employee count or range
+	Employees *string `form:"employees,omitempty" json:"employees,omitempty" xml:"employees,omitempty"`
+}
+
 // QueryResourcesBadRequestResponseBody is the type of the "query-svc" service
 // "query-resources" endpoint HTTP response body for the "BadRequest" error.
 type QueryResourcesBadRequestResponseBody struct {
@@ -40,6 +55,29 @@ type QueryResourcesInternalServerErrorResponseBody struct {
 // service "query-resources" endpoint HTTP response body for the
 // "ServiceUnavailable" error.
 type QueryResourcesServiceUnavailableResponseBody struct {
+	// Error message
+	Message *string `form:"message,omitempty" json:"message,omitempty" xml:"message,omitempty"`
+}
+
+// QueryOrgsBadRequestResponseBody is the type of the "query-svc" service
+// "query-orgs" endpoint HTTP response body for the "BadRequest" error.
+type QueryOrgsBadRequestResponseBody struct {
+	// Error message
+	Message *string `form:"message,omitempty" json:"message,omitempty" xml:"message,omitempty"`
+}
+
+// QueryOrgsInternalServerErrorResponseBody is the type of the "query-svc"
+// service "query-orgs" endpoint HTTP response body for the
+// "InternalServerError" error.
+type QueryOrgsInternalServerErrorResponseBody struct {
+	// Error message
+	Message *string `form:"message,omitempty" json:"message,omitempty" xml:"message,omitempty"`
+}
+
+// QueryOrgsServiceUnavailableResponseBody is the type of the "query-svc"
+// service "query-orgs" endpoint HTTP response body for the
+// "ServiceUnavailable" error.
+type QueryOrgsServiceUnavailableResponseBody struct {
 	// Error message
 	Message *string `form:"message,omitempty" json:"message,omitempty" xml:"message,omitempty"`
 }
@@ -117,6 +155,50 @@ func NewQueryResourcesServiceUnavailable(body *QueryResourcesServiceUnavailableR
 	return v
 }
 
+// NewQueryOrgsOrganizationOK builds a "query-svc" service "query-orgs"
+// endpoint result from a HTTP "OK" response.
+func NewQueryOrgsOrganizationOK(body *QueryOrgsResponseBody) *querysvc.Organization {
+	v := &querysvc.Organization{
+		Name:      body.Name,
+		Domain:    body.Domain,
+		Industry:  body.Industry,
+		Sector:    body.Sector,
+		Employees: body.Employees,
+	}
+
+	return v
+}
+
+// NewQueryOrgsBadRequest builds a query-svc service query-orgs endpoint
+// BadRequest error.
+func NewQueryOrgsBadRequest(body *QueryOrgsBadRequestResponseBody) *querysvc.BadRequestError {
+	v := &querysvc.BadRequestError{
+		Message: *body.Message,
+	}
+
+	return v
+}
+
+// NewQueryOrgsInternalServerError builds a query-svc service query-orgs
+// endpoint InternalServerError error.
+func NewQueryOrgsInternalServerError(body *QueryOrgsInternalServerErrorResponseBody) *querysvc.InternalServerError {
+	v := &querysvc.InternalServerError{
+		Message: *body.Message,
+	}
+
+	return v
+}
+
+// NewQueryOrgsServiceUnavailable builds a query-svc service query-orgs
+// endpoint ServiceUnavailable error.
+func NewQueryOrgsServiceUnavailable(body *QueryOrgsServiceUnavailableResponseBody) *querysvc.ServiceUnavailableError {
+	v := &querysvc.ServiceUnavailableError{
+		Message: *body.Message,
+	}
+
+	return v
+}
+
 // NewReadyzNotReady builds a query-svc service readyz endpoint NotReady error.
 func NewReadyzNotReady(body *ReadyzNotReadyResponseBody) *goa.ServiceError {
 	v := &goa.ServiceError{
@@ -161,6 +243,33 @@ func ValidateQueryResourcesInternalServerErrorResponseBody(body *QueryResourcesI
 // ValidateQueryResourcesServiceUnavailableResponseBody runs the validations
 // defined on query-resources_ServiceUnavailable_response_body
 func ValidateQueryResourcesServiceUnavailableResponseBody(body *QueryResourcesServiceUnavailableResponseBody) (err error) {
+	if body.Message == nil {
+		err = goa.MergeErrors(err, goa.MissingFieldError("message", "body"))
+	}
+	return
+}
+
+// ValidateQueryOrgsBadRequestResponseBody runs the validations defined on
+// query-orgs_BadRequest_response_body
+func ValidateQueryOrgsBadRequestResponseBody(body *QueryOrgsBadRequestResponseBody) (err error) {
+	if body.Message == nil {
+		err = goa.MergeErrors(err, goa.MissingFieldError("message", "body"))
+	}
+	return
+}
+
+// ValidateQueryOrgsInternalServerErrorResponseBody runs the validations
+// defined on query-orgs_InternalServerError_response_body
+func ValidateQueryOrgsInternalServerErrorResponseBody(body *QueryOrgsInternalServerErrorResponseBody) (err error) {
+	if body.Message == nil {
+		err = goa.MergeErrors(err, goa.MissingFieldError("message", "body"))
+	}
+	return
+}
+
+// ValidateQueryOrgsServiceUnavailableResponseBody runs the validations defined
+// on query-orgs_ServiceUnavailable_response_body
+func ValidateQueryOrgsServiceUnavailableResponseBody(body *QueryOrgsServiceUnavailableResponseBody) (err error) {
 	if body.Message == nil {
 		err = goa.MergeErrors(err, goa.MissingFieldError("message", "body"))
 	}
