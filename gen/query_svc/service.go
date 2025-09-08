@@ -59,6 +59,11 @@ type InternalServerError struct {
 	Message string
 }
 
+type NotFoundError struct {
+	// Error message
+	Message string
+}
+
 // Organization is the result type of the query-svc service query-orgs method.
 type Organization struct {
 	// Organization name
@@ -165,6 +170,23 @@ func (e *InternalServerError) ErrorName() string {
 // GoaErrorName returns "InternalServerError".
 func (e *InternalServerError) GoaErrorName() string {
 	return "InternalServerError"
+}
+
+// Error returns an error description.
+func (e *NotFoundError) Error() string {
+	return ""
+}
+
+// ErrorName returns "NotFoundError".
+//
+// Deprecated: Use GoaErrorName - https://github.com/goadesign/goa/issues/3105
+func (e *NotFoundError) ErrorName() string {
+	return e.GoaErrorName()
+}
+
+// GoaErrorName returns "NotFoundError".
+func (e *NotFoundError) GoaErrorName() string {
+	return "NotFound"
 }
 
 // Error returns an error description.

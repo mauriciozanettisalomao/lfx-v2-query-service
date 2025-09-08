@@ -74,6 +74,13 @@ type QueryOrgsInternalServerErrorResponseBody struct {
 	Message string `form:"message" json:"message" xml:"message"`
 }
 
+// QueryOrgsNotFoundResponseBody is the type of the "query-svc" service
+// "query-orgs" endpoint HTTP response body for the "NotFound" error.
+type QueryOrgsNotFoundResponseBody struct {
+	// Error message
+	Message string `form:"message" json:"message" xml:"message"`
+}
+
 // QueryOrgsServiceUnavailableResponseBody is the type of the "query-svc"
 // service "query-orgs" endpoint HTTP response body for the
 // "ServiceUnavailable" error.
@@ -182,6 +189,15 @@ func NewQueryOrgsBadRequestResponseBody(res *querysvc.BadRequestError) *QueryOrg
 // from the result of the "query-orgs" endpoint of the "query-svc" service.
 func NewQueryOrgsInternalServerErrorResponseBody(res *querysvc.InternalServerError) *QueryOrgsInternalServerErrorResponseBody {
 	body := &QueryOrgsInternalServerErrorResponseBody{
+		Message: res.Message,
+	}
+	return body
+}
+
+// NewQueryOrgsNotFoundResponseBody builds the HTTP response body from the
+// result of the "query-orgs" endpoint of the "query-svc" service.
+func NewQueryOrgsNotFoundResponseBody(res *querysvc.NotFoundError) *QueryOrgsNotFoundResponseBody {
+	body := &QueryOrgsNotFoundResponseBody{
 		Message: res.Message,
 	}
 	return body

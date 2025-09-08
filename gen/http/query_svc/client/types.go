@@ -74,6 +74,13 @@ type QueryOrgsInternalServerErrorResponseBody struct {
 	Message *string `form:"message,omitempty" json:"message,omitempty" xml:"message,omitempty"`
 }
 
+// QueryOrgsNotFoundResponseBody is the type of the "query-svc" service
+// "query-orgs" endpoint HTTP response body for the "NotFound" error.
+type QueryOrgsNotFoundResponseBody struct {
+	// Error message
+	Message *string `form:"message,omitempty" json:"message,omitempty" xml:"message,omitempty"`
+}
+
 // QueryOrgsServiceUnavailableResponseBody is the type of the "query-svc"
 // service "query-orgs" endpoint HTTP response body for the
 // "ServiceUnavailable" error.
@@ -189,6 +196,16 @@ func NewQueryOrgsInternalServerError(body *QueryOrgsInternalServerErrorResponseB
 	return v
 }
 
+// NewQueryOrgsNotFound builds a query-svc service query-orgs endpoint NotFound
+// error.
+func NewQueryOrgsNotFound(body *QueryOrgsNotFoundResponseBody) *querysvc.NotFoundError {
+	v := &querysvc.NotFoundError{
+		Message: *body.Message,
+	}
+
+	return v
+}
+
 // NewQueryOrgsServiceUnavailable builds a query-svc service query-orgs
 // endpoint ServiceUnavailable error.
 func NewQueryOrgsServiceUnavailable(body *QueryOrgsServiceUnavailableResponseBody) *querysvc.ServiceUnavailableError {
@@ -261,6 +278,15 @@ func ValidateQueryOrgsBadRequestResponseBody(body *QueryOrgsBadRequestResponseBo
 // ValidateQueryOrgsInternalServerErrorResponseBody runs the validations
 // defined on query-orgs_InternalServerError_response_body
 func ValidateQueryOrgsInternalServerErrorResponseBody(body *QueryOrgsInternalServerErrorResponseBody) (err error) {
+	if body.Message == nil {
+		err = goa.MergeErrors(err, goa.MissingFieldError("message", "body"))
+	}
+	return
+}
+
+// ValidateQueryOrgsNotFoundResponseBody runs the validations defined on
+// query-orgs_NotFound_response_body
+func ValidateQueryOrgsNotFoundResponseBody(body *QueryOrgsNotFoundResponseBody) (err error) {
 	if body.Message == nil {
 		err = goa.MergeErrors(err, goa.MissingFieldError("message", "body"))
 	}

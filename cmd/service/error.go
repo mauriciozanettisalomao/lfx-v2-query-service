@@ -19,6 +19,10 @@ func wrapError(ctx context.Context, err error) error {
 			return &querysvc.BadRequestError{
 				Message: e.Error(),
 			}
+		case errors.NotFound:
+			return &querysvc.NotFoundError{
+				Message: e.Error(),
+			}
 		case errors.ServiceUnavailable:
 			return &querysvc.ServiceUnavailableError{
 				Message: e.Error(),

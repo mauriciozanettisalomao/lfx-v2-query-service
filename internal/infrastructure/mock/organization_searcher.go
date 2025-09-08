@@ -10,6 +10,7 @@ import (
 	"strings"
 
 	"github.com/linuxfoundation/lfx-v2-query-service/internal/domain/model"
+	"github.com/linuxfoundation/lfx-v2-query-service/pkg/errors"
 )
 
 // MockOrganizationSearcher is a mock implementation of OrganizationSearcher for testing
@@ -113,14 +114,14 @@ func (m *MockOrganizationSearcher) QueryOrganizations(ctx context.Context, crite
 
 	// Not found - return appropriate error
 	if criteria.Name != nil && criteria.Domain != nil {
-		return nil, fmt.Errorf("organization not found with name '%s' or domain '%s'", *criteria.Name, *criteria.Domain)
+		return nil, errors.NewNotFound(fmt.Sprintf("organization not found with name '%s' or domain '%s'", *criteria.Name, *criteria.Domain))
 	} else if criteria.Name != nil {
-		return nil, fmt.Errorf("organization not found with name '%s'", *criteria.Name)
+		return nil, errors.NewNotFound(fmt.Sprintf("organization not found with name '%s'", *criteria.Name))
 	} else if criteria.Domain != nil {
-		return nil, fmt.Errorf("organization not found with domain '%s'", *criteria.Domain)
+		return nil, errors.NewNotFound(fmt.Sprintf("organization not found with domain '%s'", *criteria.Domain))
 	}
 
-	return nil, fmt.Errorf("no search criteria provided")
+	return nil, errors.NewValidation("no search criteria provided")
 }
 
 // IsReady implements the OrganizationSearcher interface (always ready for mock)

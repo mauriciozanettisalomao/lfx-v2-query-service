@@ -56,6 +56,14 @@ var BadRequestError = dsl.Type("BadRequestError", func() {
 	dsl.Required("message")
 })
 
+// NotFoundError is the DSL type for a not found error.
+var NotFoundError = dsl.Type("NotFoundError", func() {
+	dsl.Attribute("message", dsl.String, "Error message", func() {
+		dsl.Example("The requested resource was not found.")
+	})
+	dsl.Required("message")
+})
+
 // InternalServerError is the DSL type for an internal server error.
 var InternalServerError = dsl.Type("InternalServerError", func() {
 	dsl.Attribute("message", dsl.String, "Error message", func() {

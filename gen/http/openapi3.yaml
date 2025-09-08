@@ -68,6 +68,14 @@ paths:
                                 $ref: '#/components/schemas/BadRequestError'
                             example:
                                 message: The request was invalid.
+                "404":
+                    description: 'NotFound: Not found'
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/NotFoundError'
+                            example:
+                                message: The requested resource was not found.
                 "500":
                     description: 'InternalServerError: Internal server error'
                     content:
@@ -257,6 +265,17 @@ components:
                     example: An internal server error occurred.
             example:
                 message: An internal server error occurred.
+            required:
+                - message
+        NotFoundError:
+            type: object
+            properties:
+                message:
+                    type: string
+                    description: Error message
+                    example: The requested resource was not found.
+            example:
+                message: The requested resource was not found.
             required:
                 - message
         Organization:

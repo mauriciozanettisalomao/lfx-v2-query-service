@@ -217,6 +217,7 @@ func EncodeQueryOrgsRequest(encoder func(*http.Request) goahttp.Encoder) func(*h
 // DecodeQueryOrgsResponse may return the following errors:
 //   - "BadRequest" (type *querysvc.BadRequestError): http.StatusBadRequest
 //   - "InternalServerError" (type *querysvc.InternalServerError): http.StatusInternalServerError
+//   - "NotFound" (type *querysvc.NotFoundError): http.StatusNotFound
 //   - "ServiceUnavailable" (type *querysvc.ServiceUnavailableError): http.StatusServiceUnavailable
 //   - error: internal error
 func DecodeQueryOrgsResponse(decoder func(*http.Response) goahttp.Decoder, restoreBody bool) func(*http.Response) (any, error) {
@@ -273,6 +274,20 @@ func DecodeQueryOrgsResponse(decoder func(*http.Response) goahttp.Decoder, resto
 				return nil, goahttp.ErrValidationError("query-svc", "query-orgs", err)
 			}
 			return nil, NewQueryOrgsInternalServerError(&body)
+		case http.StatusNotFound:
+			var (
+				body QueryOrgsNotFoundResponseBody
+				err  error
+			)
+			err = decoder(resp).Decode(&body)
+			if err != nil {
+				return nil, goahttp.ErrDecodingError("query-svc", "query-orgs", err)
+			}
+			err = ValidateQueryOrgsNotFoundResponseBody(&body)
+			if err != nil {
+				return nil, goahttp.ErrValidationError("query-svc", "query-orgs", err)
+			}
+			return nil, NewQueryOrgsNotFound(&body)
 		case http.StatusServiceUnavailable:
 			var (
 				body QueryOrgsServiceUnavailableResponseBody

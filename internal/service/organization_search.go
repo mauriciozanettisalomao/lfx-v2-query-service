@@ -5,7 +5,6 @@ package usecase
 
 import (
 	"context"
-	"fmt"
 	"log/slog"
 
 	"github.com/linuxfoundation/lfx-v2-query-service/internal/domain/model"
@@ -43,7 +42,7 @@ func (s *OrganizationSearch) QueryOrganizations(ctx context.Context, criteria mo
 		slog.ErrorContext(ctx, "organization search operation failed while executing query organizations",
 			"error", err,
 		)
-		return nil, fmt.Errorf("organization search operation failed: %w", err)
+		return nil, err
 	}
 
 	slog.DebugContext(ctx, "organization search completed",

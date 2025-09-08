@@ -20,6 +20,7 @@ var _ = dsl.Service("query-svc", func() {
 	dsl.Description("The query service provides resource and user queries.")
 
 	dsl.Error("BadRequest", BadRequestError, "Bad request")
+	dsl.Error("NotFound", NotFoundError, "Not found")
 	dsl.Error("InternalServerError", InternalServerError, "Internal server error")
 	dsl.Error("ServiceUnavailable", ServiceUnavailableError, "Service unavailable")
 
@@ -120,6 +121,7 @@ var _ = dsl.Service("query-svc", func() {
 			dsl.Header("bearer_token:Authorization")
 			dsl.Response(dsl.StatusOK)
 			dsl.Response("BadRequest", dsl.StatusBadRequest)
+			dsl.Response("NotFound", dsl.StatusNotFound)
 			dsl.Response("InternalServerError", dsl.StatusInternalServerError)
 			dsl.Response("ServiceUnavailable", dsl.StatusServiceUnavailable)
 		})

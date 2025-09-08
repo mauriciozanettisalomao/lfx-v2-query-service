@@ -24,3 +24,23 @@ func NewValidation(message string, err ...error) Validation {
 		},
 	}
 }
+
+// NotFound represents a not found error in the application.
+type NotFound struct {
+	base
+}
+
+// Error returns the error message for NotFound.
+func (v NotFound) Error() string {
+	return v.error()
+}
+
+// NewNotFound creates a new NotFound error with the provided message.
+func NewNotFound(message string, err ...error) NotFound {
+	return NotFound{
+		base: base{
+			message: message,
+			err:     errors.Join(err...),
+		},
+	}
+}
