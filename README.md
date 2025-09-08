@@ -25,7 +25,7 @@ The implementation follows the clean architecture principles where:
 │   ├── domain/                     # Domain logic layer
 │   │   ├── model/                  # Domain models and entities
 │   │   └── port/                   # Domain interfaces/ports
-│   ├── usecase/                    # Business logic/use cases layer
+│   ├── service/                    # Business logic/use cases layer
 │   ├── infrastructure/             # Infrastructure layer
 │   └── middleware/                 # HTTP middleware components
 └── pkg/                            # Shared packages for internal and external services
@@ -47,10 +47,10 @@ The implementation follows the clean architecture principles where:
 - **ResourceSearcher Interface**: Defines the contract for resource search operations
 - **AccessControlChecker Interface**: Defines the contract for access control operations
 
-### Use Case Layer (`internal/usecase/`)
+### Service Layer (`internal/service/`)
 
 - **Business Logic**: Application-specific business rules and operations
-- **Use Case Orchestration**: Coordinates between domain models and infrastructure
+- **Service Orchestration**: Coordinates between domain models and infrastructure
 
 ### Infrastructure Layer (`internal/infrastructure/`)
 

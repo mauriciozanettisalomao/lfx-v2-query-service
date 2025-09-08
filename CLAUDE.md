@@ -41,7 +41,7 @@ make lint
 # Or: golangci-lint run ./...
 
 # Run specific test
-go test -v -run TestResourceSearch ./internal/usecase/
+go test -v -run TestResourceSearch ./internal/service/
 ```
 
 ### Docker Operations
@@ -64,7 +64,7 @@ This service follows clean architecture principles with clear separation of conc
    - `model/`: Core business entities (Resource, SearchCriteria, AccessCheck)
    - `port/`: Interfaces defining contracts (ResourceSearcher, AccessControlChecker)
 
-2. **Use Case Layer** (`internal/usecase/`)
+2. **Service Layer** (`internal/service/`)
    - Business logic orchestration
    - Coordinates between domain and infrastructure
 
@@ -93,7 +93,7 @@ This service follows clean architecture principles with clear separation of conc
 
 1. HTTP request → Goa generated server (`gen/http/query_svc/server/`)
 2. Service layer (`cmd/query_svc/query_svc.go`)
-3. Use case orchestration (`internal/usecase/resource_search.go`)
+3. Use case orchestration (`internal/service/resource_search.go`)
 4. Domain interfaces called with concrete implementations
 5. Response formatted and returned through Goa
 

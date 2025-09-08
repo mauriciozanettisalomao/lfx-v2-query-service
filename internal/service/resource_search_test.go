@@ -1,7 +1,7 @@
 // Copyright The Linux Foundation and each contributor to LFX.
 // SPDX-License-Identifier: MIT
 
-package usecase
+package service
 
 import (
 	"context"
@@ -635,7 +635,7 @@ func TestNewResourceSearch(t *testing.T) {
 				return mock.NewMockResourceSearcher(), mock.NewMockAccessControlChecker()
 			},
 			expectNonNil: true,
-			expectType:   "*usecase.ResourceSearch",
+			expectType:   "*service.ResourceSearch",
 		},
 		{
 			name: "creates new resource search with nil dependencies",
@@ -643,7 +643,7 @@ func TestNewResourceSearch(t *testing.T) {
 				return nil, nil
 			},
 			expectNonNil: true,
-			expectType:   "*usecase.ResourceSearch",
+			expectType:   "*service.ResourceSearch",
 		},
 	}
 
