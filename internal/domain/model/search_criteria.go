@@ -40,3 +40,11 @@ type SearchResult struct {
 	// Total number of resources found
 	Total int
 }
+
+// OrganizationSearchCriteria encapsulates search parameters for organizations
+type OrganizationSearchCriteria struct {
+	// Organization name
+	Name *string
+	// Organization domain or website URL
+	Domain *string
+}

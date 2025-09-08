@@ -1,7 +1,7 @@
 // Copyright The Linux Foundation and each contributor to LFX.
 // SPDX-License-Identifier: MIT
 
-package querysvcapi
+package service
 
 import (
 	"context"
@@ -10,7 +10,7 @@ import (
 	querysvc "github.com/linuxfoundation/lfx-v2-query-service/gen/query_svc"
 	"github.com/linuxfoundation/lfx-v2-query-service/internal/domain/model"
 	"github.com/linuxfoundation/lfx-v2-query-service/internal/domain/port"
-	"github.com/linuxfoundation/lfx-v2-query-service/internal/usecase"
+	usecase "github.com/linuxfoundation/lfx-v2-query-service/internal/service"
 	"github.com/linuxfoundation/lfx-v2-query-service/pkg/constants"
 	"github.com/linuxfoundation/lfx-v2-query-service/pkg/global"
 	"github.com/linuxfoundation/lfx-v2-query-service/pkg/log"
@@ -21,7 +21,8 @@ import (
 
 // query-svc service implementation using clean architecture.
 type querySvcsrvc struct {
-	resourceService usecase.ResourceSearcher
+	resourceService     usecase.ResourceSearcher
+	organizationService usecase.OrganizationSearcher
 }
 
 // JWTAuth implements the authorization logic for service "query-svc" for the
@@ -67,6 +68,28 @@ func (s *querySvcsrvc) QueryResources(ctx context.Context, p *querysvc.QueryReso
 	return res, nil
 }
 
+// Locate a single organization by name or domain.
+func (s *querySvcsrvc) QueryOrgs(ctx context.Context, p *querysvc.QueryOrgsPayload) (res *querysvc.Organization, err error) {
+
+	slog.DebugContext(ctx, "querySvc.query-orgs",
+		"name", p.Name,
+		"domain", p.Domain,
+	)
+
+	// Convert payload to domain criteria
+	criteria := s.payloadToOrganizationCriteria(ctx, p)
+
+	// Execute search using the service layer
+	result, errQueryOrgs := s.organizationService.QueryOrganizations(ctx, criteria)
+	if errQueryOrgs != nil {
+		return nil, wrapError(ctx, errQueryOrgs)
+	}
+
+	// Convert domain result to response
+	res = s.domainOrganizationToResponse(result)
+	return res, nil
+}
+
 // Check if the service is able to take inbound requests.
 func (s *querySvcsrvc) Readyz(ctx context.Context) (res []byte, err error) {
 	errIsReady := s.resourceService.IsReady(ctx)
@@ -74,6 +97,13 @@ func (s *querySvcsrvc) Readyz(ctx context.Context) (res []byte, err error) {
 		slog.ErrorContext(ctx, "querySvc.readyz failed", "error", errIsReady)
 		return nil, wrapError(ctx, errIsReady)
 	}
+
+	errIsOrgReady := s.organizationService.IsReady(ctx)
+	if errIsOrgReady != nil {
+		slog.ErrorContext(ctx, "querySvc.readyz organization service failed", "error", errIsOrgReady)
+		return nil, wrapError(ctx, errIsOrgReady)
+	}
+
 	return []byte("OK\n"), nil
 }
 
@@ -148,10 +178,35 @@ func (s *querySvcsrvc) domainResultToResponse(result *model.SearchResult) *query
 	return response
 }
 
+// payloadToOrganizationCriteria converts the generated payload to domain organization search criteria
+func (s *querySvcsrvc) payloadToOrganizationCriteria(ctx context.Context, p *querysvc.QueryOrgsPayload) model.OrganizationSearchCriteria {
+	criteria := model.OrganizationSearchCriteria{
+		Name:   p.Name,
+		Domain: p.Domain,
+	}
+	return criteria
+}
+
+// domainOrganizationToResponse converts domain organization result to generated response
+func (s *querySvcsrvc) domainOrganizationToResponse(org *model.Organization) *querysvc.Organization {
+	return &querysvc.Organization{
+		Name:      &org.Name,
+		Domain:    &org.Domain,
+		Industry:  &org.Industry,
+		Sector:    &org.Sector,
+		Employees: &org.Employees,
+	}
+}
+
 // NewQuerySvc returns the query-svc service implementation.
-func NewQuerySvc(resourceSearcher port.ResourceSearcher, accessControlChecker port.AccessControlChecker) querysvc.Service {
+func NewQuerySvc(resourceSearcher port.ResourceSearcher,
+	accessControlChecker port.AccessControlChecker,
+	organizationSearcher port.OrganizationSearcher,
+) querysvc.Service {
 	resourceService := usecase.NewResourceSearch(resourceSearcher, accessControlChecker)
+	organizationService := usecase.NewOrganizationSearch(organizationSearcher)
 	return &querySvcsrvc{
-		resourceService: resourceService,
+		resourceService:     resourceService,
+		organizationService: organizationService,
 	}
 }
