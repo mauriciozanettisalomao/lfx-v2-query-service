@@ -12,6 +12,7 @@ import (
 	"time"
 
 	"github.com/linuxfoundation/lfx-v2-query-service/internal/domain/port"
+	"github.com/linuxfoundation/lfx-v2-query-service/internal/infrastructure/clearbit"
 	"github.com/linuxfoundation/lfx-v2-query-service/internal/infrastructure/mock"
 	"github.com/linuxfoundation/lfx-v2-query-service/internal/infrastructure/nats"
 	"github.com/linuxfoundation/lfx-v2-query-service/internal/infrastructure/opensearch"
@@ -115,8 +116,6 @@ func AccessControlCheckerImpl(ctx context.Context) port.AccessControlChecker {
 		log.Fatalf("invalid NATS reconnect wait duration %s : %v", natsReconnectWait, err)
 	}
 
-	//natsReconnectWait := flag.Duration("nats-reconnect-wait", 2*time.Second, "NATS reconnection wait time")
-
 	// Initialize the access control checker based on configuration
 	switch accessControlSource {
 	case "mock":
@@ -147,12 +146,15 @@ func AccessControlCheckerImpl(ctx context.Context) port.AccessControlChecker {
 // OrganizationSearcherImpl injects the organization searcher implementation
 func OrganizationSearcherImpl(ctx context.Context) port.OrganizationSearcher {
 
-	var organizationSearcher port.OrganizationSearcher
+	var (
+		organizationSearcher port.OrganizationSearcher
+		err                  error
+	)
 
 	// Organization search source implementation configuration
 	orgSearchSource := os.Getenv("ORG_SEARCH_SOURCE")
 	if orgSearchSource == "" {
-		orgSearchSource = "mock"
+		orgSearchSource = "clearbit"
 	}
 
 	switch orgSearchSource {
@@ -160,10 +162,43 @@ func OrganizationSearcherImpl(ctx context.Context) port.OrganizationSearcher {
 		slog.InfoContext(ctx, "initializing mock organization searcher")
 		organizationSearcher = mock.NewMockOrganizationSearcher()
 
-	case "external-api":
-		slog.InfoContext(ctx, "initializing external API organization searcher")
-		// TODO: Implement external API organization searcher when needed
-		log.Fatalf("external-api organization searcher not yet implemented")
+	case "clearbit":
+		// Parse Clearbit environment variables
+		clearbitAPIKey := os.Getenv("CLEARBIT_API_KEY")
+		clearbitBaseURL := os.Getenv("CLEARBIT_BASE_URL")
+		clearbitTimeout := os.Getenv("CLEARBIT_TIMEOUT")
+
+		clearbitMaxRetries := os.Getenv("CLEARBIT_MAX_RETRIES")
+		clearbitMaxRetriesInt := 3 // default
+		if clearbitMaxRetries != "" {
+			clearbitMaxRetriesInt, err = strconv.Atoi(clearbitMaxRetries)
+			if err != nil {
+				log.Fatalf("invalid Clearbit max retries value %s: %v", clearbitMaxRetries, err)
+			}
+		}
+
+		clearbitRetryDelay := os.Getenv("CLEARBIT_RETRY_DELAY")
+
+		clearbitConfig, err := clearbit.NewConfig(clearbitAPIKey,
+			clearbitBaseURL,
+			clearbitTimeout,
+			clearbitMaxRetriesInt,
+			clearbitRetryDelay,
+		)
+		if err != nil {
+			log.Fatalf("failed to create Clearbit configuration: %v", err)
+		}
+
+		slog.InfoContext(ctx, "initializing Clearbit organization searcher",
+			"base_url", clearbitConfig.BaseURL,
+			"timeout", clearbitConfig.Timeout,
+			"max_retries", clearbitConfig.MaxRetries,
+		)
+
+		organizationSearcher, err = clearbit.NewOrganizationSearcher(ctx, clearbitConfig)
+		if err != nil {
+			log.Fatalf("failed to initialize Clearbit organization searcher: %v", err)
+		}
 
 	default:
 		log.Fatalf("unsupported organization search implementation: %s", orgSearchSource)
