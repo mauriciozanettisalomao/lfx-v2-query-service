@@ -220,8 +220,8 @@ func TestDefaultConfig(t *testing.T) {
 	if config.Timeout != 30*time.Second {
 		t.Errorf("Expected default timeout 30s, got %v", config.Timeout)
 	}
-	if config.MaxRetries != 3 {
-		t.Errorf("Expected default max retries 3, got %d", config.MaxRetries)
+	if config.MaxRetries != 2 {
+		t.Errorf("Expected default max retries 2, got %d", config.MaxRetries)
 	}
 	if config.RetryDelay != 1*time.Second {
 		t.Errorf("Expected default retry delay 1s, got %v", config.RetryDelay)

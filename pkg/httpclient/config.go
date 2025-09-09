@@ -26,7 +26,7 @@ type Config struct {
 func DefaultConfig() Config {
 	return Config{
 		Timeout:      30 * time.Second,
-		MaxRetries:   3,
+		MaxRetries:   2,
 		RetryDelay:   1 * time.Second,
 		RetryBackoff: true,
 	}

@@ -5,6 +5,8 @@ package clearbit
 
 import (
 	"context"
+	"net/http"
+	"net/http/httptest"
 	"testing"
 	"time"
 
@@ -13,6 +15,12 @@ import (
 
 func TestNewOrganizationSearcher(t *testing.T) {
 	ctx := context.Background()
+
+	// Local test server to satisfy IsReady without internet access.
+	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(http.StatusOK)
+	}))
+	defer ts.Close()
 
 	tests := []struct {
 		name        string
@@ -23,17 +31,17 @@ func TestNewOrganizationSearcher(t *testing.T) {
 			name: "valid config with fake API key",
 			config: Config{
 				APIKey:     "test-api-key",
-				BaseURL:    "https://company.clearbit.com",
+				BaseURL:    ts.URL,
 				Timeout:    5 * time.Second,
 				MaxRetries: 1,
 				RetryDelay: 100 * time.Millisecond,
 			},
-			expectError: false, // The test connection might succeed (returns "not found" which is OK)
+			expectError: false,
 		},
 		{
 			name: "missing API key",
 			config: Config{
-				BaseURL:    "https://company.clearbit.com",
+				BaseURL:    ts.URL,
 				Timeout:    30 * time.Second,
 				MaxRetries: 3,
 				RetryDelay: 1 * time.Second,

@@ -66,9 +66,12 @@ func (s *querySvcsrvc) domainResultToResponse(result *model.SearchResult) *query
 	}
 
 	for i, domainResource := range result.Resources {
+		// Create local copies to avoid taking addresses of loop variables
+		resourceType := domainResource.Type
+		resourceID := domainResource.ID
 		response.Resources[i] = &querysvc.Resource{
-			Type: &domainResource.Type,
-			ID:   &domainResource.ID,
+			Type: &resourceType,
+			ID:   &resourceID,
 			Data: domainResource.Data,
 		}
 	}

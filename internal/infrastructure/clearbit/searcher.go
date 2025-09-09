@@ -47,7 +47,7 @@ func (s *OrganizationSearcher) QueryOrganizations(ctx context.Context, criteria 
 			slog.DebugContext(ctx, "found organization by name", "name", clearbitCompany.Name)
 		}
 		// search by domain again to enrich the organization
-		if clearbitCompany != nil {
+		if clearbitCompany != nil && clearbitCompany.Domain != "" {
 			clearbitCompany, err = s.client.FindCompanyByDomain(ctx, clearbitCompany.Domain)
 			if err == nil {
 				slog.DebugContext(ctx, "found organization by domain", "name", clearbitCompany.Name)

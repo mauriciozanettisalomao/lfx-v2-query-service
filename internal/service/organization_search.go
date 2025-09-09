@@ -45,9 +45,15 @@ func (s *OrganizationSearch) QueryOrganizations(ctx context.Context, criteria mo
 		return nil, err
 	}
 
+	var orgName, orgDomain string
+	if result != nil {
+		orgName = result.Name
+		orgDomain = result.Domain
+	}
+
 	slog.DebugContext(ctx, "organization search completed",
-		"organization_name", result.Name,
-		"organization_domain", result.Domain,
+		"organization_name", orgName,
+		"organization_domain", orgDomain,
 	)
 
 	return result, nil
