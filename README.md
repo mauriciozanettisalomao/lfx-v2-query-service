@@ -62,6 +62,10 @@ The OpenSearch implementation includes query templates, a searcher, and a client
 
 The NATS implementation consists of a client, access control logic, and request/response models for messaging and access control.
 
+#### Clearbit Implementation
+
+The Clearbit implementation provides organization search capabilities using the Clearbit Company API. It includes a client for API communication, searcher for organization queries, and configuration management for API credentials and settings.
+
 ## Dependency Injection
 
 Dependency injection is performed in `cmd/main.go`, where the concrete implementations for resource search and access control are selected based on configuration and then injected into the service constructor.
@@ -106,15 +110,21 @@ SEARCH_SOURCE=mock ACCESS_CONTROL_SOURCE=mock go run cmd/main.go
 SEARCH_SOURCE=mock ACCESS_CONTROL_SOURCE=mock go run cmd/main.go -p 3000
 ```
 
-#### With OpenSearch and NATS
+#### With Production Services
 
 ```bash
-# Using OpenSearch and NATS (production-like setup)
+# production-like setup
 SEARCH_SOURCE=opensearch \
+ORG_SEARCH_SOURCE=clearbit \
 ACCESS_CONTROL_SOURCE=nats \
 OPENSEARCH_URL={{placeholder}} \
 OPENSEARCH_INDEX=resources \
 NATS_URL{{placeholder}} \
+CLEARBIT_CREDENTIAL=your_clearbit_api_key \
+CLEARBIT_BASE_URL=https://company.clearbit.com \
+CLEARBIT_TIMEOUT=30s \
+CLEARBIT_MAX_RETRIES=5 \
+CLEARBIT_RETRY_DELAY=2s \
 go run cmd/main.go
 ```
 
@@ -123,6 +133,10 @@ go run cmd/main.go
 **Search Implementation:**
 
 - `SEARCH_SOURCE`: Choose between "mock" or "opensearch" (default: "opensearch")
+
+**Organization Search Implementation:**
+
+- `ORG_SEARCH_SOURCE`: Choose between "mock" or "clearbit" (default: "clearbit")
 
 **OpenSearch Configuration:**
 
@@ -139,6 +153,14 @@ go run cmd/main.go
 - `NATS_TIMEOUT`: Request timeout duration (default: "10s")
 - `NATS_MAX_RECONNECT`: Maximum reconnection attempts (default: "3")
 - `NATS_RECONNECT_WAIT`: Time between reconnection attempts (default: "2s")
+
+**Clearbit Configuration:**
+
+- `CLEARBIT_CREDENTIAL`: Clearbit API key (required for organization search)
+- `CLEARBIT_BASE_URL`: Clearbit API base URL (default: `https://company.clearbit.com`)
+- `CLEARBIT_TIMEOUT`: HTTP client timeout for API requests (default: "10s")
+- `CLEARBIT_MAX_RETRIES`: Maximum number of retry attempts for failed requests (default: "3")
+- `CLEARBIT_RETRY_DELAY`: Delay between retry attempts (default: "1s")
 
 **Server Configuration:**
 
@@ -183,6 +205,59 @@ GET /query/resources?name=committee&type=committee&v=1
   "cache_control": "public, max-age=300"
 }
 ```
+
+## Clearbit API Integration
+
+The service integrates with Clearbit's Company API to provide enriched organization data for search operations. This integration allows the service to fetch detailed company information including industry classification, employee count, and domain information.
+
+### Clearbit API Setup
+
+#### 1. Obtain API Credentials
+
+To use Clearbit integration, you need to obtain an API key from Clearbit:
+
+1. Sign up for a Clearbit account at [https://clearbit.com](https://clearbit.com)
+2. Navigate to your API settings to generate an API key
+3. Copy the API key for use in your environment configuration
+
+#### 2. Configure Environment Variables
+
+Set the required environment variables for Clearbit integration:
+
+```bash
+# Required: Clearbit API key
+export CLEARBIT_CREDENTIAL=your_clearbit_api_key_here
+
+# Optional: Custom configuration (defaults shown)
+export CLEARBIT_BASE_URL=https://company.clearbit.com
+export CLEARBIT_TIMEOUT=30s
+export CLEARBIT_MAX_RETRIES=3
+export CLEARBIT_RETRY_DELAY=1s
+
+# Set organization search source to use Clearbit
+export ORG_SEARCH_SOURCE=clearbit
+```
+
+#### 3. API Usage and Features
+
+The Clearbit integration supports the following search operations:
+
+**Search by Company Name:**
+- Searches for companies using their registered business name
+- Falls back to domain-based search for additional data enrichment
+
+**Search by Domain:**
+- More accurate search method using company domain names
+- Provides comprehensive company information
+
+#### 4. Error Handling
+
+The Clearbit integration includes robust error handling:
+
+- **404 Not Found**: Returns appropriate "organization not found" errors
+- **Rate Limiting**: Automatic retry with exponential backoff
+- **Network Issues**: Configurable retry attempts with delays
+- **API Errors**: Proper error propagation with context
 
 ### Testing
 
