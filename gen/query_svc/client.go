@@ -16,14 +16,16 @@ import (
 // Client is the "query-svc" service client.
 type Client struct {
 	QueryResourcesEndpoint goa.Endpoint
+	QueryOrgsEndpoint      goa.Endpoint
 	ReadyzEndpoint         goa.Endpoint
 	LivezEndpoint          goa.Endpoint
 }
 
 // NewClient initializes a "query-svc" service client given the endpoints.
-func NewClient(queryResources, readyz, livez goa.Endpoint) *Client {
+func NewClient(queryResources, queryOrgs, readyz, livez goa.Endpoint) *Client {
 	return &Client{
 		QueryResourcesEndpoint: queryResources,
+		QueryOrgsEndpoint:      queryOrgs,
 		ReadyzEndpoint:         readyz,
 		LivezEndpoint:          livez,
 	}
@@ -33,6 +35,7 @@ func NewClient(queryResources, readyz, livez goa.Endpoint) *Client {
 // service.
 // QueryResources may return the following errors:
 //   - "BadRequest" (type *BadRequestError): Bad request
+//   - "NotFound" (type *NotFoundError): Not found
 //   - "InternalServerError" (type *InternalServerError): Internal server error
 //   - "ServiceUnavailable" (type *ServiceUnavailableError): Service unavailable
 //   - error: internal error
@@ -45,10 +48,27 @@ func (c *Client) QueryResources(ctx context.Context, p *QueryResourcesPayload) (
 	return ires.(*QueryResourcesResult), nil
 }
 
+// QueryOrgs calls the "query-orgs" endpoint of the "query-svc" service.
+// QueryOrgs may return the following errors:
+//   - "BadRequest" (type *BadRequestError): Bad request
+//   - "NotFound" (type *NotFoundError): Not found
+//   - "InternalServerError" (type *InternalServerError): Internal server error
+//   - "ServiceUnavailable" (type *ServiceUnavailableError): Service unavailable
+//   - error: internal error
+func (c *Client) QueryOrgs(ctx context.Context, p *QueryOrgsPayload) (res *Organization, err error) {
+	var ires any
+	ires, err = c.QueryOrgsEndpoint(ctx, p)
+	if err != nil {
+		return
+	}
+	return ires.(*Organization), nil
+}
+
 // Readyz calls the "readyz" endpoint of the "query-svc" service.
 // Readyz may return the following errors:
 //   - "NotReady" (type *goa.ServiceError): Service is not ready yet
 //   - "BadRequest" (type *BadRequestError): Bad request
+//   - "NotFound" (type *NotFoundError): Not found
 //   - "InternalServerError" (type *InternalServerError): Internal server error
 //   - "ServiceUnavailable" (type *ServiceUnavailableError): Service unavailable
 //   - error: internal error
@@ -64,6 +84,7 @@ func (c *Client) Readyz(ctx context.Context) (res []byte, err error) {
 // Livez calls the "livez" endpoint of the "query-svc" service.
 // Livez may return the following errors:
 //   - "BadRequest" (type *BadRequestError): Bad request
+//   - "NotFound" (type *NotFoundError): Not found
 //   - "InternalServerError" (type *InternalServerError): Internal server error
 //   - "ServiceUnavailable" (type *ServiceUnavailableError): Service unavailable
 //   - error: internal error

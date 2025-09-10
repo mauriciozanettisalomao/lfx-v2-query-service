@@ -164,6 +164,139 @@ func EncodeQueryResourcesError(encoder func(context.Context, http.ResponseWriter
 	}
 }
 
+// EncodeQueryOrgsResponse returns an encoder for responses returned by the
+// query-svc query-orgs endpoint.
+func EncodeQueryOrgsResponse(encoder func(context.Context, http.ResponseWriter) goahttp.Encoder) func(context.Context, http.ResponseWriter, any) error {
+	return func(ctx context.Context, w http.ResponseWriter, v any) error {
+		res, _ := v.(*querysvc.Organization)
+		enc := encoder(ctx, w)
+		body := NewQueryOrgsResponseBody(res)
+		w.WriteHeader(http.StatusOK)
+		return enc.Encode(body)
+	}
+}
+
+// DecodeQueryOrgsRequest returns a decoder for requests sent to the query-svc
+// query-orgs endpoint.
+func DecodeQueryOrgsRequest(mux goahttp.Muxer, decoder func(*http.Request) goahttp.Decoder) func(*http.Request) (any, error) {
+	return func(r *http.Request) (any, error) {
+		var (
+			version     string
+			name        *string
+			domain      *string
+			bearerToken string
+			err         error
+		)
+		qp := r.URL.Query()
+		version = qp.Get("v")
+		if version == "" {
+			err = goa.MergeErrors(err, goa.MissingFieldError("version", "query string"))
+		}
+		if !(version == "1") {
+			err = goa.MergeErrors(err, goa.InvalidEnumValueError("version", version, []any{"1"}))
+		}
+		nameRaw := qp.Get("name")
+		if nameRaw != "" {
+			name = &nameRaw
+		}
+		if name != nil {
+			if utf8.RuneCountInString(*name) < 1 {
+				err = goa.MergeErrors(err, goa.InvalidLengthError("name", *name, utf8.RuneCountInString(*name), 1, true))
+			}
+		}
+		domainRaw := qp.Get("domain")
+		if domainRaw != "" {
+			domain = &domainRaw
+		}
+		if domain != nil {
+			err = goa.MergeErrors(err, goa.ValidatePattern("domain", *domain, "^[a-zA-Z0-9][a-zA-Z0-9-_.]*[a-zA-Z0-9]*\\.[a-zA-Z]{2,}$"))
+		}
+		bearerToken = r.Header.Get("Authorization")
+		if bearerToken == "" {
+			err = goa.MergeErrors(err, goa.MissingFieldError("bearer_token", "header"))
+		}
+		if err != nil {
+			return nil, err
+		}
+		payload := NewQueryOrgsPayload(version, name, domain, bearerToken)
+		if strings.Contains(payload.BearerToken, " ") {
+			// Remove authorization scheme prefix (e.g. "Bearer")
+			cred := strings.SplitN(payload.BearerToken, " ", 2)[1]
+			payload.BearerToken = cred
+		}
+
+		return payload, nil
+	}
+}
+
+// EncodeQueryOrgsError returns an encoder for errors returned by the
+// query-orgs query-svc endpoint.
+func EncodeQueryOrgsError(encoder func(context.Context, http.ResponseWriter) goahttp.Encoder, formatter func(ctx context.Context, err error) goahttp.Statuser) func(context.Context, http.ResponseWriter, error) error {
+	encodeError := goahttp.ErrorEncoder(encoder, formatter)
+	return func(ctx context.Context, w http.ResponseWriter, v error) error {
+		var en goa.GoaErrorNamer
+		if !errors.As(v, &en) {
+			return encodeError(ctx, w, v)
+		}
+		switch en.GoaErrorName() {
+		case "BadRequest":
+			var res *querysvc.BadRequestError
+			errors.As(v, &res)
+			enc := encoder(ctx, w)
+			var body any
+			if formatter != nil {
+				body = formatter(ctx, res)
+			} else {
+				body = NewQueryOrgsBadRequestResponseBody(res)
+			}
+			w.Header().Set("goa-error", res.GoaErrorName())
+			w.WriteHeader(http.StatusBadRequest)
+			return enc.Encode(body)
+		case "InternalServerError":
+			var res *querysvc.InternalServerError
+			errors.As(v, &res)
+			enc := encoder(ctx, w)
+			var body any
+			if formatter != nil {
+				body = formatter(ctx, res)
+			} else {
+				body = NewQueryOrgsInternalServerErrorResponseBody(res)
+			}
+			w.Header().Set("goa-error", res.GoaErrorName())
+			w.WriteHeader(http.StatusInternalServerError)
+			return enc.Encode(body)
+		case "NotFound":
+			var res *querysvc.NotFoundError
+			errors.As(v, &res)
+			enc := encoder(ctx, w)
+			var body any
+			if formatter != nil {
+				body = formatter(ctx, res)
+			} else {
+				body = NewQueryOrgsNotFoundResponseBody(res)
+			}
+			w.Header().Set("goa-error", res.GoaErrorName())
+			w.WriteHeader(http.StatusNotFound)
+			return enc.Encode(body)
+		case "ServiceUnavailable":
+			var res *querysvc.ServiceUnavailableError
+			errors.As(v, &res)
+			enc := encoder(ctx, w)
+			var body any
+			if formatter != nil {
+				body = formatter(ctx, res)
+			} else {
+				body = NewQueryOrgsServiceUnavailableResponseBody(res)
+			}
+			w.Header().Set("goa-error", res.GoaErrorName())
+			w.WriteHeader(http.StatusServiceUnavailable)
+			return enc.Encode(body)
+		default:
+			return encodeError(ctx, w, v)
+		}
+	}
+}
+
 // EncodeReadyzResponse returns an encoder for responses returned by the
 // query-svc readyz endpoint.
 func EncodeReadyzResponse(encoder func(context.Context, http.ResponseWriter) goahttp.Encoder) func(context.Context, http.ResponseWriter, any) error {

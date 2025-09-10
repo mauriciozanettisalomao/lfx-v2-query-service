@@ -20,6 +20,7 @@ var _ = dsl.Service("query-svc", func() {
 	dsl.Description("The query service provides resource and user queries.")
 
 	dsl.Error("BadRequest", BadRequestError, "Bad request")
+	dsl.Error("NotFound", NotFoundError, "Not found")
 	dsl.Error("InternalServerError", InternalServerError, "Internal server error")
 	dsl.Error("ServiceUnavailable", ServiceUnavailableError, "Service unavailable")
 
@@ -31,7 +32,7 @@ var _ = dsl.Service("query-svc", func() {
 		dsl.Payload(func() {
 			dsl.Extend(Sortable)
 			dsl.Token("bearer_token", dsl.String, func() {
-				dsl.Description("JWT token issued by Heimdall")
+				dsl.Description("Token")
 				dsl.Example("eyJhbGci...")
 			})
 			dsl.Attribute("version", dsl.String, "Version of the API", func() {
@@ -80,6 +81,47 @@ var _ = dsl.Service("query-svc", func() {
 				dsl.Header("cache_control:Cache-Control")
 			})
 			dsl.Response("BadRequest", dsl.StatusBadRequest)
+			dsl.Response("InternalServerError", dsl.StatusInternalServerError)
+			dsl.Response("ServiceUnavailable", dsl.StatusServiceUnavailable)
+		})
+	})
+
+	dsl.Method("query-orgs", func() {
+		dsl.Description("Locate a single organization by name or domain.")
+
+		dsl.Security(JWTAuth)
+
+		dsl.Payload(func() {
+			dsl.Token("bearer_token", dsl.String, func() {
+				dsl.Description("Token")
+				dsl.Example("eyJhbGci...")
+			})
+			dsl.Attribute("version", dsl.String, "Version of the API", func() {
+				dsl.Enum("1")
+				dsl.Example("1")
+			})
+			dsl.Attribute("name", dsl.String, "Organization name", func() {
+				dsl.Example("The Linux Foundation")
+				dsl.MinLength(1)
+			})
+			dsl.Attribute("domain", dsl.String, "Organization domain or website URL", func() {
+				dsl.Example("linuxfoundation.org")
+				dsl.Pattern(`^[a-zA-Z0-9][a-zA-Z0-9-_.]*[a-zA-Z0-9]*\.[a-zA-Z]{2,}$`)
+			})
+			dsl.Required("bearer_token", "version")
+		})
+
+		dsl.Result(Organization)
+
+		dsl.HTTP(func() {
+			dsl.GET("/query/orgs")
+			dsl.Param("version:v")
+			dsl.Param("name")
+			dsl.Param("domain")
+			dsl.Header("bearer_token:Authorization")
+			dsl.Response(dsl.StatusOK)
+			dsl.Response("BadRequest", dsl.StatusBadRequest)
+			dsl.Response("NotFound", dsl.StatusNotFound)
 			dsl.Response("InternalServerError", dsl.StatusInternalServerError)
 			dsl.Response("ServiceUnavailable", dsl.StatusServiceUnavailable)
 		})

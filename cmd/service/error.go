@@ -1,7 +1,7 @@
 // Copyright The Linux Foundation and each contributor to LFX.
 // SPDX-License-Identifier: MIT
 
-package querysvcapi
+package service
 
 import (
 	"context"
@@ -17,6 +17,10 @@ func wrapError(ctx context.Context, err error) error {
 		switch e := err.(type) {
 		case errors.Validation:
 			return &querysvc.BadRequestError{
+				Message: e.Error(),
+			}
+		case errors.NotFound:
+			return &querysvc.NotFoundError{
 				Message: e.Error(),
 			}
 		case errors.ServiceUnavailable:

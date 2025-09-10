@@ -21,6 +21,7 @@ import (
 type Server struct {
 	Mounts              []*MountPoint
 	QueryResources      http.Handler
+	QueryOrgs           http.Handler
 	Readyz              http.Handler
 	Livez               http.Handler
 	GenHTTPOpenapiJSON  http.Handler
@@ -77,6 +78,7 @@ func New(
 	return &Server{
 		Mounts: []*MountPoint{
 			{"QueryResources", "GET", "/query/resources"},
+			{"QueryOrgs", "GET", "/query/orgs"},
 			{"Readyz", "GET", "/readyz"},
 			{"Livez", "GET", "/livez"},
 			{"Serve gen/http/openapi.json", "GET", "/_query/openapi.json"},
@@ -85,6 +87,7 @@ func New(
 			{"Serve gen/http/openapi3.yaml", "GET", "/_query/openapi3.yaml"},
 		},
 		QueryResources:      NewQueryResourcesHandler(e.QueryResources, mux, decoder, encoder, errhandler, formatter),
+		QueryOrgs:           NewQueryOrgsHandler(e.QueryOrgs, mux, decoder, encoder, errhandler, formatter),
 		Readyz:              NewReadyzHandler(e.Readyz, mux, decoder, encoder, errhandler, formatter),
 		Livez:               NewLivezHandler(e.Livez, mux, decoder, encoder, errhandler, formatter),
 		GenHTTPOpenapiJSON:  http.FileServer(fileSystemGenHTTPOpenapiJSON),
@@ -100,6 +103,7 @@ func (s *Server) Service() string { return "query-svc" }
 // Use wraps the server handlers with the given middleware.
 func (s *Server) Use(m func(http.Handler) http.Handler) {
 	s.QueryResources = m(s.QueryResources)
+	s.QueryOrgs = m(s.QueryOrgs)
 	s.Readyz = m(s.Readyz)
 	s.Livez = m(s.Livez)
 }
@@ -110,6 +114,7 @@ func (s *Server) MethodNames() []string { return querysvc.MethodNames[:] }
 // Mount configures the mux to serve the query-svc endpoints.
 func Mount(mux goahttp.Muxer, h *Server) {
 	MountQueryResourcesHandler(mux, h.QueryResources)
+	MountQueryOrgsHandler(mux, h.QueryOrgs)
 	MountReadyzHandler(mux, h.Readyz)
 	MountLivezHandler(mux, h.Livez)
 	MountGenHTTPOpenapiJSON(mux, http.StripPrefix("/_query", h.GenHTTPOpenapiJSON))
@@ -153,6 +158,57 @@ func NewQueryResourcesHandler(
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		ctx := context.WithValue(r.Context(), goahttp.AcceptTypeKey, r.Header.Get("Accept"))
 		ctx = context.WithValue(ctx, goa.MethodKey, "query-resources")
+		ctx = context.WithValue(ctx, goa.ServiceKey, "query-svc")
+		payload, err := decodeRequest(r)
+		if err != nil {
+			if err := encodeError(ctx, w, err); err != nil {
+				errhandler(ctx, w, err)
+			}
+			return
+		}
+		res, err := endpoint(ctx, payload)
+		if err != nil {
+			if err := encodeError(ctx, w, err); err != nil {
+				errhandler(ctx, w, err)
+			}
+			return
+		}
+		if err := encodeResponse(ctx, w, res); err != nil {
+			errhandler(ctx, w, err)
+		}
+	})
+}
+
+// MountQueryOrgsHandler configures the mux to serve the "query-svc" service
+// "query-orgs" endpoint.
+func MountQueryOrgsHandler(mux goahttp.Muxer, h http.Handler) {
+	f, ok := h.(http.HandlerFunc)
+	if !ok {
+		f = func(w http.ResponseWriter, r *http.Request) {
+			h.ServeHTTP(w, r)
+		}
+	}
+	mux.Handle("GET", "/query/orgs", f)
+}
+
+// NewQueryOrgsHandler creates a HTTP handler which loads the HTTP request and
+// calls the "query-svc" service "query-orgs" endpoint.
+func NewQueryOrgsHandler(
+	endpoint goa.Endpoint,
+	mux goahttp.Muxer,
+	decoder func(*http.Request) goahttp.Decoder,
+	encoder func(context.Context, http.ResponseWriter) goahttp.Encoder,
+	errhandler func(context.Context, http.ResponseWriter, error),
+	formatter func(ctx context.Context, err error) goahttp.Statuser,
+) http.Handler {
+	var (
+		decodeRequest  = DecodeQueryOrgsRequest(mux, decoder)
+		encodeResponse = EncodeQueryOrgsResponse(encoder)
+		encodeError    = EncodeQueryOrgsError(encoder, formatter)
+	)
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		ctx := context.WithValue(r.Context(), goahttp.AcceptTypeKey, r.Header.Get("Accept"))
+		ctx = context.WithValue(ctx, goa.MethodKey, "query-orgs")
 		ctx = context.WithValue(ctx, goa.ServiceKey, "query-svc")
 		payload, err := decodeRequest(r)
 		if err != nil {

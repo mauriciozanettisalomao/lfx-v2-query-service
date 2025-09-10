@@ -56,6 +56,14 @@ var BadRequestError = dsl.Type("BadRequestError", func() {
 	dsl.Required("message")
 })
 
+// NotFoundError is the DSL type for a not found error.
+var NotFoundError = dsl.Type("NotFoundError", func() {
+	dsl.Attribute("message", dsl.String, "Error message", func() {
+		dsl.Example("The requested resource was not found.")
+	})
+	dsl.Required("message")
+})
+
 // InternalServerError is the DSL type for an internal server error.
 var InternalServerError = dsl.Type("InternalServerError", func() {
 	dsl.Attribute("message", dsl.String, "Error message", func() {
@@ -70,6 +78,26 @@ var ServiceUnavailableError = dsl.Type("ServiceUnavailableError", func() {
 		dsl.Example("The service is unavailable.")
 	})
 	dsl.Required("message")
+})
+
+var Organization = dsl.Type("Organization", func() {
+	dsl.Description("An organization is a universal representation of an LFX API organization.")
+
+	dsl.Attribute("name", dsl.String, "Organization name", func() {
+		dsl.Example("Linux Foundation")
+	})
+	dsl.Attribute("domain", dsl.String, "Organization domain", func() {
+		dsl.Example("linuxfoundation.org")
+	})
+	dsl.Attribute("industry", dsl.String, "Organization industry classification", func() {
+		dsl.Example("Non-Profit")
+	})
+	dsl.Attribute("sector", dsl.String, "Business sector classification", func() {
+		dsl.Example("Technology")
+	})
+	dsl.Attribute("employees", dsl.String, "Employee count or range", func() {
+		dsl.Example("100-499")
+	})
 })
 
 // Define an example cached LFX resource for the nested "data" attribute for
