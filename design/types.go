@@ -100,6 +100,21 @@ var Organization = dsl.Type("Organization", func() {
 	})
 })
 
+var OrganizationSuggestion = dsl.Type("OrganizationSuggestion", func() {
+	dsl.Description("An organization suggestion for the search.")
+
+	dsl.Attribute("name", dsl.String, "Organization name", func() {
+		dsl.Example("Linux Foundation")
+	})
+	dsl.Attribute("domain", dsl.String, "Organization domain", func() {
+		dsl.Example("linuxfoundation.org")
+	})
+	dsl.Attribute("logo", dsl.String, "Organization logo URL", func() {
+		dsl.Example("https://example.com/logo.png")
+	})
+	dsl.Required("name", "domain")
+})
+
 // Define an example cached LFX resource for the nested "data" attribute for
 // resource searches. This example happens to be a committee to match the
 // example value of "committee" for the "type" attribute of Resource.

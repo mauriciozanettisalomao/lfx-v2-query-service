@@ -124,6 +124,43 @@ func (m *MockOrganizationSearcher) QueryOrganizations(ctx context.Context, crite
 	return nil, errors.NewValidation("no search criteria provided")
 }
 
+// SuggestOrganizations implements the OrganizationSearcher interface with mock suggestions
+func (m *MockOrganizationSearcher) SuggestOrganizations(ctx context.Context, criteria model.OrganizationSuggestionCriteria) (*model.OrganizationSuggestionsResult, error) {
+	slog.DebugContext(ctx, "executing mock organization suggestions search",
+		"query", criteria.Query,
+	)
+
+	var suggestions []model.OrganizationSuggestion
+	query := strings.ToLower(criteria.Query)
+
+	// Search for organizations that match the query (case-insensitive partial match)
+	for _, org := range m.organizations {
+		if strings.Contains(strings.ToLower(org.Name), query) || strings.Contains(strings.ToLower(org.Domain), query) {
+			suggestions = append(suggestions, model.OrganizationSuggestion{
+				Name:   org.Name,
+				Domain: org.Domain,
+				Logo:   nil, // Mock doesn't have logo data
+			})
+		}
+	}
+
+	// Limit to first 5 suggestions for realistic behavior
+	if len(suggestions) > 5 {
+		suggestions = suggestions[:5]
+	}
+
+	result := &model.OrganizationSuggestionsResult{
+		Suggestions: suggestions,
+	}
+
+	slog.DebugContext(ctx, "mock organization suggestions search completed",
+		"query", criteria.Query,
+		"suggestion_count", len(suggestions),
+	)
+
+	return result, nil
+}
+
 // IsReady implements the OrganizationSearcher interface (always ready for mock)
 func (m *MockOrganizationSearcher) IsReady(ctx context.Context) error {
 	return nil

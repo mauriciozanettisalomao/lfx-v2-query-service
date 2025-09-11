@@ -27,6 +27,9 @@ type OrganizationSearcher interface {
 	// QueryOrganizations searches for organizations based on the provided criteria
 	QueryOrganizations(ctx context.Context, criteria model.OrganizationSearchCriteria) (*model.Organization, error)
 
+	// SuggestOrganizations returns organization suggestions for typeahead search
+	SuggestOrganizations(ctx context.Context, criteria model.OrganizationSuggestionCriteria) (*model.OrganizationSuggestionsResult, error)
+
 	// IsReady checks if the search service is ready
 	IsReady(ctx context.Context) error
 }

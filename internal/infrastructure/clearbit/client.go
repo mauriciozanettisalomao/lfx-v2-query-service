@@ -32,7 +32,12 @@ func (c *Client) FindCompanyByName(ctx context.Context, name string) (*ClearbitC
 	q.Set("name", name)
 	u.RawQuery = q.Encode()
 
-	return c.makeRequest(ctx, u.String())
+	var company ClearbitCompany
+	err = c.makeRequest(ctx, u.String(), &company)
+	if err != nil {
+		return nil, err
+	}
+	return &company, nil
 }
 
 // FindCompanyByDomain searches for a company by domain using Clearbit's Company API
@@ -47,11 +52,36 @@ func (c *Client) FindCompanyByDomain(ctx context.Context, domain string) (*Clear
 	q.Set("domain", domain)
 	u.RawQuery = q.Encode()
 
-	return c.makeRequest(ctx, u.String())
+	var company ClearbitCompany
+	err = c.makeRequest(ctx, u.String(), &company)
+	if err != nil {
+		return nil, err
+	}
+	return &company, nil
+}
+
+// SuggestCompanies searches for company suggestions using Clearbit's Autocomplete API
+func (c *Client) SuggestCompanies(ctx context.Context, query string) ([]ClearbitCompanySuggestion, error) {
+	// Build the URL with query parameters
+	u, err := url.Parse(fmt.Sprintf("%s/v1/companies/suggest", c.config.AutocompleteBaseURL))
+	if err != nil {
+		return nil, fmt.Errorf("failed to parse autocomplete base URL: %w", err)
+	}
+
+	q := u.Query()
+	q.Set("query", query)
+	u.RawQuery = q.Encode()
+
+	var suggestions []ClearbitCompanySuggestion
+	err = c.makeRequest(ctx, u.String(), &suggestions)
+	if err != nil {
+		return nil, err
+	}
+	return suggestions, nil
 }
 
 // makeRequest performs the HTTP request to Clearbit API using the generic HTTP client
-func (c *Client) makeRequest(ctx context.Context, url string) (*ClearbitCompany, error) {
+func (c *Client) makeRequest(ctx context.Context, url string, model any) error {
 	headers := map[string]string{
 		"Authorization": fmt.Sprintf("Bearer %s", c.config.APIKey),
 	}
@@ -62,20 +92,21 @@ func (c *Client) makeRequest(ctx context.Context, url string) (*ClearbitCompany,
 		if httpErr, ok := err.(*httpclient.RetryableError); ok {
 			switch httpErr.StatusCode {
 			case http.StatusNotFound:
-				return nil, errors.NewNotFound("company not found")
+				return errors.NewNotFound("company not found")
+			case http.StatusBadRequest, http.StatusUnprocessableEntity:
+				return errors.NewValidation("invalid request", err)
 			default:
-				return nil, errors.NewUnexpected("unexpected error", err)
+				return errors.NewUnexpected("unexpected error", err)
 			}
 		}
-		return nil, errors.NewUnexpected("request failed", err)
+		return errors.NewUnexpected("request failed", err)
 	}
 
-	var company ClearbitCompany
-	if err := json.Unmarshal(resp.Body, &company); err != nil {
-		return nil, errors.NewUnexpected("failed to decode response", err)
+	if err := json.Unmarshal(resp.Body, &model); err != nil {
+		return errors.NewUnexpected("failed to decode response", err)
 	}
 
-	return &company, nil
+	return nil
 }
 
 // IsReady checks if the Clearbit API is reachable

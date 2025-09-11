@@ -56,3 +56,15 @@ type ClearbitError struct {
 	Type    string `json:"type"`
 	Message string `json:"message"`
 }
+
+// ClearbitCompanySuggestion represents a company suggestion from the autocomplete API
+type ClearbitCompanySuggestion struct {
+	// Name is the company name
+	Name string `json:"name"`
+
+	// Domain is the company's primary domain
+	Domain string `json:"domain"`
+
+	// Logo is the URL to the company's logo (can be null)
+	Logo *string `json:"logo"`
+}

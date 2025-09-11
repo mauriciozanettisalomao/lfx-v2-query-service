@@ -78,6 +78,61 @@ paths:
                 - http
             security:
                 - jwt_header_Authorization: []
+    /query/orgs/suggest:
+        get:
+            tags:
+                - query-svc
+            summary: suggest-orgs query-svc
+            description: Get organization suggestions for typeahead search based on a query.
+            operationId: query-svc#suggest-orgs
+            parameters:
+                - name: v
+                  in: query
+                  description: Version of the API
+                  required: true
+                  type: string
+                  enum:
+                    - "1"
+                - name: query
+                  in: query
+                  description: Search query for organization suggestions
+                  required: true
+                  type: string
+                  minLength: 1
+                - name: Authorization
+                  in: header
+                  description: Token
+                  required: true
+                  type: string
+            responses:
+                "200":
+                    description: OK response.
+                    schema:
+                        $ref: '#/definitions/QuerySvcSuggestOrgsResponseBody'
+                        required:
+                            - suggestions
+                "400":
+                    description: Bad Request response.
+                    schema:
+                        $ref: '#/definitions/BadRequestError'
+                        required:
+                            - message
+                "500":
+                    description: Internal Server Error response.
+                    schema:
+                        $ref: '#/definitions/InternalServerError'
+                        required:
+                            - message
+                "503":
+                    description: Service Unavailable response.
+                    schema:
+                        $ref: '#/definitions/ServiceUnavailableError'
+                        required:
+                            - message
+            schemes:
+                - http
+            security:
+                - jwt_header_Authorization: []
     /query/resources:
         get:
             tags:
@@ -242,6 +297,30 @@ definitions:
             industry: Non-Profit
             name: Linux Foundation
             sector: Technology
+    OrganizationSuggestion:
+        title: OrganizationSuggestion
+        type: object
+        properties:
+            domain:
+                type: string
+                description: Organization domain
+                example: linuxfoundation.org
+            logo:
+                type: string
+                description: Organization logo URL
+                example: https://example.com/logo.png
+            name:
+                type: string
+                description: Organization name
+                example: Linux Foundation
+        description: An organization suggestion for typeahead search.
+        example:
+            domain: linuxfoundation.org
+            logo: https://example.com/logo.png
+            name: Linux Foundation
+        required:
+            - name
+            - domain
     QuerySvcQueryResourcesResponseBody:
         title: QuerySvcQueryResourcesResponseBody
         type: object
@@ -256,6 +335,18 @@ definitions:
                     $ref: '#/definitions/Resource'
                 description: Resources found
                 example:
+                    - data:
+                        id: "123"
+                        name: My committee
+                        description: a committee
+                      id: "123"
+                      type: committee
+                    - data:
+                        id: "123"
+                        name: My committee
+                        description: a committee
+                      id: "123"
+                      type: committee
                     - data:
                         id: "123"
                         name: My committee
@@ -297,6 +388,41 @@ definitions:
                   type: committee
         required:
             - resources
+    QuerySvcSuggestOrgsResponseBody:
+        title: QuerySvcSuggestOrgsResponseBody
+        type: object
+        properties:
+            suggestions:
+                type: array
+                items:
+                    $ref: '#/definitions/OrganizationSuggestion'
+                description: Organization suggestions
+                example:
+                    - domain: linuxfoundation.org
+                      logo: https://example.com/logo.png
+                      name: Linux Foundation
+                    - domain: linuxfoundation.org
+                      logo: https://example.com/logo.png
+                      name: Linux Foundation
+                    - domain: linuxfoundation.org
+                      logo: https://example.com/logo.png
+                      name: Linux Foundation
+        example:
+            suggestions:
+                - domain: linuxfoundation.org
+                  logo: https://example.com/logo.png
+                  name: Linux Foundation
+                - domain: linuxfoundation.org
+                  logo: https://example.com/logo.png
+                  name: Linux Foundation
+                - domain: linuxfoundation.org
+                  logo: https://example.com/logo.png
+                  name: Linux Foundation
+                - domain: linuxfoundation.org
+                  logo: https://example.com/logo.png
+                  name: Linux Foundation
+        required:
+            - suggestions
     Resource:
         title: Resource
         type: object

@@ -7,6 +7,7 @@ import (
 	"context"
 	"fmt"
 	"io"
+	"log/slog"
 	"net/http"
 	"strings"
 	"time"
@@ -40,7 +41,7 @@ type RetryableError struct {
 }
 
 func (e *RetryableError) Error() string {
-	return fmt.Sprintf("HTTP %d: %s", e.StatusCode, e.Message)
+	return e.Message
 }
 
 // Do executes an HTTP request with retry logic
@@ -75,7 +76,9 @@ func (c *Client) Do(ctx context.Context, req Request) (*Response, error) {
 		}
 	}
 
-	return nil, fmt.Errorf("request failed %w", lastErr)
+	slog.ErrorContext(ctx, "request failed", "error", lastErr)
+
+	return nil, lastErr
 }
 
 // doRequest performs a single HTTP request
@@ -111,7 +114,7 @@ func (c *Client) doRequest(ctx context.Context, reqConfig Request) (*Response, e
 	}
 
 	// Check for HTTP errors
-	if resp.StatusCode >= 400 {
+	if resp.StatusCode >= http.StatusBadRequest {
 		err := &RetryableError{
 			StatusCode: resp.StatusCode,
 			Message:    string(body),
@@ -131,7 +134,7 @@ func (c *Client) shouldRetry(err error) bool {
 	// Check if it's a retryable error
 	if retryableErr, ok := err.(*RetryableError); ok {
 		// Retry on server errors and rate limiting
-		return retryableErr.StatusCode >= 500 || retryableErr.StatusCode == 429
+		return retryableErr.StatusCode >= http.StatusInternalServerError || retryableErr.StatusCode == http.StatusTooManyRequests
 	}
 
 	// Retry on network-related errors

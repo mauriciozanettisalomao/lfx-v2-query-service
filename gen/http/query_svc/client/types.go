@@ -36,6 +36,13 @@ type QueryOrgsResponseBody struct {
 	Employees *string `form:"employees,omitempty" json:"employees,omitempty" xml:"employees,omitempty"`
 }
 
+// SuggestOrgsResponseBody is the type of the "query-svc" service
+// "suggest-orgs" endpoint HTTP response body.
+type SuggestOrgsResponseBody struct {
+	// Organization suggestions
+	Suggestions []*OrganizationSuggestionResponseBody `form:"suggestions,omitempty" json:"suggestions,omitempty" xml:"suggestions,omitempty"`
+}
+
 // QueryResourcesBadRequestResponseBody is the type of the "query-svc" service
 // "query-resources" endpoint HTTP response body for the "BadRequest" error.
 type QueryResourcesBadRequestResponseBody struct {
@@ -89,6 +96,29 @@ type QueryOrgsServiceUnavailableResponseBody struct {
 	Message *string `form:"message,omitempty" json:"message,omitempty" xml:"message,omitempty"`
 }
 
+// SuggestOrgsBadRequestResponseBody is the type of the "query-svc" service
+// "suggest-orgs" endpoint HTTP response body for the "BadRequest" error.
+type SuggestOrgsBadRequestResponseBody struct {
+	// Error message
+	Message *string `form:"message,omitempty" json:"message,omitempty" xml:"message,omitempty"`
+}
+
+// SuggestOrgsInternalServerErrorResponseBody is the type of the "query-svc"
+// service "suggest-orgs" endpoint HTTP response body for the
+// "InternalServerError" error.
+type SuggestOrgsInternalServerErrorResponseBody struct {
+	// Error message
+	Message *string `form:"message,omitempty" json:"message,omitempty" xml:"message,omitempty"`
+}
+
+// SuggestOrgsServiceUnavailableResponseBody is the type of the "query-svc"
+// service "suggest-orgs" endpoint HTTP response body for the
+// "ServiceUnavailable" error.
+type SuggestOrgsServiceUnavailableResponseBody struct {
+	// Error message
+	Message *string `form:"message,omitempty" json:"message,omitempty" xml:"message,omitempty"`
+}
+
 // ReadyzNotReadyResponseBody is the type of the "query-svc" service "readyz"
 // endpoint HTTP response body for the "NotReady" error.
 type ReadyzNotReadyResponseBody struct {
@@ -115,6 +145,17 @@ type ResourceResponseBody struct {
 	ID *string `form:"id,omitempty" json:"id,omitempty" xml:"id,omitempty"`
 	// Resource data snapshot
 	Data any `form:"data,omitempty" json:"data,omitempty" xml:"data,omitempty"`
+}
+
+// OrganizationSuggestionResponseBody is used to define fields on response body
+// types.
+type OrganizationSuggestionResponseBody struct {
+	// Organization name
+	Name *string `form:"name,omitempty" json:"name,omitempty" xml:"name,omitempty"`
+	// Organization domain
+	Domain *string `form:"domain,omitempty" json:"domain,omitempty" xml:"domain,omitempty"`
+	// Organization logo URL
+	Logo *string `form:"logo,omitempty" json:"logo,omitempty" xml:"logo,omitempty"`
 }
 
 // NewQueryResourcesResultOK builds a "query-svc" service "query-resources"
@@ -216,6 +257,48 @@ func NewQueryOrgsServiceUnavailable(body *QueryOrgsServiceUnavailableResponseBod
 	return v
 }
 
+// NewSuggestOrgsResultOK builds a "query-svc" service "suggest-orgs" endpoint
+// result from a HTTP "OK" response.
+func NewSuggestOrgsResultOK(body *SuggestOrgsResponseBody) *querysvc.SuggestOrgsResult {
+	v := &querysvc.SuggestOrgsResult{}
+	v.Suggestions = make([]*querysvc.OrganizationSuggestion, len(body.Suggestions))
+	for i, val := range body.Suggestions {
+		v.Suggestions[i] = unmarshalOrganizationSuggestionResponseBodyToQuerysvcOrganizationSuggestion(val)
+	}
+
+	return v
+}
+
+// NewSuggestOrgsBadRequest builds a query-svc service suggest-orgs endpoint
+// BadRequest error.
+func NewSuggestOrgsBadRequest(body *SuggestOrgsBadRequestResponseBody) *querysvc.BadRequestError {
+	v := &querysvc.BadRequestError{
+		Message: *body.Message,
+	}
+
+	return v
+}
+
+// NewSuggestOrgsInternalServerError builds a query-svc service suggest-orgs
+// endpoint InternalServerError error.
+func NewSuggestOrgsInternalServerError(body *SuggestOrgsInternalServerErrorResponseBody) *querysvc.InternalServerError {
+	v := &querysvc.InternalServerError{
+		Message: *body.Message,
+	}
+
+	return v
+}
+
+// NewSuggestOrgsServiceUnavailable builds a query-svc service suggest-orgs
+// endpoint ServiceUnavailable error.
+func NewSuggestOrgsServiceUnavailable(body *SuggestOrgsServiceUnavailableResponseBody) *querysvc.ServiceUnavailableError {
+	v := &querysvc.ServiceUnavailableError{
+		Message: *body.Message,
+	}
+
+	return v
+}
+
 // NewReadyzNotReady builds a query-svc service readyz endpoint NotReady error.
 func NewReadyzNotReady(body *ReadyzNotReadyResponseBody) *goa.ServiceError {
 	v := &goa.ServiceError{
@@ -235,6 +318,22 @@ func NewReadyzNotReady(body *ReadyzNotReadyResponseBody) *goa.ServiceError {
 func ValidateQueryResourcesResponseBody(body *QueryResourcesResponseBody) (err error) {
 	if body.Resources == nil {
 		err = goa.MergeErrors(err, goa.MissingFieldError("resources", "body"))
+	}
+	return
+}
+
+// ValidateSuggestOrgsResponseBody runs the validations defined on
+// Suggest-OrgsResponseBody
+func ValidateSuggestOrgsResponseBody(body *SuggestOrgsResponseBody) (err error) {
+	if body.Suggestions == nil {
+		err = goa.MergeErrors(err, goa.MissingFieldError("suggestions", "body"))
+	}
+	for _, e := range body.Suggestions {
+		if e != nil {
+			if err2 := ValidateOrganizationSuggestionResponseBody(e); err2 != nil {
+				err = goa.MergeErrors(err, err2)
+			}
+		}
 	}
 	return
 }
@@ -302,6 +401,33 @@ func ValidateQueryOrgsServiceUnavailableResponseBody(body *QueryOrgsServiceUnava
 	return
 }
 
+// ValidateSuggestOrgsBadRequestResponseBody runs the validations defined on
+// suggest-orgs_BadRequest_response_body
+func ValidateSuggestOrgsBadRequestResponseBody(body *SuggestOrgsBadRequestResponseBody) (err error) {
+	if body.Message == nil {
+		err = goa.MergeErrors(err, goa.MissingFieldError("message", "body"))
+	}
+	return
+}
+
+// ValidateSuggestOrgsInternalServerErrorResponseBody runs the validations
+// defined on suggest-orgs_InternalServerError_response_body
+func ValidateSuggestOrgsInternalServerErrorResponseBody(body *SuggestOrgsInternalServerErrorResponseBody) (err error) {
+	if body.Message == nil {
+		err = goa.MergeErrors(err, goa.MissingFieldError("message", "body"))
+	}
+	return
+}
+
+// ValidateSuggestOrgsServiceUnavailableResponseBody runs the validations
+// defined on suggest-orgs_ServiceUnavailable_response_body
+func ValidateSuggestOrgsServiceUnavailableResponseBody(body *SuggestOrgsServiceUnavailableResponseBody) (err error) {
+	if body.Message == nil {
+		err = goa.MergeErrors(err, goa.MissingFieldError("message", "body"))
+	}
+	return
+}
+
 // ValidateReadyzNotReadyResponseBody runs the validations defined on
 // readyz_NotReady_response_body
 func ValidateReadyzNotReadyResponseBody(body *ReadyzNotReadyResponseBody) (err error) {
@@ -322,6 +448,18 @@ func ValidateReadyzNotReadyResponseBody(body *ReadyzNotReadyResponseBody) (err e
 	}
 	if body.Fault == nil {
 		err = goa.MergeErrors(err, goa.MissingFieldError("fault", "body"))
+	}
+	return
+}
+
+// ValidateOrganizationSuggestionResponseBody runs the validations defined on
+// OrganizationSuggestionResponseBody
+func ValidateOrganizationSuggestionResponseBody(body *OrganizationSuggestionResponseBody) (err error) {
+	if body.Name == nil {
+		err = goa.MergeErrors(err, goa.MissingFieldError("name", "body"))
+	}
+	if body.Domain == nil {
+		err = goa.MergeErrors(err, goa.MissingFieldError("domain", "body"))
 	}
 	return
 }

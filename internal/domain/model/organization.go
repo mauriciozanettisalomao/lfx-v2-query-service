@@ -16,3 +16,19 @@ type Organization struct {
 	// Employee count or range
 	Employees string `json:"employees"`
 }
+
+// OrganizationSuggestion represents a suggested organization for typeahead search
+type OrganizationSuggestion struct {
+	// Organization name
+	Name string `json:"name"`
+	// Organization domain
+	Domain string `json:"domain"`
+	// Organization logo URL
+	Logo *string `json:"logo,omitempty"`
+}
+
+// OrganizationSuggestionsResult contains the results of an organization suggestions search
+type OrganizationSuggestionsResult struct {
+	// Suggestions found
+	Suggestions []OrganizationSuggestion `json:"suggestions"`
+}

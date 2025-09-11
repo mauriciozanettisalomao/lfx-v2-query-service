@@ -48,3 +48,9 @@ type OrganizationSearchCriteria struct {
 	// Organization domain or website URL
 	Domain *string
 }
+
+// OrganizationSuggestionCriteria encapsulates search parameters for organization suggestions
+type OrganizationSuggestionCriteria struct {
+	// Search query for organization suggestions
+	Query string
+}

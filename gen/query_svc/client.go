@@ -17,15 +17,17 @@ import (
 type Client struct {
 	QueryResourcesEndpoint goa.Endpoint
 	QueryOrgsEndpoint      goa.Endpoint
+	SuggestOrgsEndpoint    goa.Endpoint
 	ReadyzEndpoint         goa.Endpoint
 	LivezEndpoint          goa.Endpoint
 }
 
 // NewClient initializes a "query-svc" service client given the endpoints.
-func NewClient(queryResources, queryOrgs, readyz, livez goa.Endpoint) *Client {
+func NewClient(queryResources, queryOrgs, suggestOrgs, readyz, livez goa.Endpoint) *Client {
 	return &Client{
 		QueryResourcesEndpoint: queryResources,
 		QueryOrgsEndpoint:      queryOrgs,
+		SuggestOrgsEndpoint:    suggestOrgs,
 		ReadyzEndpoint:         readyz,
 		LivezEndpoint:          livez,
 	}
@@ -62,6 +64,22 @@ func (c *Client) QueryOrgs(ctx context.Context, p *QueryOrgsPayload) (res *Organ
 		return
 	}
 	return ires.(*Organization), nil
+}
+
+// SuggestOrgs calls the "suggest-orgs" endpoint of the "query-svc" service.
+// SuggestOrgs may return the following errors:
+//   - "BadRequest" (type *BadRequestError): Bad request
+//   - "NotFound" (type *NotFoundError): Not found
+//   - "InternalServerError" (type *InternalServerError): Internal server error
+//   - "ServiceUnavailable" (type *ServiceUnavailableError): Service unavailable
+//   - error: internal error
+func (c *Client) SuggestOrgs(ctx context.Context, p *SuggestOrgsPayload) (res *SuggestOrgsResult, err error) {
+	var ires any
+	ires, err = c.SuggestOrgsEndpoint(ctx, p)
+	if err != nil {
+		return
+	}
+	return ires.(*SuggestOrgsResult), nil
 }
 
 // Readyz calls the "readyz" endpoint of the "query-svc" service.
