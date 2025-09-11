@@ -109,6 +109,9 @@ func (s *querySvcsrvc) payloadToOrganizationSuggestionCriteria(ctx context.Conte
 
 // domainOrganizationSuggestionsToResponse converts domain organization suggestions result to generated response
 func (s *querySvcsrvc) domainOrganizationSuggestionsToResponse(result *model.OrganizationSuggestionsResult) *querysvc.SuggestOrgsResult {
+	if result == nil || len(result.Suggestions) == 0 {
+		return &querysvc.SuggestOrgsResult{Suggestions: []*querysvc.OrganizationSuggestion{}}
+	}
 	suggestions := make([]*querysvc.OrganizationSuggestion, len(result.Suggestions))
 
 	for i, domainSuggestion := range result.Suggestions {
