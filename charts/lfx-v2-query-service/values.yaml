@@ -28,9 +28,9 @@ app:
         secretKeyRef:
           name: lfx-v2-query-service-secrets
           key: PAGE_TOKEN_SECRET
-    ## in case of clearbit, the value is required to be set
-    ## optionally, it's possible to use a mock implementation
-    ## in case of mock, please set the ORG_SEARCH_SOURCE to mock
+    ## In case of clearbit, the value is required to be set.
+    ## Optionally, it's possible to use a mock implementation.
+    ## In case of mock, please set the ORG_SEARCH_SOURCE to mock.
     CLEARBIT_CREDENTIAL:
       value: null
 

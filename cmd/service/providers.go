@@ -39,9 +39,6 @@ func AuthServiceImpl(ctx context.Context) port.Authenticator {
 			JWKSURL:  os.Getenv("JWKS_URL"),
 			Audience: os.Getenv("JWT_AUDIENCE"),
 		}
-		if jwtConfig.JWKSURL == "" || jwtConfig.Audience == "" {
-			log.Fatalf("JWT configuration incomplete: JWKS_URL and JWT_AUDIENCE are required")
-		}
 		jwtAuth, err := auth.NewJWTAuth(jwtConfig)
 		if err != nil {
 			log.Fatalf("failed to initialize JWT authentication service: %v", err)
