@@ -30,7 +30,7 @@ func (s *querySvcsrvc) JWTAuth(ctx context.Context, token string, scheme *securi
 	// Parse the Heimdall-authorized principal from the token.
 	principal, err := s.auth.ParsePrincipal(ctx, token, slog.Default())
 	if err != nil {
-		return ctx, err
+		return ctx, wrapError(ctx, err)
 	}
 
 	// Log the principal for debugging purposes in all logs for this request.

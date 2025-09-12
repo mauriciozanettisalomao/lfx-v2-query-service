@@ -11,6 +11,8 @@ import (
 	"strings"
 	"time"
 
+	errs "github.com/linuxfoundation/lfx-v2-query-service/pkg/errors"
+
 	"github.com/auth0/go-jwt-middleware/v2/jwks"
 	"github.com/auth0/go-jwt-middleware/v2/validator"
 )
@@ -90,19 +92,19 @@ func (j *JWTAuth) ParsePrincipal(ctx context.Context, token string, logger *slog
 				errString = errString[:firstColon+secondColon+1]
 			}
 		}
-		return "", errors.New(errString)
+		return "", errs.NewValidation(errString)
 	}
 
 	claims, ok := parsedJWT.(*validator.ValidatedClaims)
 	if !ok {
 		// This should never happen.
-		return "", errors.New("failed to get validated authorization claims")
+		return "", errs.NewValidation("failed to get validated authorization claims")
 	}
 
 	customClaims, ok := claims.CustomClaims.(*HeimdallClaims)
 	if !ok {
 		// This should never happen.
-		return "", errors.New("failed to get custom authorization claims")
+		return "", errs.NewValidation("failed to get custom authorization claims")
 	}
 
 	return customClaims.Principal, nil
