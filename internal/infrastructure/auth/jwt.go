@@ -1,15 +1,13 @@
 // Copyright The Linux Foundation and each contributor to LFX.
 // SPDX-License-Identifier: MIT
 
-package service
+package auth
 
 import (
 	"context"
 	"errors"
-	"log"
 	"log/slog"
 	"net/url"
-	"os"
 	"strings"
 	"time"
 
@@ -19,18 +17,27 @@ import (
 
 const (
 	// PS256 is the default for Heimdall's JWT finalizer.
-	ps256           = validator.PS256
-	rs256           = validator.RS256
-	defaultIssuer   = "heimdall"
-	defaultAudience = "lfx-v2-query-service"
+	signatureAlgorithm = validator.PS256
+	defaultIssuer      = "heimdall"
+	defaultAudience    = "lfx-v2-query-service"
+	defaultJWKSURL     = "http://heimdall:4457/.well-known/jwks"
 )
+
+// JWTAuthConfig holds the configuration parameters for JWT authentication.
+type JWTAuthConfig struct {
+	// JWKSURL is the URL to the JSON Web Key Set endpoint
+	JWKSURL string
+	// Audience is the intended audience for the JWT token
+	Audience string
+	// MockLocalPrincipal is used for local development to bypass JWT validation
+	MockLocalPrincipal string
+}
 
 var (
 	// Factory for custom JWT claims target.
 	customClaims = func() validator.CustomClaims {
 		return &HeimdallClaims{}
 	}
-	jwtValidator *validator.Validator
 )
 
 // HeimdallClaims contains extra custom claims we want to parse from the JWT
@@ -49,73 +56,19 @@ func (c *HeimdallClaims) Validate(ctx context.Context) error {
 	return nil
 }
 
-// SetupJWTAuth initializes the JWT authentication middleware for the service.
-func SetupJWTAuth(ctx context.Context) {
-	// Set up Heimdall JWKS key provider.
-	jwksEnv := os.Getenv("JWKS_URL")
-	if jwksEnv == "" {
-		jwksEnv = "http://heimdall:4457/.well-known/jwks"
-	}
-	jwksURL, err := url.Parse(jwksEnv)
-	if err != nil {
-		slog.ErrorContext(ctx, "failed to parse JWKS URL",
-			"url", jwksEnv,
-			"error", err,
-		)
-		log.Fatalf("failed to parse JWKS URL: %v", err)
-	}
-	var issuer *url.URL
-	issuer, err = url.Parse(defaultIssuer)
-	if err != nil {
-		// This shouldn't happen; a bare hostname is a valid URL.
-		slog.ErrorContext(ctx, "failed to parse issuer URL",
-			"issuer", defaultIssuer,
-			"error", err,
-		)
-		log.Fatalf("failed to parse issuer URL: %v", err)
-	}
-	provider := jwks.NewCachingProvider(issuer, 5*time.Minute, jwks.WithCustomJWKSURI(jwksURL))
-
-	signatureAlgorithm := ps256
-	if os.Getenv("JWT_SIGNATURE_ALGORITHM") == "RS256" {
-		signatureAlgorithm = rs256
-	}
-	// Set up the JWT validator.
-	audience := os.Getenv("AUDIENCE")
-	if audience == "" {
-		audience = defaultAudience
-	}
-	jwtValidator, err = validator.New(
-		provider.KeyFunc,
-		signatureAlgorithm,
-		issuer.String(),
-		[]string{audience},
-		validator.WithCustomClaims(customClaims),
-		validator.WithAllowedClockSkew(5*time.Second),
-	)
-	if err != nil {
-		slog.ErrorContext(ctx, "failed to create JWT validator",
-			"error", err,
-		)
-		log.Fatalf("failed to create JWT validator: %v", err)
-	}
+type JWTAuth struct {
+	validator *validator.Validator
+	config    JWTAuthConfig
 }
 
 // ParsePrincipal extracts the principal from the JWT claims.
-func ParsePrincipal(ctx context.Context, token string) (string, error) {
+func (j *JWTAuth) ParsePrincipal(ctx context.Context, token string, logger *slog.Logger) (string, error) {
 
-	if mockLocalPrincipal := os.Getenv("JWT_AUTH_DISABLED_MOCK_LOCAL_PRINCIPAL"); mockLocalPrincipal != "" {
-		slog.InfoContext(ctx, "JWT authentication is disabled, returning mock principal",
-			"principal", mockLocalPrincipal,
-		)
-		return mockLocalPrincipal, nil
-	}
-
-	if jwtValidator == nil {
+	if j.validator == nil {
 		return "", errors.New("JWT validator is not set up")
 	}
 
-	parsedJWT, err := jwtValidator.ValidateToken(ctx, token)
+	parsedJWT, err := j.validator.ValidateToken(ctx, token)
 	if err != nil {
 		slog.ErrorContext(ctx, "failed to validate JWT token",
 			"error", err,
@@ -153,4 +106,51 @@ func ParsePrincipal(ctx context.Context, token string) (string, error) {
 	}
 
 	return customClaims.Principal, nil
+}
+
+// NewJWTAuth creates a new JWT authentication service
+func NewJWTAuth(config JWTAuthConfig) (*JWTAuth, error) {
+	// Set up defaults if not provided
+	jwksURLStr := config.JWKSURL
+	if jwksURLStr == "" {
+		jwksURLStr = defaultJWKSURL
+	}
+	audience := config.Audience
+	if audience == "" {
+		audience = defaultAudience
+	}
+
+	// Set up Heimdall JWKS key provider.
+	jwksURL, err := url.Parse(jwksURLStr)
+	if err != nil {
+		slog.With("error", err).Error("invalid JWKS_URL")
+		return nil, err
+	}
+	var issuer *url.URL
+	issuer, err = url.Parse(defaultIssuer)
+	if err != nil {
+		// This shouldn't happen; a bare hostname is a valid URL.
+		slog.Error("unexpected URL parsing of default issuer")
+		return nil, err
+	}
+	provider := jwks.NewCachingProvider(issuer, 5*time.Minute, jwks.WithCustomJWKSURI(jwksURL))
+
+	// Set up the JWT validator.
+	jwtValidator, err := validator.New(
+		provider.KeyFunc,
+		signatureAlgorithm,
+		issuer.String(),
+		[]string{audience},
+		validator.WithCustomClaims(customClaims),
+		validator.WithAllowedClockSkew(5*time.Second),
+	)
+	if err != nil {
+		slog.With("error", err).Error("failed to set up the Heimdall JWT validator")
+		return nil, err
+	}
+
+	return &JWTAuth{
+		validator: jwtValidator,
+		config:    config,
+	}, nil
 }

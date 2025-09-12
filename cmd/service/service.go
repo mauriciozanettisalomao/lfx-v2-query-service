@@ -20,6 +20,7 @@ import (
 type querySvcsrvc struct {
 	resourceService     service.ResourceSearcher
 	organizationService service.OrganizationSearcher
+	auth                port.Authenticator
 }
 
 // JWTAuth implements the authorization logic for service "query-svc" for the
@@ -27,7 +28,7 @@ type querySvcsrvc struct {
 func (s *querySvcsrvc) JWTAuth(ctx context.Context, token string, scheme *security.JWTScheme) (context.Context, error) {
 
 	// Parse the Heimdall-authorized principal from the token.
-	principal, err := ParsePrincipal(ctx, token)
+	principal, err := s.auth.ParsePrincipal(ctx, token, slog.Default())
 	if err != nil {
 		return ctx, err
 	}
@@ -132,11 +133,13 @@ func (s *querySvcsrvc) Livez(ctx context.Context) (res []byte, err error) {
 func NewQuerySvc(resourceSearcher port.ResourceSearcher,
 	accessControlChecker port.AccessControlChecker,
 	organizationSearcher port.OrganizationSearcher,
+	auth port.Authenticator,
 ) querysvc.Service {
 	resourceService := service.NewResourceSearch(resourceSearcher, accessControlChecker)
 	organizationService := service.NewOrganizationSearch(organizationSearcher)
 	return &querySvcsrvc{
 		resourceService:     resourceService,
 		organizationService: organizationService,
+		auth:                auth,
 	}
 }

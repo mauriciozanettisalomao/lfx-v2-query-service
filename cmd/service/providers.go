@@ -12,11 +12,47 @@ import (
 	"time"
 
 	"github.com/linuxfoundation/lfx-v2-query-service/internal/domain/port"
+	"github.com/linuxfoundation/lfx-v2-query-service/internal/infrastructure/auth"
 	"github.com/linuxfoundation/lfx-v2-query-service/internal/infrastructure/clearbit"
 	"github.com/linuxfoundation/lfx-v2-query-service/internal/infrastructure/mock"
 	"github.com/linuxfoundation/lfx-v2-query-service/internal/infrastructure/nats"
 	"github.com/linuxfoundation/lfx-v2-query-service/internal/infrastructure/opensearch"
 )
+
+// AuthServiceImpl initializes the authentication service implementation
+func AuthServiceImpl(ctx context.Context) port.Authenticator {
+	var authService port.Authenticator
+
+	// Repository implementation configuration
+	authSource := os.Getenv("AUTH_SOURCE")
+	if authSource == "" {
+		authSource = "jwt"
+	}
+
+	switch authSource {
+	case "mock":
+		slog.InfoContext(ctx, "initializing mock authentication service")
+		authService = mock.NewMockAuthService()
+	case "jwt":
+		slog.InfoContext(ctx, "initializing JWT authentication service")
+		jwtConfig := auth.JWTAuthConfig{
+			JWKSURL:  os.Getenv("JWKS_URL"),
+			Audience: os.Getenv("JWT_AUDIENCE"),
+		}
+		if jwtConfig.JWKSURL == "" || jwtConfig.Audience == "" {
+			log.Fatalf("JWT configuration incomplete: JWKS_URL and JWT_AUDIENCE are required")
+		}
+		jwtAuth, err := auth.NewJWTAuth(jwtConfig)
+		if err != nil {
+			log.Fatalf("failed to initialize JWT authentication service: %v", err)
+		}
+		authService = jwtAuth
+	default:
+		log.Fatalf("unsupported authentication service implementation: %s", authSource)
+	}
+
+	return authService
+}
 
 // SearcherImpl injects the resource searcher implementation
 func SearcherImpl(ctx context.Context) port.ResourceSearcher {

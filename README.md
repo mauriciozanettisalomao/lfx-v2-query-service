@@ -20,7 +20,7 @@ The implementation follows the clean architecture principles where:
 ├── design/                         # GOA design specification files
 ├── gen/                            # GOA generated code (HTTP server, client, OpenAPI)
 ├── cmd/                            # Services (main packages)
-│   └── query_svc/                  # Query service implementation
+│   └── service/                    # Service implementation
 ├── internal/                       # Internal service packages
 │   ├── domain/                     # Domain logic layer
 │   │   ├── model/                  # Domain models and entities
@@ -45,7 +45,9 @@ The implementation follows the clean architecture principles where:
 #### Ports (`internal/domain/port/`)
 
 - **ResourceSearcher Interface**: Defines the contract for resource search operations
+- **OrganizationSearcher Interface**: Defines the contract for organization search operations  
 - **AccessControlChecker Interface**: Defines the contract for access control operations
+- **Authenticator Interface**: Defines the contract for authentication operations
 
 ### Service Layer (`internal/service/`)
 
@@ -53,6 +55,26 @@ The implementation follows the clean architecture principles where:
 - **Service Orchestration**: Coordinates between domain models and infrastructure
 
 ### Infrastructure Layer (`internal/infrastructure/`)
+
+#### Authentication Implementation
+
+The authentication system provides JWT-based authentication with support for Heimdall tokens:
+
+- **JWT Authentication (`internal/infrastructure/auth/jwt.go`)**:
+  - Validates JWT tokens using JWKS (JSON Web Key Set)
+  - Extracts custom claims including principal and email
+  - Supports PS256 signature algorithm (default for Heimdall)
+  - Configurable JWKS URL and audience
+
+- **Mock Authentication (`internal/infrastructure/mock/auth.go`)**:
+  - Uses environment variable for mock principal
+  - Bypasses JWT validation for local development
+
+**Authentication Configuration:**
+- `AUTH_SOURCE`: Choose between "mock" or "jwt" (default: "jwt")
+- `JWKS_URL`: JSON Web Key Set endpoint URL
+- `JWT_AUDIENCE`: Intended audience for JWT tokens
+- `JWT_AUTH_DISABLED_MOCK_LOCAL_PRINCIPAL`: Mock principal for development
 
 #### OpenSearch Implementation
 
@@ -162,6 +184,13 @@ go run cmd/main.go
 - `CLEARBIT_MAX_RETRIES`: Maximum number of retry attempts for failed requests (default: "3")
 - `CLEARBIT_RETRY_DELAY`: Delay between retry attempts (default: "1s")
 
+**Authentication Configuration:**
+
+- `AUTH_SOURCE`: Choose between "mock" or "jwt" (default: "jwt")
+- `JWKS_URL`: JSON Web Key Set endpoint URL (default: "http://heimdall:4457/.well-known/jwks")
+- `JWT_AUDIENCE`: Intended audience for JWT tokens (default: "lfx-v2-query-service")
+- `JWT_AUTH_DISABLED_MOCK_LOCAL_PRINCIPAL`: Mock principal for development (required when AUTH_SOURCE=mock)
+
 **Server Configuration:**
 
 - `-p`: HTTP port (default: "8080")
@@ -170,10 +199,13 @@ go run cmd/main.go
 
 ### API Usage
 
-The service exposes a RESTful API through the Goa framework:
+The service exposes a RESTful API through the Goa framework with JWT authentication:
+
+#### Resource Search API
 
 ```
 GET /query/resources?name=committee&type=committee&v=1
+Authorization: Bearer <jwt_token>
 ```
 
 **Parameters:**
@@ -203,6 +235,59 @@ GET /query/resources?name=committee&type=committee&v=1
   ],
   "page_token": "offset_50",
   "cache_control": "public, max-age=300"
+}
+```
+
+#### Organization Search API
+
+**Query Organizations:**
+
+```
+GET /query/orgs?name=Linux Foundation&domain=linuxfoundation.org&v=1
+Authorization: Bearer <jwt_token>
+```
+
+**Parameters:**
+
+- `name`: Organization name (optional)
+- `domain`: Organization domain or website URL (optional)
+- `v`: API version (required)
+
+**Response:**
+
+```json
+{
+  "name": "Linux Foundation",
+  "domain": "linuxfoundation.org",
+  "industry": "Non-Profit",
+  "sector": "Technology",
+  "employees": "100-499"
+}
+```
+
+**Organization Suggestions API:**
+
+```
+GET /query/orgs/suggest?query=linux&v=1
+Authorization: Bearer <jwt_token>
+```
+
+**Parameters:**
+
+- `query`: Search query for organization suggestions (required, minimum 1 character)
+- `v`: API version (required)
+
+**Response:**
+
+```json
+{
+  "suggestions": [
+    {
+      "name": "Linux Foundation",
+      "domain": "linuxfoundation.org",
+      "logo": "https://example.com/logo.png"
+    }
+  ]
 }
 ```
 
