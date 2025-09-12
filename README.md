@@ -186,9 +186,9 @@ go run cmd/main.go
 
 **Authentication Configuration:**
 
-- `AUTH_SOURCE`: Choose between "mock" or "jwt" (default: "jwt")
-- `JWKS_URL`: JSON Web Key Set endpoint URL (default: "http://heimdall:4457/.well-known/jwks")
-- `JWT_AUDIENCE`: Intended audience for JWT tokens (default: "lfx-v2-query-service")
+- `AUTH_SOURCE`: Choose between "mock" or "jwt" 
+- `JWKS_URL`: JSON Web Key Set endpoint URL
+- `JWT_AUDIENCE`: Intended audience for JWT tokens 
 - `JWT_AUTH_DISABLED_MOCK_LOCAL_PRINCIPAL`: Mock principal for development (required when AUTH_SOURCE=mock)
 
 **Server Configuration:**
