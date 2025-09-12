@@ -21,6 +21,8 @@ type Service interface {
 	QueryResources(context.Context, *QueryResourcesPayload) (res *QueryResourcesResult, err error)
 	// Locate a single organization by name or domain.
 	QueryOrgs(context.Context, *QueryOrgsPayload) (res *Organization, err error)
+	// Get organization suggestions for typeahead search based on a query.
+	SuggestOrgs(context.Context, *SuggestOrgsPayload) (res *SuggestOrgsResult, err error)
 	// Check if the service is able to take inbound requests.
 	Readyz(context.Context) (res []byte, err error)
 	// Check if the service is alive.
@@ -47,7 +49,7 @@ const ServiceName = "query-svc"
 // MethodNames lists the service method names as defined in the design. These
 // are the same values that are set in the endpoint request contexts under the
 // MethodKey key.
-var MethodNames = [4]string{"query-resources", "query-orgs", "readyz", "livez"}
+var MethodNames = [5]string{"query-resources", "query-orgs", "suggest-orgs", "readyz", "livez"}
 
 type BadRequestError struct {
 	// Error message
@@ -76,6 +78,16 @@ type Organization struct {
 	Sector *string
 	// Employee count or range
 	Employees *string
+}
+
+// An organization suggestion for typeahead search.
+type OrganizationSuggestion struct {
+	// Organization name
+	Name string
+	// Organization domain
+	Domain string
+	// Organization logo URL
+	Logo *string
 }
 
 // QueryOrgsPayload is the payload type of the query-svc service query-orgs
@@ -136,6 +148,24 @@ type Resource struct {
 type ServiceUnavailableError struct {
 	// Error message
 	Message string
+}
+
+// SuggestOrgsPayload is the payload type of the query-svc service suggest-orgs
+// method.
+type SuggestOrgsPayload struct {
+	// Token
+	BearerToken string
+	// Version of the API
+	Version string
+	// Search query for organization suggestions
+	Query string
+}
+
+// SuggestOrgsResult is the result type of the query-svc service suggest-orgs
+// method.
+type SuggestOrgsResult struct {
+	// Organization suggestions
+	Suggestions []*OrganizationSuggestion
 }
 
 // Error returns an error description.

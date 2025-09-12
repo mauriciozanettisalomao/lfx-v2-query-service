@@ -36,6 +36,13 @@ type QueryOrgsResponseBody struct {
 	Employees *string `form:"employees,omitempty" json:"employees,omitempty" xml:"employees,omitempty"`
 }
 
+// SuggestOrgsResponseBody is the type of the "query-svc" service
+// "suggest-orgs" endpoint HTTP response body.
+type SuggestOrgsResponseBody struct {
+	// Organization suggestions
+	Suggestions []*OrganizationSuggestionResponseBody `form:"suggestions" json:"suggestions" xml:"suggestions"`
+}
+
 // QueryResourcesBadRequestResponseBody is the type of the "query-svc" service
 // "query-resources" endpoint HTTP response body for the "BadRequest" error.
 type QueryResourcesBadRequestResponseBody struct {
@@ -89,6 +96,29 @@ type QueryOrgsServiceUnavailableResponseBody struct {
 	Message string `form:"message" json:"message" xml:"message"`
 }
 
+// SuggestOrgsBadRequestResponseBody is the type of the "query-svc" service
+// "suggest-orgs" endpoint HTTP response body for the "BadRequest" error.
+type SuggestOrgsBadRequestResponseBody struct {
+	// Error message
+	Message string `form:"message" json:"message" xml:"message"`
+}
+
+// SuggestOrgsInternalServerErrorResponseBody is the type of the "query-svc"
+// service "suggest-orgs" endpoint HTTP response body for the
+// "InternalServerError" error.
+type SuggestOrgsInternalServerErrorResponseBody struct {
+	// Error message
+	Message string `form:"message" json:"message" xml:"message"`
+}
+
+// SuggestOrgsServiceUnavailableResponseBody is the type of the "query-svc"
+// service "suggest-orgs" endpoint HTTP response body for the
+// "ServiceUnavailable" error.
+type SuggestOrgsServiceUnavailableResponseBody struct {
+	// Error message
+	Message string `form:"message" json:"message" xml:"message"`
+}
+
 // ReadyzNotReadyResponseBody is the type of the "query-svc" service "readyz"
 // endpoint HTTP response body for the "NotReady" error.
 type ReadyzNotReadyResponseBody struct {
@@ -117,6 +147,17 @@ type ResourceResponseBody struct {
 	Data any `form:"data,omitempty" json:"data,omitempty" xml:"data,omitempty"`
 }
 
+// OrganizationSuggestionResponseBody is used to define fields on response body
+// types.
+type OrganizationSuggestionResponseBody struct {
+	// Organization name
+	Name string `form:"name" json:"name" xml:"name"`
+	// Organization domain
+	Domain string `form:"domain" json:"domain" xml:"domain"`
+	// Organization logo URL
+	Logo *string `form:"logo,omitempty" json:"logo,omitempty" xml:"logo,omitempty"`
+}
+
 // NewQueryResourcesResponseBody builds the HTTP response body from the result
 // of the "query-resources" endpoint of the "query-svc" service.
 func NewQueryResourcesResponseBody(res *querysvc.QueryResourcesResult) *QueryResourcesResponseBody {
@@ -143,6 +184,21 @@ func NewQueryOrgsResponseBody(res *querysvc.Organization) *QueryOrgsResponseBody
 		Industry:  res.Industry,
 		Sector:    res.Sector,
 		Employees: res.Employees,
+	}
+	return body
+}
+
+// NewSuggestOrgsResponseBody builds the HTTP response body from the result of
+// the "suggest-orgs" endpoint of the "query-svc" service.
+func NewSuggestOrgsResponseBody(res *querysvc.SuggestOrgsResult) *SuggestOrgsResponseBody {
+	body := &SuggestOrgsResponseBody{}
+	if res.Suggestions != nil {
+		body.Suggestions = make([]*OrganizationSuggestionResponseBody, len(res.Suggestions))
+		for i, val := range res.Suggestions {
+			body.Suggestions[i] = marshalQuerysvcOrganizationSuggestionToOrganizationSuggestionResponseBody(val)
+		}
+	} else {
+		body.Suggestions = []*OrganizationSuggestionResponseBody{}
 	}
 	return body
 }
@@ -212,6 +268,33 @@ func NewQueryOrgsServiceUnavailableResponseBody(res *querysvc.ServiceUnavailable
 	return body
 }
 
+// NewSuggestOrgsBadRequestResponseBody builds the HTTP response body from the
+// result of the "suggest-orgs" endpoint of the "query-svc" service.
+func NewSuggestOrgsBadRequestResponseBody(res *querysvc.BadRequestError) *SuggestOrgsBadRequestResponseBody {
+	body := &SuggestOrgsBadRequestResponseBody{
+		Message: res.Message,
+	}
+	return body
+}
+
+// NewSuggestOrgsInternalServerErrorResponseBody builds the HTTP response body
+// from the result of the "suggest-orgs" endpoint of the "query-svc" service.
+func NewSuggestOrgsInternalServerErrorResponseBody(res *querysvc.InternalServerError) *SuggestOrgsInternalServerErrorResponseBody {
+	body := &SuggestOrgsInternalServerErrorResponseBody{
+		Message: res.Message,
+	}
+	return body
+}
+
+// NewSuggestOrgsServiceUnavailableResponseBody builds the HTTP response body
+// from the result of the "suggest-orgs" endpoint of the "query-svc" service.
+func NewSuggestOrgsServiceUnavailableResponseBody(res *querysvc.ServiceUnavailableError) *SuggestOrgsServiceUnavailableResponseBody {
+	body := &SuggestOrgsServiceUnavailableResponseBody{
+		Message: res.Message,
+	}
+	return body
+}
+
 // NewReadyzNotReadyResponseBody builds the HTTP response body from the result
 // of the "readyz" endpoint of the "query-svc" service.
 func NewReadyzNotReadyResponseBody(res *goa.ServiceError) *ReadyzNotReadyResponseBody {
@@ -248,6 +331,17 @@ func NewQueryOrgsPayload(version string, name *string, domain *string, bearerTok
 	v.Version = version
 	v.Name = name
 	v.Domain = domain
+	v.BearerToken = bearerToken
+
+	return v
+}
+
+// NewSuggestOrgsPayload builds a query-svc service suggest-orgs endpoint
+// payload.
+func NewSuggestOrgsPayload(version string, query string, bearerToken string) *querysvc.SuggestOrgsPayload {
+	v := &querysvc.SuggestOrgsPayload{}
+	v.Version = version
+	v.Query = query
 	v.BearerToken = bearerToken
 
 	return v

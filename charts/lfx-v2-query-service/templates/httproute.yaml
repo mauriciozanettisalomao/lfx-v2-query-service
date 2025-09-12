@@ -15,7 +15,7 @@ spec:
   rules:
   - matches:
     - path:
-        type: Exact
+        type: PathPrefix
         value: /query/orgs
     {{- if .Values.heimdall.enabled }}
     filters:
@@ -25,7 +25,7 @@ spec:
           kind: Middleware
           name: heimdall
       {{- if .Values.orgSearch.rateLimit.enabled }}
-      # Organization search endpoint (with rate limiting + authentication)
+      # Organization endpoints (with rate limiting + authentication)
       - type: ExtensionRef
         extensionRef:
           group: traefik.io

@@ -166,6 +166,7 @@ func OrganizationSearcherImpl(ctx context.Context) port.OrganizationSearcher {
 		// Parse Clearbit environment variables
 		clearbitAPIKey := os.Getenv("CLEARBIT_CREDENTIAL")
 		clearbitBaseURL := os.Getenv("CLEARBIT_BASE_URL")
+		clearbitAutocompleteBaseURL := os.Getenv("CLEARBIT_AUTOCOMPLETE_BASE_URL")
 		clearbitTimeout := os.Getenv("CLEARBIT_TIMEOUT")
 
 		clearbitMaxRetries := os.Getenv("CLEARBIT_MAX_RETRIES")
@@ -181,6 +182,7 @@ func OrganizationSearcherImpl(ctx context.Context) port.OrganizationSearcher {
 
 		clearbitConfig, err := clearbit.NewConfig(clearbitAPIKey,
 			clearbitBaseURL,
+			clearbitAutocompleteBaseURL,
 			clearbitTimeout,
 			clearbitMaxRetriesInt,
 			clearbitRetryDelay,
@@ -191,6 +193,7 @@ func OrganizationSearcherImpl(ctx context.Context) port.OrganizationSearcher {
 
 		slog.InfoContext(ctx, "initializing Clearbit organization searcher",
 			"base_url", clearbitConfig.BaseURL,
+			"autocomplete_base_url", clearbitConfig.AutocompleteBaseURL,
 			"timeout", clearbitConfig.Timeout,
 			"max_retries", clearbitConfig.MaxRetries,
 		)

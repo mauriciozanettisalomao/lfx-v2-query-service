@@ -18,6 +18,9 @@ type OrganizationSearcher interface {
 	// QueryOrganizations searches for organizations based on the provided criteria
 	QueryOrganizations(ctx context.Context, criteria model.OrganizationSearchCriteria) (*model.Organization, error)
 
+	// SuggestOrganizations returns organization suggestions for typeahead search
+	SuggestOrganizations(ctx context.Context, criteria model.OrganizationSuggestionCriteria) (*model.OrganizationSuggestionsResult, error)
+
 	// IsReady checks if the search service is ready
 	IsReady(ctx context.Context) error
 }
@@ -54,6 +57,35 @@ func (s *OrganizationSearch) QueryOrganizations(ctx context.Context, criteria mo
 	slog.DebugContext(ctx, "organization search completed",
 		"organization_name", orgName,
 		"organization_domain", orgDomain,
+	)
+
+	return result, nil
+}
+
+// SuggestOrganizations performs organization suggestions with business logic validation
+func (s *OrganizationSearch) SuggestOrganizations(ctx context.Context, criteria model.OrganizationSuggestionCriteria) (*model.OrganizationSuggestionsResult, error) {
+
+	slog.DebugContext(ctx, "starting organization suggestions search",
+		"query", criteria.Query,
+	)
+
+	// Delegate to the search implementation
+	result, err := s.organizationSearcher.SuggestOrganizations(ctx, criteria)
+	if err != nil {
+		slog.ErrorContext(ctx, "organization suggestions search operation failed",
+			"error", err,
+		)
+		return nil, err
+	}
+
+	var suggestionCount int
+	if result != nil {
+		suggestionCount = len(result.Suggestions)
+	}
+
+	slog.DebugContext(ctx, "organization suggestions search completed",
+		"query", criteria.Query,
+		"suggestion_count", suggestionCount,
 	)
 
 	return result, nil

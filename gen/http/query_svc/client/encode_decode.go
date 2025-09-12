@@ -309,6 +309,132 @@ func DecodeQueryOrgsResponse(decoder func(*http.Response) goahttp.Decoder, resto
 	}
 }
 
+// BuildSuggestOrgsRequest instantiates a HTTP request object with method and
+// path set to call the "query-svc" service "suggest-orgs" endpoint
+func (c *Client) BuildSuggestOrgsRequest(ctx context.Context, v any) (*http.Request, error) {
+	u := &url.URL{Scheme: c.scheme, Host: c.host, Path: SuggestOrgsQuerySvcPath()}
+	req, err := http.NewRequest("GET", u.String(), nil)
+	if err != nil {
+		return nil, goahttp.ErrInvalidURL("query-svc", "suggest-orgs", u.String(), err)
+	}
+	if ctx != nil {
+		req = req.WithContext(ctx)
+	}
+
+	return req, nil
+}
+
+// EncodeSuggestOrgsRequest returns an encoder for requests sent to the
+// query-svc suggest-orgs server.
+func EncodeSuggestOrgsRequest(encoder func(*http.Request) goahttp.Encoder) func(*http.Request, any) error {
+	return func(req *http.Request, v any) error {
+		p, ok := v.(*querysvc.SuggestOrgsPayload)
+		if !ok {
+			return goahttp.ErrInvalidType("query-svc", "suggest-orgs", "*querysvc.SuggestOrgsPayload", v)
+		}
+		{
+			head := p.BearerToken
+			if !strings.Contains(head, " ") {
+				req.Header.Set("Authorization", "Bearer "+head)
+			} else {
+				req.Header.Set("Authorization", head)
+			}
+		}
+		values := req.URL.Query()
+		values.Add("v", p.Version)
+		values.Add("query", p.Query)
+		req.URL.RawQuery = values.Encode()
+		return nil
+	}
+}
+
+// DecodeSuggestOrgsResponse returns a decoder for responses returned by the
+// query-svc suggest-orgs endpoint. restoreBody controls whether the response
+// body should be restored after having been read.
+// DecodeSuggestOrgsResponse may return the following errors:
+//   - "BadRequest" (type *querysvc.BadRequestError): http.StatusBadRequest
+//   - "InternalServerError" (type *querysvc.InternalServerError): http.StatusInternalServerError
+//   - "ServiceUnavailable" (type *querysvc.ServiceUnavailableError): http.StatusServiceUnavailable
+//   - error: internal error
+func DecodeSuggestOrgsResponse(decoder func(*http.Response) goahttp.Decoder, restoreBody bool) func(*http.Response) (any, error) {
+	return func(resp *http.Response) (any, error) {
+		if restoreBody {
+			b, err := io.ReadAll(resp.Body)
+			if err != nil {
+				return nil, err
+			}
+			resp.Body = io.NopCloser(bytes.NewBuffer(b))
+			defer func() {
+				resp.Body = io.NopCloser(bytes.NewBuffer(b))
+			}()
+		} else {
+			defer resp.Body.Close()
+		}
+		switch resp.StatusCode {
+		case http.StatusOK:
+			var (
+				body SuggestOrgsResponseBody
+				err  error
+			)
+			err = decoder(resp).Decode(&body)
+			if err != nil {
+				return nil, goahttp.ErrDecodingError("query-svc", "suggest-orgs", err)
+			}
+			err = ValidateSuggestOrgsResponseBody(&body)
+			if err != nil {
+				return nil, goahttp.ErrValidationError("query-svc", "suggest-orgs", err)
+			}
+			res := NewSuggestOrgsResultOK(&body)
+			return res, nil
+		case http.StatusBadRequest:
+			var (
+				body SuggestOrgsBadRequestResponseBody
+				err  error
+			)
+			err = decoder(resp).Decode(&body)
+			if err != nil {
+				return nil, goahttp.ErrDecodingError("query-svc", "suggest-orgs", err)
+			}
+			err = ValidateSuggestOrgsBadRequestResponseBody(&body)
+			if err != nil {
+				return nil, goahttp.ErrValidationError("query-svc", "suggest-orgs", err)
+			}
+			return nil, NewSuggestOrgsBadRequest(&body)
+		case http.StatusInternalServerError:
+			var (
+				body SuggestOrgsInternalServerErrorResponseBody
+				err  error
+			)
+			err = decoder(resp).Decode(&body)
+			if err != nil {
+				return nil, goahttp.ErrDecodingError("query-svc", "suggest-orgs", err)
+			}
+			err = ValidateSuggestOrgsInternalServerErrorResponseBody(&body)
+			if err != nil {
+				return nil, goahttp.ErrValidationError("query-svc", "suggest-orgs", err)
+			}
+			return nil, NewSuggestOrgsInternalServerError(&body)
+		case http.StatusServiceUnavailable:
+			var (
+				body SuggestOrgsServiceUnavailableResponseBody
+				err  error
+			)
+			err = decoder(resp).Decode(&body)
+			if err != nil {
+				return nil, goahttp.ErrDecodingError("query-svc", "suggest-orgs", err)
+			}
+			err = ValidateSuggestOrgsServiceUnavailableResponseBody(&body)
+			if err != nil {
+				return nil, goahttp.ErrValidationError("query-svc", "suggest-orgs", err)
+			}
+			return nil, NewSuggestOrgsServiceUnavailable(&body)
+		default:
+			body, _ := io.ReadAll(resp.Body)
+			return nil, goahttp.ErrInvalidResponse("query-svc", "suggest-orgs", resp.StatusCode, string(body))
+		}
+	}
+}
+
 // BuildReadyzRequest instantiates a HTTP request object with method and path
 // set to call the "query-svc" service "readyz" endpoint
 func (c *Client) BuildReadyzRequest(ctx context.Context, v any) (*http.Request, error) {
@@ -433,6 +559,19 @@ func unmarshalResourceResponseBodyToQuerysvcResource(v *ResourceResponseBody) *q
 		Type: v.Type,
 		ID:   v.ID,
 		Data: v.Data,
+	}
+
+	return res
+}
+
+// unmarshalOrganizationSuggestionResponseBodyToQuerysvcOrganizationSuggestion
+// builds a value of type *querysvc.OrganizationSuggestion from a value of type
+// *OrganizationSuggestionResponseBody.
+func unmarshalOrganizationSuggestionResponseBodyToQuerysvcOrganizationSuggestion(v *OrganizationSuggestionResponseBody) *querysvc.OrganizationSuggestion {
+	res := &querysvc.OrganizationSuggestion{
+		Name:   *v.Name,
+		Domain: *v.Domain,
+		Logo:   v.Logo,
 	}
 
 	return res

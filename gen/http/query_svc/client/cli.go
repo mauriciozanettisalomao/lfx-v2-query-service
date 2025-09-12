@@ -150,3 +150,39 @@ func BuildQueryOrgsPayload(querySvcQueryOrgsVersion string, querySvcQueryOrgsNam
 
 	return v, nil
 }
+
+// BuildSuggestOrgsPayload builds the payload for the query-svc suggest-orgs
+// endpoint from CLI flags.
+func BuildSuggestOrgsPayload(querySvcSuggestOrgsVersion string, querySvcSuggestOrgsQuery string, querySvcSuggestOrgsBearerToken string) (*querysvc.SuggestOrgsPayload, error) {
+	var err error
+	var version string
+	{
+		version = querySvcSuggestOrgsVersion
+		if !(version == "1") {
+			err = goa.MergeErrors(err, goa.InvalidEnumValueError("version", version, []any{"1"}))
+		}
+		if err != nil {
+			return nil, err
+		}
+	}
+	var query string
+	{
+		query = querySvcSuggestOrgsQuery
+		if utf8.RuneCountInString(query) < 1 {
+			err = goa.MergeErrors(err, goa.InvalidLengthError("query", query, utf8.RuneCountInString(query), 1, true))
+		}
+		if err != nil {
+			return nil, err
+		}
+	}
+	var bearerToken string
+	{
+		bearerToken = querySvcSuggestOrgsBearerToken
+	}
+	v := &querysvc.SuggestOrgsPayload{}
+	v.Version = version
+	v.Query = query
+	v.BearerToken = bearerToken
+
+	return v, nil
+}

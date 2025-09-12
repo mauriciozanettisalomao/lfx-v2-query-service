@@ -17,6 +17,11 @@ func QueryOrgsQuerySvcPath() string {
 	return "/query/orgs"
 }
 
+// SuggestOrgsQuerySvcPath returns the URL path to the query-svc service suggest-orgs HTTP endpoint.
+func SuggestOrgsQuerySvcPath() string {
+	return "/query/orgs/suggest"
+}
+
 // ReadyzQuerySvcPath returns the URL path to the query-svc service readyz HTTP endpoint.
 func ReadyzQuerySvcPath() string {
 	return "/readyz"

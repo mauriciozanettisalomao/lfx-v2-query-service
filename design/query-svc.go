@@ -127,6 +127,44 @@ var _ = dsl.Service("query-svc", func() {
 		})
 	})
 
+	dsl.Method("suggest-orgs", func() {
+		dsl.Description("Get organization suggestions for typeahead search based on a query.")
+
+		dsl.Security(JWTAuth)
+
+		dsl.Payload(func() {
+			dsl.Token("bearer_token", dsl.String, func() {
+				dsl.Description("Token")
+				dsl.Example("eyJhbGci...")
+			})
+			dsl.Attribute("version", dsl.String, "Version of the API", func() {
+				dsl.Enum("1")
+				dsl.Example("1")
+			})
+			dsl.Attribute("query", dsl.String, "Search query for organization suggestions", func() {
+				dsl.Example("linux")
+				dsl.MinLength(1)
+			})
+			dsl.Required("bearer_token", "version", "query")
+		})
+
+		dsl.Result(func() {
+			dsl.Attribute("suggestions", dsl.ArrayOf(OrganizationSuggestion), "Organization suggestions", func() {})
+			dsl.Required("suggestions")
+		})
+
+		dsl.HTTP(func() {
+			dsl.GET("/query/orgs/suggest")
+			dsl.Param("version:v")
+			dsl.Param("query")
+			dsl.Header("bearer_token:Authorization")
+			dsl.Response(dsl.StatusOK)
+			dsl.Response("BadRequest", dsl.StatusBadRequest)
+			dsl.Response("InternalServerError", dsl.StatusInternalServerError)
+			dsl.Response("ServiceUnavailable", dsl.StatusServiceUnavailable)
+		})
+	})
+
 	dsl.Method("readyz", func() {
 		dsl.Description("Check if the service is able to take inbound requests.")
 		dsl.Meta("swagger:generate", "false")

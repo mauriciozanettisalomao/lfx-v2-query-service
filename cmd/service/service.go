@@ -87,6 +87,27 @@ func (s *querySvcsrvc) QueryOrgs(ctx context.Context, p *querysvc.QueryOrgsPaylo
 	return res, nil
 }
 
+// Get organization suggestions for typeahead search based on a query.
+func (s *querySvcsrvc) SuggestOrgs(ctx context.Context, p *querysvc.SuggestOrgsPayload) (res *querysvc.SuggestOrgsResult, err error) {
+
+	slog.DebugContext(ctx, "querySvc.suggest-orgs",
+		"query", p.Query,
+	)
+
+	// Convert payload to domain criteria
+	criteria := s.payloadToOrganizationSuggestionCriteria(ctx, p)
+
+	// Execute search using the service layer
+	result, errSuggestOrgs := s.organizationService.SuggestOrganizations(ctx, criteria)
+	if errSuggestOrgs != nil {
+		return nil, wrapError(ctx, errSuggestOrgs)
+	}
+
+	// Convert domain result to response
+	res = s.domainOrganizationSuggestionsToResponse(result)
+	return res, nil
+}
+
 // Check if the service is able to take inbound requests.
 func (s *querySvcsrvc) Readyz(ctx context.Context) (res []byte, err error) {
 	errIsReady := s.resourceService.IsReady(ctx)

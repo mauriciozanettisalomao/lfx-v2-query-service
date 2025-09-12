@@ -98,3 +98,31 @@ func (s *querySvcsrvc) domainOrganizationToResponse(org *model.Organization) *qu
 		Employees: &org.Employees,
 	}
 }
+
+// payloadToOrganizationSuggestionCriteria converts the generated payload to domain organization suggestion criteria
+func (s *querySvcsrvc) payloadToOrganizationSuggestionCriteria(ctx context.Context, p *querysvc.SuggestOrgsPayload) model.OrganizationSuggestionCriteria {
+	criteria := model.OrganizationSuggestionCriteria{
+		Query: p.Query,
+	}
+	return criteria
+}
+
+// domainOrganizationSuggestionsToResponse converts domain organization suggestions result to generated response
+func (s *querySvcsrvc) domainOrganizationSuggestionsToResponse(result *model.OrganizationSuggestionsResult) *querysvc.SuggestOrgsResult {
+	if result == nil || len(result.Suggestions) == 0 {
+		return &querysvc.SuggestOrgsResult{Suggestions: []*querysvc.OrganizationSuggestion{}}
+	}
+	suggestions := make([]*querysvc.OrganizationSuggestion, len(result.Suggestions))
+
+	for i, domainSuggestion := range result.Suggestions {
+		suggestions[i] = &querysvc.OrganizationSuggestion{
+			Name:   domainSuggestion.Name,
+			Domain: domainSuggestion.Domain,
+			Logo:   domainSuggestion.Logo,
+		}
+	}
+
+	return &querysvc.SuggestOrgsResult{
+		Suggestions: suggestions,
+	}
+}

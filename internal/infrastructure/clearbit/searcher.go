@@ -48,25 +48,22 @@ func (s *OrganizationSearcher) QueryOrganizations(ctx context.Context, criteria 
 		}
 		// search by domain again to enrich the organization
 		if clearbitCompany != nil && clearbitCompany.Domain != "" {
-			clearbitCompany, err = s.client.FindCompanyByDomain(ctx, clearbitCompany.Domain)
-			if err == nil {
+			clearbitCompanyEnriched, errFindCompanyByDomain := s.client.FindCompanyByDomain(ctx, clearbitCompany.Domain)
+			if errFindCompanyByDomain == nil {
 				slog.DebugContext(ctx, "found organization by domain", "name", clearbitCompany.Name)
+				clearbitCompany = clearbitCompanyEnriched
 			}
 		}
 	}
 
-	if clearbitCompany == nil {
+	if err != nil {
 		slog.ErrorContext(ctx, "error searching organization", "error", err)
-		if criteria.Name != nil && criteria.Domain != nil {
-			return nil, errors.NewNotFound(fmt.Sprintf("organization not found with name '%s' or domain '%s'", *criteria.Name, *criteria.Domain), err)
-		}
-		if criteria.Name != nil {
-			return nil, errors.NewNotFound(fmt.Sprintf("organization not found with name '%s'", *criteria.Name), err)
-		}
-		if criteria.Domain != nil {
-			return nil, errors.NewNotFound(fmt.Sprintf("organization not found with domain '%s'", *criteria.Domain), err)
-		}
-		return nil, errors.NewNotFound("no search criteria provided", err)
+		return nil, err
+	}
+
+	if clearbitCompany == nil {
+		slog.ErrorContext(ctx, "organization not found", "error", err)
+		return nil, errors.NewNotFound("organization not found")
 	}
 
 	// Convert Clearbit company to domain model
@@ -79,6 +76,41 @@ func (s *OrganizationSearcher) QueryOrganizations(ctx context.Context, criteria 
 	)
 
 	return org, nil
+}
+
+// SuggestOrganizations returns organization suggestions using Clearbit Autocomplete API
+func (s *OrganizationSearcher) SuggestOrganizations(ctx context.Context, criteria model.OrganizationSuggestionCriteria) (*model.OrganizationSuggestionsResult, error) {
+	slog.DebugContext(ctx, "searching organization suggestions via Clearbit Autocomplete API",
+		"query", criteria.Query,
+	)
+
+	// Call the Clearbit Autocomplete API
+	clearbitSuggestions, err := s.client.SuggestCompanies(ctx, criteria.Query)
+	if err != nil {
+		slog.ErrorContext(ctx, "error searching organization suggestions", "error", err)
+		return nil, err
+	}
+
+	// Convert to domain model
+	suggestions := make([]model.OrganizationSuggestion, len(clearbitSuggestions))
+	for i, suggestion := range clearbitSuggestions {
+		suggestions[i] = model.OrganizationSuggestion{
+			Name:   suggestion.Name,
+			Domain: suggestion.Domain,
+			Logo:   suggestion.Logo,
+		}
+	}
+
+	result := &model.OrganizationSuggestionsResult{
+		Suggestions: suggestions,
+	}
+
+	slog.DebugContext(ctx, "successfully found organization suggestions",
+		"query", criteria.Query,
+		"count", len(suggestions),
+	)
+
+	return result, nil
 }
 
 // convertToDomainModel converts a Clearbit company to the domain model
