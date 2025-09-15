@@ -58,13 +58,14 @@ func main() {
 	resourceSearcher := service.SearcherImpl(ctx)
 	accessControlChecker := service.AccessControlCheckerImpl(ctx)
 	organizationSearcher := service.OrganizationSearcherImpl(ctx)
+	authService := service.AuthServiceImpl(ctx)
 
 	// Initialize the services.
 	var (
 		querySvcSvc querysvc.Service
 	)
 	{
-		querySvcSvc = service.NewQuerySvc(resourceSearcher, accessControlChecker, organizationSearcher)
+		querySvcSvc = service.NewQuerySvc(resourceSearcher, accessControlChecker, organizationSearcher, authService)
 	}
 
 	// Wrap the services in endpoints that can be invoked from other services
@@ -86,9 +87,6 @@ func main() {
 
 	var wg sync.WaitGroup
 	ctx, cancel := context.WithCancel(ctx)
-
-	// Setup the JWT authentication which validates and parses the JWT token.
-	service.SetupJWTAuth(ctx)
 
 	// Start the servers and send errors (if any) to the error channel.
 	addr := ":" + *port
