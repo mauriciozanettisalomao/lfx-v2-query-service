@@ -14,6 +14,12 @@ import (
 func wrapError(ctx context.Context, err error) error {
 
 	f := func(err error) error {
+		if err == nil {
+			return &querysvc.InternalServerError{
+				Message: "unknown error",
+			}
+		}
+
 		switch e := err.(type) {
 		case errors.Validation:
 			return &querysvc.BadRequestError{
@@ -29,7 +35,7 @@ func wrapError(ctx context.Context, err error) error {
 			}
 		default:
 			return &querysvc.InternalServerError{
-				Message: e.Error(),
+				Message: err.Error(),
 			}
 		}
 	}
