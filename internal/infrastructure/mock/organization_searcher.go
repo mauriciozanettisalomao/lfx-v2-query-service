@@ -130,8 +130,8 @@ func (m *MockOrganizationSearcher) SuggestOrganizations(ctx context.Context, cri
 		"query", criteria.Query,
 	)
 
-	var suggestions []model.OrganizationSuggestion
-	query := strings.ToLower(criteria.Query)
+	suggestions := make([]model.OrganizationSuggestion, 0)
+	query := strings.ToLower(strings.TrimSpace(criteria.Query))
 
 	// Search for organizations that match the query (case-insensitive partial match)
 	for _, org := range m.organizations {
