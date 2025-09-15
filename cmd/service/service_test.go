@@ -58,7 +58,7 @@ func TestQuerySvcsrvc_JWTAuth(t *testing.T) {
 			mockResourceSearcher := mock.NewMockResourceSearcher()
 			mockAccessChecker := mock.NewMockAccessControlChecker()
 			mockOrgSearcher := mock.NewMockOrganizationSearcher()
-			service := NewQuerySvc(mockResourceSearcher, mockAccessChecker, mockOrgSearcher)
+			service := NewQuerySvc(mockResourceSearcher, mockAccessChecker, mockOrgSearcher, mock.NewMockAuthService())
 			svc, ok := service.(*querySvcsrvc)
 			assert.True(t, ok)
 
@@ -147,7 +147,7 @@ func TestQuerySvcsrvc_QueryResources(t *testing.T) {
 			mockOrgSearcher := mock.NewMockOrganizationSearcher()
 			tc.setupMocks(mockResourceSearcher, mockAccessChecker)
 
-			service := NewQuerySvc(mockResourceSearcher, mockAccessChecker, mockOrgSearcher)
+			service := NewQuerySvc(mockResourceSearcher, mockAccessChecker, mockOrgSearcher, mock.NewMockAuthService())
 			svc, ok := service.(*querySvcsrvc)
 			assert.True(t, ok)
 
@@ -235,7 +235,7 @@ func TestQuerySvcsrvc_QueryOrgs(t *testing.T) {
 			mockOrgSearcher := mock.NewMockOrganizationSearcher()
 			tc.setupMocks(mockOrgSearcher)
 
-			service := NewQuerySvc(mockResourceSearcher, mockAccessChecker, mockOrgSearcher)
+			service := NewQuerySvc(mockResourceSearcher, mockAccessChecker, mockOrgSearcher, mock.NewMockAuthService())
 			svc, ok := service.(*querySvcsrvc)
 			assert.True(t, ok)
 
@@ -302,7 +302,7 @@ func TestQuerySvcsrvc_SuggestOrgs(t *testing.T) {
 			mockOrgSearcher := mock.NewMockOrganizationSearcher()
 			tc.setupMocks(mockOrgSearcher)
 
-			service := NewQuerySvc(mockResourceSearcher, mockAccessChecker, mockOrgSearcher)
+			service := NewQuerySvc(mockResourceSearcher, mockAccessChecker, mockOrgSearcher, mock.NewMockAuthService())
 			svc, ok := service.(*querySvcsrvc)
 			assert.True(t, ok)
 
@@ -354,7 +354,7 @@ func TestQuerySvcsrvc_Readyz(t *testing.T) {
 			mockOrgSearcher := mock.NewMockOrganizationSearcher()
 			tc.setupMocks(mockResourceSearcher)
 
-			service := NewQuerySvc(mockResourceSearcher, mockAccessChecker, mockOrgSearcher)
+			service := NewQuerySvc(mockResourceSearcher, mockAccessChecker, mockOrgSearcher, mock.NewMockAuthService())
 			svc, ok := service.(*querySvcsrvc)
 			assert.True(t, ok)
 
@@ -396,7 +396,7 @@ func TestQuerySvcsrvc_Livez(t *testing.T) {
 			mockResourceSearcher := mock.NewMockResourceSearcher()
 			mockAccessChecker := mock.NewMockAccessControlChecker()
 			mockOrgSearcher := mock.NewMockOrganizationSearcher()
-			service := NewQuerySvc(mockResourceSearcher, mockAccessChecker, mockOrgSearcher)
+			service := NewQuerySvc(mockResourceSearcher, mockAccessChecker, mockOrgSearcher, mock.NewMockAuthService())
 			svc, ok := service.(*querySvcsrvc)
 			assert.True(t, ok)
 
@@ -444,7 +444,7 @@ func TestNewQuerySvc(t *testing.T) {
 			resourceSearcher, accessChecker, orgSearcher := tc.setupMocks()
 
 			// Execute
-			result := NewQuerySvc(resourceSearcher, accessChecker, orgSearcher)
+			result := NewQuerySvc(resourceSearcher, accessChecker, orgSearcher, mock.NewMockAuthService())
 
 			// Verify
 			if tc.expectNonNil {
@@ -468,7 +468,7 @@ func TestQuerySvcsrvc_InterfaceCompliance(t *testing.T) {
 	mockResourceSearcher := mock.NewMockResourceSearcher()
 	mockAccessChecker := mock.NewMockAccessControlChecker()
 	mockOrgSearcher := mock.NewMockOrganizationSearcher()
-	service := NewQuerySvc(mockResourceSearcher, mockAccessChecker, mockOrgSearcher)
+	service := NewQuerySvc(mockResourceSearcher, mockAccessChecker, mockOrgSearcher, mock.NewMockAuthService())
 
 	// This will fail to compile if querySvcsrvc doesn't implement querysvc.Service
 	var _ querysvc.Service = service
