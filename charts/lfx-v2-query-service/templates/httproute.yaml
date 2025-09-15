@@ -44,6 +44,9 @@ spec:
     - path:
         type: PathPrefix
         value: /query/resources
+    - path:
+        type: PathPrefix
+        value: /_query/
     {{- if .Values.heimdall.enabled }}
     filters:
     - type: ExtensionRef
