@@ -6,6 +6,7 @@ package opensearch
 import (
 	"bytes"
 	"context"
+	"encoding/json"
 	"fmt"
 	"log/slog"
 	"net/http"
@@ -88,6 +89,42 @@ func (c *httpClient) Search(ctx context.Context, index string, query []byte) (*S
 	}
 
 	return result, nil
+}
+
+func (c *httpClient) AggregationSearch(ctx context.Context, index string, query []byte) (*AggregationResponse, error) {
+	searchRequest := opensearchapi.SearchReq{
+		Indices: []string{index},
+		Body:    bytes.NewReader(query),
+	}
+
+	// Perform the search.
+	searchResponse, err := c.client.Search(ctx, &searchRequest)
+	if err != nil {
+		return nil, fmt.Errorf("opensearch search failed: %w", err)
+	}
+
+	// First, unmarshal the aggregations from raw JSON.
+	var aggregations AggregationResponse
+	if err := json.Unmarshal(searchResponse.Aggregations, &aggregations); err != nil {
+		slog.ErrorContext(ctx, "failed to unmarshal aggregations", "error", err)
+		return nil, fmt.Errorf("unrecoverable aggregation processing error: %w", err)
+	}
+
+	return &aggregations, nil
+}
+
+func (c *httpClient) Count(ctx context.Context, index string, query []byte) (*CountResponse, error) {
+	countRequest := opensearchapi.IndicesCountReq{
+		Indices: []string{index},
+		Body:    bytes.NewReader(query),
+	}
+	countResponse, err := c.client.Indices.Count(ctx, &countRequest)
+	if err != nil {
+		return nil, fmt.Errorf("opensearch count failed: %w", err)
+	}
+	return &CountResponse{
+		Count: countResponse.Count,
+	}, nil
 }
 
 func (c *httpClient) IsReady(ctx context.Context) error {

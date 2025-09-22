@@ -86,6 +86,66 @@ var _ = dsl.Service("query-svc", func() {
 		})
 	})
 
+	dsl.Method("query-resources-count", func() {
+		dsl.Description("Count matching resources by query.")
+
+		dsl.Security(JWTAuth)
+
+		dsl.Payload(func() {
+			dsl.Token("bearer_token", dsl.String, func() {
+				dsl.Description("JWT token issued by Heimdall")
+				dsl.Example("eyJhbGci...")
+			})
+			dsl.Attribute("version", dsl.String, "Version of the API", func() {
+				dsl.Enum("1")
+				dsl.Example("1")
+			})
+			dsl.Attribute("name", dsl.String, "Resource name or alias; supports typeahead", func() {
+				dsl.Example("gov board")
+				dsl.MinLength(1)
+			})
+			dsl.Attribute("parent", dsl.String, "Parent (for navigation; varies by object type)", func() {
+				dsl.Example("project:123")
+			})
+			dsl.Attribute("type", dsl.String, "Resource type to search", func() {
+				dsl.Example("committee")
+			})
+			dsl.Attribute("tags", dsl.ArrayOf(dsl.String), "Tags to search (varies by object type)", func() {
+				dsl.Example([]string{"active"})
+			})
+			dsl.Required("bearer_token", "version")
+		})
+
+		dsl.Result(func() {
+			dsl.Attribute("count", dsl.UInt64, "Count of resources found", func() {
+				dsl.Example(1234)
+			})
+			dsl.Attribute("has_more", dsl.Boolean, "True if count is not guaranteed to be exhaustive: client should request a narrower query", func() {
+				dsl.Example(false)
+			})
+			dsl.Attribute("cache_control", dsl.String, "Cache control header", func() {
+				dsl.Example("public, max-age=300")
+			})
+			dsl.Required("count", "has_more")
+		})
+
+		dsl.Error("BadRequest", dsl.ErrorResult, "Bad request")
+
+		dsl.HTTP(func() {
+			dsl.GET("/query/resources/count")
+			dsl.Param("version:v")
+			dsl.Param("name")
+			dsl.Param("parent")
+			dsl.Param("type")
+			dsl.Param("tags")
+			dsl.Header("bearer_token:Authorization")
+			dsl.Response(dsl.StatusOK, func() {
+				dsl.Header("cache_control:Cache-Control")
+			})
+			dsl.Response("BadRequest", dsl.StatusBadRequest)
+		})
+	})
+
 	dsl.Method("query-orgs", func() {
 		dsl.Description("Locate a single organization by name or domain.")
 

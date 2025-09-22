@@ -21,6 +21,16 @@ type QueryResourcesResponseBody struct {
 	PageToken *string `form:"page_token,omitempty" json:"page_token,omitempty" xml:"page_token,omitempty"`
 }
 
+// QueryResourcesCountResponseBody is the type of the "query-svc" service
+// "query-resources-count" endpoint HTTP response body.
+type QueryResourcesCountResponseBody struct {
+	// Count of resources found
+	Count uint64 `form:"count" json:"count" xml:"count"`
+	// True if count is not guaranteed to be exhaustive: client should request a
+	// narrower query
+	HasMore bool `form:"has_more" json:"has_more" xml:"has_more"`
+}
+
 // QueryOrgsResponseBody is the type of the "query-svc" service "query-orgs"
 // endpoint HTTP response body.
 type QueryOrgsResponseBody struct {
@@ -64,6 +74,25 @@ type QueryResourcesInternalServerErrorResponseBody struct {
 type QueryResourcesServiceUnavailableResponseBody struct {
 	// Error message
 	Message string `form:"message" json:"message" xml:"message"`
+}
+
+// QueryResourcesCountBadRequestResponseBody is the type of the "query-svc"
+// service "query-resources-count" endpoint HTTP response body for the
+// "BadRequest" error.
+type QueryResourcesCountBadRequestResponseBody struct {
+	// Name is the name of this class of errors.
+	Name string `form:"name" json:"name" xml:"name"`
+	// ID is a unique identifier for this particular occurrence of the problem.
+	ID string `form:"id" json:"id" xml:"id"`
+	// Message is a human-readable explanation specific to this occurrence of the
+	// problem.
+	Message string `form:"message" json:"message" xml:"message"`
+	// Is the error temporary?
+	Temporary bool `form:"temporary" json:"temporary" xml:"temporary"`
+	// Is the error a timeout?
+	Timeout bool `form:"timeout" json:"timeout" xml:"timeout"`
+	// Is the error a server-side fault?
+	Fault bool `form:"fault" json:"fault" xml:"fault"`
 }
 
 // QueryOrgsBadRequestResponseBody is the type of the "query-svc" service
@@ -175,6 +204,16 @@ func NewQueryResourcesResponseBody(res *querysvc.QueryResourcesResult) *QueryRes
 	return body
 }
 
+// NewQueryResourcesCountResponseBody builds the HTTP response body from the
+// result of the "query-resources-count" endpoint of the "query-svc" service.
+func NewQueryResourcesCountResponseBody(res *querysvc.QueryResourcesCountResult) *QueryResourcesCountResponseBody {
+	body := &QueryResourcesCountResponseBody{
+		Count:   res.Count,
+		HasMore: res.HasMore,
+	}
+	return body
+}
+
 // NewQueryOrgsResponseBody builds the HTTP response body from the result of
 // the "query-orgs" endpoint of the "query-svc" service.
 func NewQueryOrgsResponseBody(res *querysvc.Organization) *QueryOrgsResponseBody {
@@ -228,6 +267,21 @@ func NewQueryResourcesInternalServerErrorResponseBody(res *querysvc.InternalServ
 func NewQueryResourcesServiceUnavailableResponseBody(res *querysvc.ServiceUnavailableError) *QueryResourcesServiceUnavailableResponseBody {
 	body := &QueryResourcesServiceUnavailableResponseBody{
 		Message: res.Message,
+	}
+	return body
+}
+
+// NewQueryResourcesCountBadRequestResponseBody builds the HTTP response body
+// from the result of the "query-resources-count" endpoint of the "query-svc"
+// service.
+func NewQueryResourcesCountBadRequestResponseBody(res *goa.ServiceError) *QueryResourcesCountBadRequestResponseBody {
+	body := &QueryResourcesCountBadRequestResponseBody{
+		Name:      res.Name,
+		ID:        res.ID,
+		Message:   res.Message,
+		Temporary: res.Temporary,
+		Timeout:   res.Timeout,
+		Fault:     res.Fault,
 	}
 	return body
 }
@@ -320,6 +374,20 @@ func NewQueryResourcesPayload(version string, name *string, parent *string, type
 	v.Tags = tags
 	v.Sort = sort
 	v.PageToken = pageToken
+	v.BearerToken = bearerToken
+
+	return v
+}
+
+// NewQueryResourcesCountPayload builds a query-svc service
+// query-resources-count endpoint payload.
+func NewQueryResourcesCountPayload(version string, name *string, parent *string, type_ *string, tags []string, bearerToken string) *querysvc.QueryResourcesCountPayload {
+	v := &querysvc.QueryResourcesCountPayload{}
+	v.Version = version
+	v.Name = name
+	v.Parent = parent
+	v.Type = type_
+	v.Tags = tags
 	v.BearerToken = bearerToken
 
 	return v

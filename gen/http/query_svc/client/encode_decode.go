@@ -167,6 +167,121 @@ func DecodeQueryResourcesResponse(decoder func(*http.Response) goahttp.Decoder, 
 	}
 }
 
+// BuildQueryResourcesCountRequest instantiates a HTTP request object with
+// method and path set to call the "query-svc" service "query-resources-count"
+// endpoint
+func (c *Client) BuildQueryResourcesCountRequest(ctx context.Context, v any) (*http.Request, error) {
+	u := &url.URL{Scheme: c.scheme, Host: c.host, Path: QueryResourcesCountQuerySvcPath()}
+	req, err := http.NewRequest("GET", u.String(), nil)
+	if err != nil {
+		return nil, goahttp.ErrInvalidURL("query-svc", "query-resources-count", u.String(), err)
+	}
+	if ctx != nil {
+		req = req.WithContext(ctx)
+	}
+
+	return req, nil
+}
+
+// EncodeQueryResourcesCountRequest returns an encoder for requests sent to the
+// query-svc query-resources-count server.
+func EncodeQueryResourcesCountRequest(encoder func(*http.Request) goahttp.Encoder) func(*http.Request, any) error {
+	return func(req *http.Request, v any) error {
+		p, ok := v.(*querysvc.QueryResourcesCountPayload)
+		if !ok {
+			return goahttp.ErrInvalidType("query-svc", "query-resources-count", "*querysvc.QueryResourcesCountPayload", v)
+		}
+		{
+			head := p.BearerToken
+			if !strings.Contains(head, " ") {
+				req.Header.Set("Authorization", "Bearer "+head)
+			} else {
+				req.Header.Set("Authorization", head)
+			}
+		}
+		values := req.URL.Query()
+		values.Add("v", p.Version)
+		if p.Name != nil {
+			values.Add("name", *p.Name)
+		}
+		if p.Parent != nil {
+			values.Add("parent", *p.Parent)
+		}
+		if p.Type != nil {
+			values.Add("type", *p.Type)
+		}
+		for _, value := range p.Tags {
+			values.Add("tags", value)
+		}
+		req.URL.RawQuery = values.Encode()
+		return nil
+	}
+}
+
+// DecodeQueryResourcesCountResponse returns a decoder for responses returned
+// by the query-svc query-resources-count endpoint. restoreBody controls
+// whether the response body should be restored after having been read.
+// DecodeQueryResourcesCountResponse may return the following errors:
+//   - "BadRequest" (type *goa.ServiceError): http.StatusBadRequest
+//   - error: internal error
+func DecodeQueryResourcesCountResponse(decoder func(*http.Response) goahttp.Decoder, restoreBody bool) func(*http.Response) (any, error) {
+	return func(resp *http.Response) (any, error) {
+		if restoreBody {
+			b, err := io.ReadAll(resp.Body)
+			if err != nil {
+				return nil, err
+			}
+			resp.Body = io.NopCloser(bytes.NewBuffer(b))
+			defer func() {
+				resp.Body = io.NopCloser(bytes.NewBuffer(b))
+			}()
+		} else {
+			defer resp.Body.Close()
+		}
+		switch resp.StatusCode {
+		case http.StatusOK:
+			var (
+				body QueryResourcesCountResponseBody
+				err  error
+			)
+			err = decoder(resp).Decode(&body)
+			if err != nil {
+				return nil, goahttp.ErrDecodingError("query-svc", "query-resources-count", err)
+			}
+			err = ValidateQueryResourcesCountResponseBody(&body)
+			if err != nil {
+				return nil, goahttp.ErrValidationError("query-svc", "query-resources-count", err)
+			}
+			var (
+				cacheControl *string
+			)
+			cacheControlRaw := resp.Header.Get("Cache-Control")
+			if cacheControlRaw != "" {
+				cacheControl = &cacheControlRaw
+			}
+			res := NewQueryResourcesCountResultOK(&body, cacheControl)
+			return res, nil
+		case http.StatusBadRequest:
+			var (
+				body QueryResourcesCountBadRequestResponseBody
+				err  error
+			)
+			err = decoder(resp).Decode(&body)
+			if err != nil {
+				return nil, goahttp.ErrDecodingError("query-svc", "query-resources-count", err)
+			}
+			err = ValidateQueryResourcesCountBadRequestResponseBody(&body)
+			if err != nil {
+				return nil, goahttp.ErrValidationError("query-svc", "query-resources-count", err)
+			}
+			return nil, NewQueryResourcesCountBadRequest(&body)
+		default:
+			body, _ := io.ReadAll(resp.Body)
+			return nil, goahttp.ErrInvalidResponse("query-svc", "query-resources-count", resp.StatusCode, string(body))
+		}
+	}
+}
+
 // BuildQueryOrgsRequest instantiates a HTTP request object with method and
 // path set to call the "query-svc" service "query-orgs" endpoint
 func (c *Client) BuildQueryOrgsRequest(ctx context.Context, v any) (*http.Request, error) {

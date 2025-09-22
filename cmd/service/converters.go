@@ -79,6 +79,67 @@ func (s *querySvcsrvc) domainResultToResponse(result *model.SearchResult) *query
 	return response
 }
 
+func (s *querySvcsrvc) payloadToCountPublicCriteria(payload *querysvc.QueryResourcesCountPayload) model.SearchCriteria {
+	// Parameters used for /<index>/_count search.
+	criteria := model.SearchCriteria{
+		GroupBySize: constants.DefaultBucketSize,
+		// Page size is not passed to this endpoint.
+		PageSize: -1,
+		// For _count, we only want public resources.
+		PublicOnly: true,
+	}
+
+	// Set the criteria from the payload
+	criteria.Tags = payload.Tags
+	if payload.Name != nil {
+		criteria.Name = payload.Name
+	}
+	if payload.Type != nil {
+		criteria.ResourceType = payload.Type
+	}
+	if payload.Parent != nil {
+		criteria.ParentRef = payload.Parent
+	}
+
+	return criteria
+}
+
+func (s *querySvcsrvc) payloadToCountAggregationCriteria(payload *querysvc.QueryResourcesCountPayload) model.SearchCriteria {
+	// Parameters used for the "group by" aggregated /<index>/_search search.
+	criteria := model.SearchCriteria{
+		GroupBySize: constants.DefaultBucketSize,
+		// We only want the aggregation, not the actual results.
+		PageSize: 0,
+		// The aggregation results will only count private resources.
+		PrivateOnly: true,
+		// Set the attribute to aggregate on.
+		// Use .keyword subfield for aggregation on text fields
+		GroupBy: "access_check_query.keyword",
+	}
+
+	// Set the criteria from the payload
+	criteria.Tags = payload.Tags
+	if payload.Name != nil {
+		criteria.Name = payload.Name
+	}
+	if payload.Type != nil {
+		criteria.ResourceType = payload.Type
+	}
+	if payload.Parent != nil {
+		criteria.ParentRef = payload.Parent
+	}
+
+	return criteria
+}
+
+func (s *querySvcsrvc) domainCountResultToResponse(result *model.CountResult) *querysvc.QueryResourcesCountResult {
+	return &querysvc.QueryResourcesCountResult{
+		Count:        uint64(result.Count),
+		HasMore:      result.HasMore,
+		CacheControl: result.CacheControl,
+	}
+}
+
 // payloadToOrganizationCriteria converts the generated payload to domain organization search criteria
 func (s *querySvcsrvc) payloadToOrganizationCriteria(ctx context.Context, p *querysvc.QueryOrgsPayload) model.OrganizationSearchCriteria {
 	criteria := model.OrganizationSearchCriteria{

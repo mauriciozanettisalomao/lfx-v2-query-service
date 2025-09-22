@@ -21,6 +21,10 @@ type Client struct {
 	// query-resources endpoint.
 	QueryResourcesDoer goahttp.Doer
 
+	// QueryResourcesCount Doer is the HTTP client used to make requests to the
+	// query-resources-count endpoint.
+	QueryResourcesCountDoer goahttp.Doer
+
 	// QueryOrgs Doer is the HTTP client used to make requests to the query-orgs
 	// endpoint.
 	QueryOrgsDoer goahttp.Doer
@@ -55,16 +59,17 @@ func NewClient(
 	restoreBody bool,
 ) *Client {
 	return &Client{
-		QueryResourcesDoer:  doer,
-		QueryOrgsDoer:       doer,
-		SuggestOrgsDoer:     doer,
-		ReadyzDoer:          doer,
-		LivezDoer:           doer,
-		RestoreResponseBody: restoreBody,
-		scheme:              scheme,
-		host:                host,
-		decoder:             dec,
-		encoder:             enc,
+		QueryResourcesDoer:      doer,
+		QueryResourcesCountDoer: doer,
+		QueryOrgsDoer:           doer,
+		SuggestOrgsDoer:         doer,
+		ReadyzDoer:              doer,
+		LivezDoer:               doer,
+		RestoreResponseBody:     restoreBody,
+		scheme:                  scheme,
+		host:                    host,
+		decoder:                 dec,
+		encoder:                 enc,
 	}
 }
 
@@ -87,6 +92,30 @@ func (c *Client) QueryResources() goa.Endpoint {
 		resp, err := c.QueryResourcesDoer.Do(req)
 		if err != nil {
 			return nil, goahttp.ErrRequestError("query-svc", "query-resources", err)
+		}
+		return decodeResponse(resp)
+	}
+}
+
+// QueryResourcesCount returns an endpoint that makes HTTP requests to the
+// query-svc service query-resources-count server.
+func (c *Client) QueryResourcesCount() goa.Endpoint {
+	var (
+		encodeRequest  = EncodeQueryResourcesCountRequest(c.encoder)
+		decodeResponse = DecodeQueryResourcesCountResponse(c.decoder, c.RestoreResponseBody)
+	)
+	return func(ctx context.Context, v any) (any, error) {
+		req, err := c.BuildQueryResourcesCountRequest(ctx, v)
+		if err != nil {
+			return nil, err
+		}
+		err = encodeRequest(req, v)
+		if err != nil {
+			return nil, err
+		}
+		resp, err := c.QueryResourcesCountDoer.Do(req)
+		if err != nil {
+			return nil, goahttp.ErrRequestError("query-svc", "query-resources-count", err)
 		}
 		return decodeResponse(resp)
 	}

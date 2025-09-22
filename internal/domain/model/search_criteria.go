@@ -27,6 +27,12 @@ type SearchCriteria struct {
 	PageSize int
 	// PublicOnly indicates if only public resources should be returned
 	PublicOnly bool
+	// PrivateOnly indicates if only private resources should be returned
+	PrivateOnly bool
+	// GroupBy indicates the field to group by
+	GroupBy string
+	// GroupBySize indicates the size of the group by
+	GroupBySize int
 }
 
 // SearchResult contains the results of a resource search
@@ -39,6 +45,18 @@ type SearchResult struct {
 	CacheControl *string
 	// Total number of resources found
 	Total int
+}
+
+// CountResult contains the results of a resource count search
+type CountResult struct {
+	// Count number of resources found
+	Count int
+	// Aggregations
+	Aggregation TermsAggregation
+	// HasMore indicates if there are more results
+	HasMore bool
+	// Cache control header
+	CacheControl *string
 }
 
 // OrganizationSearchCriteria encapsulates search parameters for organizations

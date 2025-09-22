@@ -22,7 +22,7 @@ import (
 //
 //	command (subcommand1|subcommand2|...)
 func UsageCommands() string {
-	return `query-svc (query-resources|query-orgs|suggest-orgs|readyz|livez)
+	return `query-svc (query-resources|query-resources-count|query-orgs|suggest-orgs|readyz|livez)
 `
 }
 
@@ -56,6 +56,14 @@ func ParseEndpoint(
 		querySvcQueryResourcesPageTokenFlag   = querySvcQueryResourcesFlags.String("page-token", "", "")
 		querySvcQueryResourcesBearerTokenFlag = querySvcQueryResourcesFlags.String("bearer-token", "REQUIRED", "")
 
+		querySvcQueryResourcesCountFlags           = flag.NewFlagSet("query-resources-count", flag.ExitOnError)
+		querySvcQueryResourcesCountVersionFlag     = querySvcQueryResourcesCountFlags.String("version", "REQUIRED", "")
+		querySvcQueryResourcesCountNameFlag        = querySvcQueryResourcesCountFlags.String("name", "", "")
+		querySvcQueryResourcesCountParentFlag      = querySvcQueryResourcesCountFlags.String("parent", "", "")
+		querySvcQueryResourcesCountTypeFlag        = querySvcQueryResourcesCountFlags.String("type", "", "")
+		querySvcQueryResourcesCountTagsFlag        = querySvcQueryResourcesCountFlags.String("tags", "", "")
+		querySvcQueryResourcesCountBearerTokenFlag = querySvcQueryResourcesCountFlags.String("bearer-token", "REQUIRED", "")
+
 		querySvcQueryOrgsFlags           = flag.NewFlagSet("query-orgs", flag.ExitOnError)
 		querySvcQueryOrgsVersionFlag     = querySvcQueryOrgsFlags.String("version", "REQUIRED", "")
 		querySvcQueryOrgsNameFlag        = querySvcQueryOrgsFlags.String("name", "", "")
@@ -73,6 +81,7 @@ func ParseEndpoint(
 	)
 	querySvcFlags.Usage = querySvcUsage
 	querySvcQueryResourcesFlags.Usage = querySvcQueryResourcesUsage
+	querySvcQueryResourcesCountFlags.Usage = querySvcQueryResourcesCountUsage
 	querySvcQueryOrgsFlags.Usage = querySvcQueryOrgsUsage
 	querySvcSuggestOrgsFlags.Usage = querySvcSuggestOrgsUsage
 	querySvcReadyzFlags.Usage = querySvcReadyzUsage
@@ -115,6 +124,9 @@ func ParseEndpoint(
 			case "query-resources":
 				epf = querySvcQueryResourcesFlags
 
+			case "query-resources-count":
+				epf = querySvcQueryResourcesCountFlags
+
 			case "query-orgs":
 				epf = querySvcQueryOrgsFlags
 
@@ -155,6 +167,9 @@ func ParseEndpoint(
 			case "query-resources":
 				endpoint = c.QueryResources()
 				data, err = querysvcc.BuildQueryResourcesPayload(*querySvcQueryResourcesVersionFlag, *querySvcQueryResourcesNameFlag, *querySvcQueryResourcesParentFlag, *querySvcQueryResourcesTypeFlag, *querySvcQueryResourcesTagsFlag, *querySvcQueryResourcesSortFlag, *querySvcQueryResourcesPageTokenFlag, *querySvcQueryResourcesBearerTokenFlag)
+			case "query-resources-count":
+				endpoint = c.QueryResourcesCount()
+				data, err = querysvcc.BuildQueryResourcesCountPayload(*querySvcQueryResourcesCountVersionFlag, *querySvcQueryResourcesCountNameFlag, *querySvcQueryResourcesCountParentFlag, *querySvcQueryResourcesCountTypeFlag, *querySvcQueryResourcesCountTagsFlag, *querySvcQueryResourcesCountBearerTokenFlag)
 			case "query-orgs":
 				endpoint = c.QueryOrgs()
 				data, err = querysvcc.BuildQueryOrgsPayload(*querySvcQueryOrgsVersionFlag, *querySvcQueryOrgsNameFlag, *querySvcQueryOrgsDomainFlag, *querySvcQueryOrgsBearerTokenFlag)
@@ -184,6 +199,7 @@ Usage:
 
 COMMAND:
     query-resources: Locate resources by their type or parent, or use typeahead search to query resources by a display name or similar alias.
+    query-resources-count: Count matching resources by query.
     query-orgs: Locate a single organization by name or domain.
     suggest-orgs: Get organization suggestions for typeahead search based on a query.
     readyz: Check if the service is able to take inbound requests.
@@ -210,6 +226,24 @@ Example:
     %[1]s query-svc query-resources --version "1" --name "gov board" --parent "project:123" --type "committee" --tags '[
       "active"
    ]' --sort "updated_desc" --page-token "****" --bearer-token "eyJhbGci..."
+`, os.Args[0])
+}
+
+func querySvcQueryResourcesCountUsage() {
+	fmt.Fprintf(os.Stderr, `%[1]s [flags] query-svc query-resources-count -version STRING -name STRING -parent STRING -type STRING -tags JSON -bearer-token STRING
+
+Count matching resources by query.
+    -version STRING: 
+    -name STRING: 
+    -parent STRING: 
+    -type STRING: 
+    -tags JSON: 
+    -bearer-token STRING: 
+
+Example:
+    %[1]s query-svc query-resources-count --version "1" --name "gov board" --parent "project:123" --type "committee" --tags '[
+      "active"
+   ]' --bearer-token "eyJhbGci..."
 `, os.Args[0])
 }
 

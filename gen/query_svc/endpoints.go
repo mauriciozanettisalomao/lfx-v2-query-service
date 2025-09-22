@@ -16,11 +16,12 @@ import (
 
 // Endpoints wraps the "query-svc" service endpoints.
 type Endpoints struct {
-	QueryResources goa.Endpoint
-	QueryOrgs      goa.Endpoint
-	SuggestOrgs    goa.Endpoint
-	Readyz         goa.Endpoint
-	Livez          goa.Endpoint
+	QueryResources      goa.Endpoint
+	QueryResourcesCount goa.Endpoint
+	QueryOrgs           goa.Endpoint
+	SuggestOrgs         goa.Endpoint
+	Readyz              goa.Endpoint
+	Livez               goa.Endpoint
 }
 
 // NewEndpoints wraps the methods of the "query-svc" service with endpoints.
@@ -28,17 +29,19 @@ func NewEndpoints(s Service) *Endpoints {
 	// Casting service to Auther interface
 	a := s.(Auther)
 	return &Endpoints{
-		QueryResources: NewQueryResourcesEndpoint(s, a.JWTAuth),
-		QueryOrgs:      NewQueryOrgsEndpoint(s, a.JWTAuth),
-		SuggestOrgs:    NewSuggestOrgsEndpoint(s, a.JWTAuth),
-		Readyz:         NewReadyzEndpoint(s),
-		Livez:          NewLivezEndpoint(s),
+		QueryResources:      NewQueryResourcesEndpoint(s, a.JWTAuth),
+		QueryResourcesCount: NewQueryResourcesCountEndpoint(s, a.JWTAuth),
+		QueryOrgs:           NewQueryOrgsEndpoint(s, a.JWTAuth),
+		SuggestOrgs:         NewSuggestOrgsEndpoint(s, a.JWTAuth),
+		Readyz:              NewReadyzEndpoint(s),
+		Livez:               NewLivezEndpoint(s),
 	}
 }
 
 // Use applies the given middleware to all the "query-svc" service endpoints.
 func (e *Endpoints) Use(m func(goa.Endpoint) goa.Endpoint) {
 	e.QueryResources = m(e.QueryResources)
+	e.QueryResourcesCount = m(e.QueryResourcesCount)
 	e.QueryOrgs = m(e.QueryOrgs)
 	e.SuggestOrgs = m(e.SuggestOrgs)
 	e.Readyz = m(e.Readyz)
@@ -61,6 +64,25 @@ func NewQueryResourcesEndpoint(s Service, authJWTFn security.AuthJWTFunc) goa.En
 			return nil, err
 		}
 		return s.QueryResources(ctx, p)
+	}
+}
+
+// NewQueryResourcesCountEndpoint returns an endpoint function that calls the
+// method "query-resources-count" of service "query-svc".
+func NewQueryResourcesCountEndpoint(s Service, authJWTFn security.AuthJWTFunc) goa.Endpoint {
+	return func(ctx context.Context, req any) (any, error) {
+		p := req.(*QueryResourcesCountPayload)
+		var err error
+		sc := security.JWTScheme{
+			Name:           "jwt",
+			Scopes:         []string{},
+			RequiredScopes: []string{},
+		}
+		ctx, err = authJWTFn(ctx, p.BearerToken, &sc)
+		if err != nil {
+			return nil, err
+		}
+		return s.QueryResourcesCount(ctx, p)
 	}
 }
 

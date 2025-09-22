@@ -215,6 +215,120 @@ func (m *MockResourceSearcher) QueryResources(ctx context.Context, criteria mode
 	return result, nil
 }
 
+// QueryResourcesCount implements the ResourceSearcher interface with mock data
+func (m *MockResourceSearcher) QueryResourcesCount(ctx context.Context, countCriteria model.SearchCriteria, aggregationCriteria model.SearchCriteria, publicOnly bool) (*model.CountResult, error) {
+	slog.DebugContext(ctx, "executing mock count search", "countCriteria", countCriteria, "aggregationCriteria", aggregationCriteria, "publicOnly", publicOnly)
+
+	// Filter resources based on countCriteria
+	var filteredResources []model.Resource
+
+	// Filter by public only if requested
+	for _, resource := range m.resources {
+		if publicOnly && !resource.Public {
+			continue
+		}
+		filteredResources = append(filteredResources, resource)
+	}
+
+	// Apply count criteria filters
+	// Filter by type
+	if countCriteria.ResourceType != nil {
+		var typeFiltered []model.Resource
+		for _, resource := range filteredResources {
+			if resource.Type == *countCriteria.ResourceType {
+				typeFiltered = append(typeFiltered, resource)
+			}
+		}
+		filteredResources = typeFiltered
+	}
+
+	// Filter by name
+	if countCriteria.Name != nil {
+		var nameFiltered []model.Resource
+		searchName := strings.ToLower(*countCriteria.Name)
+		for _, resource := range filteredResources {
+			if data, ok := resource.Data.(map[string]interface{}); ok {
+				nameMatch := false
+				if name, ok := data["name"].(string); ok {
+					if strings.Contains(strings.ToLower(name), searchName) {
+						nameMatch = true
+					}
+				}
+				if !nameMatch && resource.Type == "project" {
+					if slug, ok := data["slug"].(string); ok {
+						if strings.Contains(strings.ToLower(slug), searchName) {
+							nameMatch = true
+						}
+					}
+				}
+				if nameMatch {
+					nameFiltered = append(nameFiltered, resource)
+				}
+			}
+		}
+		filteredResources = nameFiltered
+	}
+
+	// Filter by tags
+	if len(countCriteria.Tags) > 0 {
+		var tagFiltered []model.Resource
+		for _, resource := range filteredResources {
+			if data, ok := resource.Data.(map[string]interface{}); ok {
+				if resourceTags, ok := data["tags"].([]string); ok {
+					for _, requestedTag := range countCriteria.Tags {
+						for _, resourceTag := range resourceTags {
+							if requestedTag == resourceTag {
+								tagFiltered = append(tagFiltered, resource)
+								goto nextResourceCount
+							}
+						}
+					}
+				}
+			}
+		nextResourceCount:
+		}
+		filteredResources = tagFiltered
+	}
+
+	// Build aggregation based on aggregationCriteria
+	aggregationBuckets := make(map[string]uint64)
+
+	// If aggregation criteria has a resource type, group by that type
+	if aggregationCriteria.ResourceType != nil && *aggregationCriteria.ResourceType != "" {
+		// Group resources by type
+		for _, resource := range filteredResources {
+			aggregationBuckets[resource.Type]++
+		}
+	} else {
+		// Default aggregation by resource type
+		for _, resource := range filteredResources {
+			aggregationBuckets[resource.Type]++
+		}
+	}
+
+	// Convert map to buckets slice
+	var buckets []model.AggregationBucket
+	for key, count := range aggregationBuckets {
+		buckets = append(buckets, model.AggregationBucket{
+			Key:      key,
+			DocCount: count,
+		})
+	}
+
+	result := &model.CountResult{
+		Count: len(filteredResources),
+		Aggregation: model.TermsAggregation{
+			DocCountErrorUpperBound: 0,
+			SumOtherDocCount:        0,
+			Buckets:                 buckets,
+		},
+		HasMore: false,
+	}
+
+	slog.DebugContext(ctx, "mock count search completed", "total_count", result.Count, "buckets", len(buckets))
+	return result, nil
+}
+
 // IsReady implements the ResourceSearcher interface (always ready for mock)
 func (m *MockResourceSearcher) IsReady(ctx context.Context) error {
 	return nil

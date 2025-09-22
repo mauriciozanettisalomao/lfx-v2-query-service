@@ -4,7 +4,9 @@
 package opensearch
 
 const queryResourceSource = `{
+  {{- if ge .PageSize 0 }}
   "size": {{ .PageSize }},
+  {{- end }}
   "query": {
     "bool": {
       "must": [
@@ -65,7 +67,8 @@ const queryResourceSource = `{
   }
   {{- if .SearchAfter }},
   "search_after": {{ .SearchAfter }}
-  {{- end }},
+  {{- end }}
+  {{- if gt .PageSize 0 }},
   "sort": [
     {
       {{ .SortBy | quote }}: {
@@ -74,4 +77,15 @@ const queryResourceSource = `{
     },
     {"_id": "asc"}
   ]
+  {{- end }}
+  {{- if .GroupBy }},
+  "aggs": {
+    "group_by": {
+      "terms": {
+        "field": {{ .GroupBy | quote }},
+        "size": {{ .GroupBySize }}
+      }
+    }
+  }
+  {{- end }}
 }`

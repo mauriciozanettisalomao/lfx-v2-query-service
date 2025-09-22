@@ -18,9 +18,10 @@ import (
 
 // query-svc service implementation using clean architecture.
 type querySvcsrvc struct {
-	resourceService     service.ResourceSearcher
-	organizationService service.OrganizationSearcher
-	auth                port.Authenticator
+	resourceService      service.ResourceSearcher
+	resourceCountService service.ResourceCountSearcher
+	organizationService  service.OrganizationSearcher
+	auth                 port.Authenticator
 }
 
 // JWTAuth implements the authorization logic for service "query-svc" for the
@@ -64,6 +65,28 @@ func (s *querySvcsrvc) QueryResources(ctx context.Context, p *querysvc.QueryReso
 	// Convert domain result to response
 	res = s.domainResultToResponse(result)
 	return res, nil
+}
+
+// QueryResourcesCount returns an aggregate count of resources the user hase
+// access to, by implementing an aggregation over the stored OpenFGA
+// relationship.
+func (s *querySvcsrvc) QueryResourcesCount(ctx context.Context, p *querysvc.QueryResourcesCountPayload) (*querysvc.QueryResourcesCountResult, error) {
+
+	slog.DebugContext(ctx, "querySvc.query-resources",
+		"name", p.Name,
+	)
+
+	// Convert payload to domain criteria
+	countCriteria := s.payloadToCountPublicCriteria(p)
+	aggregationCriteria := s.payloadToCountAggregationCriteria(p)
+
+	// Execute search using the service layer
+	result, errQueryResources := s.resourceCountService.QueryResourcesCount(ctx, countCriteria, aggregationCriteria)
+	if errQueryResources != nil {
+		return nil, wrapError(ctx, errQueryResources)
+	}
+
+	return s.domainCountResultToResponse(result), nil
 }
 
 // Locate a single organization by name or domain.
@@ -136,10 +159,12 @@ func NewQuerySvc(resourceSearcher port.ResourceSearcher,
 	auth port.Authenticator,
 ) querysvc.Service {
 	resourceService := service.NewResourceSearch(resourceSearcher, accessControlChecker)
+	resourceCountService := service.NewResourceCount(resourceSearcher, accessControlChecker)
 	organizationService := service.NewOrganizationSearch(organizationSearcher)
 	return &querySvcsrvc{
-		resourceService:     resourceService,
-		organizationService: organizationService,
-		auth:                auth,
+		resourceService:      resourceService,
+		resourceCountService: resourceCountService,
+		organizationService:  organizationService,
+		auth:                 auth,
 	}
 }

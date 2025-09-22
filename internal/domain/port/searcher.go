@@ -16,6 +16,9 @@ type ResourceSearcher interface {
 	// QueryResources searches for resources based on the provided criteria
 	QueryResources(ctx context.Context, criteria model.SearchCriteria) (*model.SearchResult, error)
 
+	// QueryResourcesCount searches for resources based on the provided criteria
+	QueryResourcesCount(ctx context.Context, countCriteria model.SearchCriteria, aggregationCriteria model.SearchCriteria, publicOnly bool) (*model.CountResult, error)
+
 	// IsReady checks if the search service is ready
 	IsReady(ctx context.Context) error
 }

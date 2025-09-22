@@ -40,6 +40,8 @@ type OpenSearchSearcher struct {
 // This allows for easy mocking and testing
 type OpenSearchClientRetriever interface {
 	Search(ctx context.Context, index string, query []byte) (*SearchResponse, error)
+	Count(ctx context.Context, index string, query []byte) (*CountResponse, error)
+	AggregationSearch(ctx context.Context, index string, query []byte) (*AggregationResponse, error)
 	IsReady(ctx context.Context) error
 }
 
@@ -62,7 +64,7 @@ func (os *OpenSearchSearcher) QueryResources(ctx context.Context, criteria model
 	}
 
 	// Convert response to domain objects
-	result, err := os.convertResponse(ctx, response)
+	result, err := os.convertSearchResponse(ctx, response)
 	if err != nil {
 		return nil, fmt.Errorf("failed to convert search response: %w", err)
 	}
@@ -70,6 +72,62 @@ func (os *OpenSearchSearcher) QueryResources(ctx context.Context, criteria model
 	slog.DebugContext(ctx, "opensearch search completed",
 		"results_count", len(result.Resources),
 	)
+	return result, nil
+}
+
+func (os *OpenSearchSearcher) QueryResourcesCount(
+	ctx context.Context,
+	publicCountCriteria model.SearchCriteria,
+	aggregationCriteria model.SearchCriteria,
+	publicOnly bool,
+) (*model.CountResult, error) {
+	slog.DebugContext(ctx, "executing opensearch query for criteria",
+		"public_count_criteria", publicCountCriteria,
+		"aggregation_criteria", aggregationCriteria,
+	)
+
+	parsedCount, err := os.Render(ctx, publicCountCriteria)
+	if err != nil {
+		// Not expected to happen: this is an error with our interpolation logic.
+		slog.ErrorContext(ctx, "unrecoverable request parsing error", "error", err)
+		return nil, fmt.Errorf("failed to render query: %w", err)
+	}
+	slog.DebugContext(ctx, "public resource count query", "query", string(parsedCount))
+
+	// Execute the search
+	countResponse, err := os.client.Count(ctx, os.index, parsedCount)
+	if err != nil {
+		return nil, fmt.Errorf("opensearch search failed: %w", err)
+	}
+
+	if publicOnly {
+		return &model.CountResult{
+			Count: countResponse.Count,
+		}, nil
+	}
+
+	parsedSearch, err := os.Render(ctx, aggregationCriteria)
+	if err != nil {
+		// Not expected to happen: this is an error with our interpolation logic.
+		slog.ErrorContext(ctx, "unrecoverable request parsing error", "error", err)
+		return nil, fmt.Errorf("failed to render query: %w", err)
+	}
+	slog.DebugContext(ctx, "resource aggregation query", "query", string(parsedSearch))
+
+	aggregationResponse, err := os.client.AggregationSearch(ctx, os.index, parsedSearch)
+	if err != nil {
+		return nil, fmt.Errorf("opensearch search failed: %w", err)
+	}
+
+	slog.DebugContext(ctx, "aggregation response", "response", aggregationResponse)
+
+	result, err := os.convertCountResponse(ctx, countResponse, aggregationResponse)
+	if err != nil {
+		return nil, fmt.Errorf("failed to convert count response: %w", err)
+	}
+
+	slog.DebugContext(ctx, "converted count response", "response", result)
+
 	return result, nil
 }
 
@@ -91,7 +149,7 @@ func (os *OpenSearchSearcher) Render(ctx context.Context, criteria model.SearchC
 }
 
 // convertResponse converts OpenSearch response to domain objects
-func (os *OpenSearchSearcher) convertResponse(ctx context.Context, response *SearchResponse) (*model.SearchResult, error) {
+func (os *OpenSearchSearcher) convertSearchResponse(ctx context.Context, response *SearchResponse) (*model.SearchResult, error) {
 
 	result := &model.SearchResult{
 		Resources: make([]model.Resource, 0, len(response.Hits.Hits)),
@@ -145,6 +203,25 @@ func (os *OpenSearchSearcher) convertHit(hit Hit) (model.Resource, error) {
 	}
 
 	return resource, nil
+}
+
+func (os *OpenSearchSearcher) convertCountResponse(ctx context.Context, response *CountResponse, aggregationResponse *AggregationResponse) (*model.CountResult, error) {
+	aggregation := model.TermsAggregation{
+		DocCountErrorUpperBound: aggregationResponse.GroupBy.DocCountErrorUpperBound,
+		SumOtherDocCount:        aggregationResponse.GroupBy.SumOtherDocCount,
+	}
+	aggregationBuckets := make([]model.AggregationBucket, len(aggregationResponse.GroupBy.Buckets))
+	for i, bucket := range aggregationResponse.GroupBy.Buckets {
+		aggregationBuckets[i] = model.AggregationBucket{
+			Key:      bucket.Key,
+			DocCount: bucket.DocCount,
+		}
+	}
+	aggregation.Buckets = aggregationBuckets
+	return &model.CountResult{
+		Count:       response.Count,
+		Aggregation: aggregation,
+	}, nil
 }
 
 func (o *OpenSearchSearcher) IsReady(ctx context.Context) error {
