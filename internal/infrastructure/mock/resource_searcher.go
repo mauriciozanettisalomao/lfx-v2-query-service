@@ -14,7 +14,10 @@ import (
 // MockResourceSearcher is a mock implementation of ResourceSearcher for testing
 // This demonstrates how the clean architecture allows easy swapping of implementations
 type MockResourceSearcher struct {
-	resources []model.Resource
+	resources                    []model.Resource
+	queryResourcesCountResponse  *model.CountResult
+	queryResourcesCountError     error
+	isReadyError                 error
 }
 
 // NewMockResourceSearcher creates a new mock searcher with some sample data
@@ -219,6 +222,16 @@ func (m *MockResourceSearcher) QueryResources(ctx context.Context, criteria mode
 func (m *MockResourceSearcher) QueryResourcesCount(ctx context.Context, countCriteria model.SearchCriteria, aggregationCriteria model.SearchCriteria, publicOnly bool) (*model.CountResult, error) {
 	slog.DebugContext(ctx, "executing mock count search", "countCriteria", countCriteria, "aggregationCriteria", aggregationCriteria, "publicOnly", publicOnly)
 
+	// If test has set a mock error, return it
+	if m.queryResourcesCountError != nil {
+		return nil, m.queryResourcesCountError
+	}
+
+	// If test has set a mock response, return it
+	if m.queryResourcesCountResponse != nil {
+		return m.queryResourcesCountResponse, nil
+	}
+
 	// Filter resources based on countCriteria
 	var filteredResources []model.Resource
 
@@ -331,6 +344,9 @@ func (m *MockResourceSearcher) QueryResourcesCount(ctx context.Context, countCri
 
 // IsReady implements the ResourceSearcher interface (always ready for mock)
 func (m *MockResourceSearcher) IsReady(ctx context.Context) error {
+	if m.isReadyError != nil {
+		return m.isReadyError
+	}
 	return nil
 }
 
@@ -427,4 +443,21 @@ func (m *MockResourceSearcher) ClearResources() {
 // GetResourceCount returns the total number of resources
 func (m *MockResourceSearcher) GetResourceCount() int {
 	return len(m.resources)
+}
+
+// Test helper methods for setting up mock responses
+
+// SetQueryResourcesCountResponse sets the mock response for QueryResourcesCount calls
+func (m *MockResourceSearcher) SetQueryResourcesCountResponse(response *model.CountResult) {
+	m.queryResourcesCountResponse = response
+}
+
+// SetQueryResourcesCountError sets the mock error for QueryResourcesCount calls
+func (m *MockResourceSearcher) SetQueryResourcesCountError(err error) {
+	m.queryResourcesCountError = err
+}
+
+// SetIsReadyError sets the mock error for IsReady calls
+func (m *MockResourceSearcher) SetIsReadyError(err error) {
+	m.isReadyError = err
 }

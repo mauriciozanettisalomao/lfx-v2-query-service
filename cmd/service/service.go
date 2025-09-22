@@ -72,7 +72,7 @@ func (s *querySvcsrvc) QueryResources(ctx context.Context, p *querysvc.QueryReso
 // relationship.
 func (s *querySvcsrvc) QueryResourcesCount(ctx context.Context, p *querysvc.QueryResourcesCountPayload) (*querysvc.QueryResourcesCountResult, error) {
 
-	slog.DebugContext(ctx, "querySvc.query-resources",
+	slog.DebugContext(ctx, "querySvc.query-resource-counts",
 		"name", p.Name,
 	)
 
