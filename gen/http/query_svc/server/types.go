@@ -95,6 +95,22 @@ type QueryResourcesCountBadRequestResponseBody struct {
 	Fault bool `form:"fault" json:"fault" xml:"fault"`
 }
 
+// QueryResourcesCountInternalServerErrorResponseBody is the type of the
+// "query-svc" service "query-resources-count" endpoint HTTP response body for
+// the "InternalServerError" error.
+type QueryResourcesCountInternalServerErrorResponseBody struct {
+	// Error message
+	Message string `form:"message" json:"message" xml:"message"`
+}
+
+// QueryResourcesCountServiceUnavailableResponseBody is the type of the
+// "query-svc" service "query-resources-count" endpoint HTTP response body for
+// the "ServiceUnavailable" error.
+type QueryResourcesCountServiceUnavailableResponseBody struct {
+	// Error message
+	Message string `form:"message" json:"message" xml:"message"`
+}
+
 // QueryOrgsBadRequestResponseBody is the type of the "query-svc" service
 // "query-orgs" endpoint HTTP response body for the "BadRequest" error.
 type QueryOrgsBadRequestResponseBody struct {
@@ -282,6 +298,26 @@ func NewQueryResourcesCountBadRequestResponseBody(res *goa.ServiceError) *QueryR
 		Temporary: res.Temporary,
 		Timeout:   res.Timeout,
 		Fault:     res.Fault,
+	}
+	return body
+}
+
+// NewQueryResourcesCountInternalServerErrorResponseBody builds the HTTP
+// response body from the result of the "query-resources-count" endpoint of the
+// "query-svc" service.
+func NewQueryResourcesCountInternalServerErrorResponseBody(res *querysvc.InternalServerError) *QueryResourcesCountInternalServerErrorResponseBody {
+	body := &QueryResourcesCountInternalServerErrorResponseBody{
+		Message: res.Message,
+	}
+	return body
+}
+
+// NewQueryResourcesCountServiceUnavailableResponseBody builds the HTTP
+// response body from the result of the "query-resources-count" endpoint of the
+// "query-svc" service.
+func NewQueryResourcesCountServiceUnavailableResponseBody(res *querysvc.ServiceUnavailableError) *QueryResourcesCountServiceUnavailableResponseBody {
+	body := &QueryResourcesCountServiceUnavailableResponseBody{
+		Message: res.Message,
 	}
 	return body
 }

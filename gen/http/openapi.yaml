@@ -287,6 +287,18 @@ paths:
                     description: Bad Request response.
                     schema:
                         $ref: '#/definitions/QuerySvcQueryResourcesCountBadRequestResponseBody'
+                "500":
+                    description: Internal Server Error response.
+                    schema:
+                        $ref: '#/definitions/InternalServerError'
+                        required:
+                            - message
+                "503":
+                    description: Service Unavailable response.
+                    schema:
+                        $ref: '#/definitions/ServiceUnavailableError'
+                        required:
+                            - message
             schemes:
                 - http
             security:

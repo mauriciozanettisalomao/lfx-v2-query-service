@@ -223,6 +223,8 @@ func EncodeQueryResourcesCountRequest(encoder func(*http.Request) goahttp.Encode
 // whether the response body should be restored after having been read.
 // DecodeQueryResourcesCountResponse may return the following errors:
 //   - "BadRequest" (type *goa.ServiceError): http.StatusBadRequest
+//   - "InternalServerError" (type *querysvc.InternalServerError): http.StatusInternalServerError
+//   - "ServiceUnavailable" (type *querysvc.ServiceUnavailableError): http.StatusServiceUnavailable
 //   - error: internal error
 func DecodeQueryResourcesCountResponse(decoder func(*http.Response) goahttp.Decoder, restoreBody bool) func(*http.Response) (any, error) {
 	return func(resp *http.Response) (any, error) {
@@ -275,6 +277,34 @@ func DecodeQueryResourcesCountResponse(decoder func(*http.Response) goahttp.Deco
 				return nil, goahttp.ErrValidationError("query-svc", "query-resources-count", err)
 			}
 			return nil, NewQueryResourcesCountBadRequest(&body)
+		case http.StatusInternalServerError:
+			var (
+				body QueryResourcesCountInternalServerErrorResponseBody
+				err  error
+			)
+			err = decoder(resp).Decode(&body)
+			if err != nil {
+				return nil, goahttp.ErrDecodingError("query-svc", "query-resources-count", err)
+			}
+			err = ValidateQueryResourcesCountInternalServerErrorResponseBody(&body)
+			if err != nil {
+				return nil, goahttp.ErrValidationError("query-svc", "query-resources-count", err)
+			}
+			return nil, NewQueryResourcesCountInternalServerError(&body)
+		case http.StatusServiceUnavailable:
+			var (
+				body QueryResourcesCountServiceUnavailableResponseBody
+				err  error
+			)
+			err = decoder(resp).Decode(&body)
+			if err != nil {
+				return nil, goahttp.ErrDecodingError("query-svc", "query-resources-count", err)
+			}
+			err = ValidateQueryResourcesCountServiceUnavailableResponseBody(&body)
+			if err != nil {
+				return nil, goahttp.ErrValidationError("query-svc", "query-resources-count", err)
+			}
+			return nil, NewQueryResourcesCountServiceUnavailable(&body)
 		default:
 			body, _ := io.ReadAll(resp.Body)
 			return nil, goahttp.ErrInvalidResponse("query-svc", "query-resources-count", resp.StatusCode, string(body))

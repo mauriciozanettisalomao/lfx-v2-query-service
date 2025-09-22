@@ -95,6 +95,22 @@ type QueryResourcesCountBadRequestResponseBody struct {
 	Fault *bool `form:"fault,omitempty" json:"fault,omitempty" xml:"fault,omitempty"`
 }
 
+// QueryResourcesCountInternalServerErrorResponseBody is the type of the
+// "query-svc" service "query-resources-count" endpoint HTTP response body for
+// the "InternalServerError" error.
+type QueryResourcesCountInternalServerErrorResponseBody struct {
+	// Error message
+	Message *string `form:"message,omitempty" json:"message,omitempty" xml:"message,omitempty"`
+}
+
+// QueryResourcesCountServiceUnavailableResponseBody is the type of the
+// "query-svc" service "query-resources-count" endpoint HTTP response body for
+// the "ServiceUnavailable" error.
+type QueryResourcesCountServiceUnavailableResponseBody struct {
+	// Error message
+	Message *string `form:"message,omitempty" json:"message,omitempty" xml:"message,omitempty"`
+}
+
 // QueryOrgsBadRequestResponseBody is the type of the "query-svc" service
 // "query-orgs" endpoint HTTP response body for the "BadRequest" error.
 type QueryOrgsBadRequestResponseBody struct {
@@ -254,6 +270,26 @@ func NewQueryResourcesCountBadRequest(body *QueryResourcesCountBadRequestRespons
 		Temporary: *body.Temporary,
 		Timeout:   *body.Timeout,
 		Fault:     *body.Fault,
+	}
+
+	return v
+}
+
+// NewQueryResourcesCountInternalServerError builds a query-svc service
+// query-resources-count endpoint InternalServerError error.
+func NewQueryResourcesCountInternalServerError(body *QueryResourcesCountInternalServerErrorResponseBody) *querysvc.InternalServerError {
+	v := &querysvc.InternalServerError{
+		Message: *body.Message,
+	}
+
+	return v
+}
+
+// NewQueryResourcesCountServiceUnavailable builds a query-svc service
+// query-resources-count endpoint ServiceUnavailable error.
+func NewQueryResourcesCountServiceUnavailable(body *QueryResourcesCountServiceUnavailableResponseBody) *querysvc.ServiceUnavailableError {
+	v := &querysvc.ServiceUnavailableError{
+		Message: *body.Message,
 	}
 
 	return v
@@ -453,6 +489,25 @@ func ValidateQueryResourcesCountBadRequestResponseBody(body *QueryResourcesCount
 	}
 	if body.Fault == nil {
 		err = goa.MergeErrors(err, goa.MissingFieldError("fault", "body"))
+	}
+	return
+}
+
+// ValidateQueryResourcesCountInternalServerErrorResponseBody runs the
+// validations defined on
+// query-resources-count_InternalServerError_response_body
+func ValidateQueryResourcesCountInternalServerErrorResponseBody(body *QueryResourcesCountInternalServerErrorResponseBody) (err error) {
+	if body.Message == nil {
+		err = goa.MergeErrors(err, goa.MissingFieldError("message", "body"))
+	}
+	return
+}
+
+// ValidateQueryResourcesCountServiceUnavailableResponseBody runs the
+// validations defined on query-resources-count_ServiceUnavailable_response_body
+func ValidateQueryResourcesCountServiceUnavailableResponseBody(body *QueryResourcesCountServiceUnavailableResponseBody) (err error) {
+	if body.Message == nil {
+		err = goa.MergeErrors(err, goa.MissingFieldError("message", "body"))
 	}
 	return
 }

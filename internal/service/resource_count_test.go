@@ -73,7 +73,7 @@ func TestResourceCountQueryResourcesCount(t *testing.T) {
 				})
 			},
 			expectedError:        false,
-			expectedCount:        2, // Just the public count, private access didn't match
+			expectedCount:        2,
 			expectedCacheControl: false,
 		},
 		{
@@ -105,7 +105,7 @@ func TestResourceCountQueryResourcesCount(t *testing.T) {
 				})
 			},
 			expectedError:        false,
-			expectedCount:        5, // Just the public count, private access didn't work
+			expectedCount:        5,
 			expectedCacheControl: false,
 		},
 		{

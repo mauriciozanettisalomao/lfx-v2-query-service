@@ -103,6 +103,10 @@ func (c *httpClient) AggregationSearch(ctx context.Context, index string, query 
 		return nil, fmt.Errorf("opensearch search failed: %w", err)
 	}
 
+	if searchResponse.Errors {
+		return nil, fmt.Errorf("opensearch search returned errors")
+	}
+
 	// First, unmarshal the aggregations from raw JSON.
 	var aggregations AggregationResponse
 	if err := json.Unmarshal(searchResponse.Aggregations, &aggregations); err != nil {

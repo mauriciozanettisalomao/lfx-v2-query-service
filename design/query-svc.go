@@ -143,6 +143,8 @@ var _ = dsl.Service("query-svc", func() {
 				dsl.Header("cache_control:Cache-Control")
 			})
 			dsl.Response("BadRequest", dsl.StatusBadRequest)
+			dsl.Response("InternalServerError", dsl.StatusInternalServerError)
+			dsl.Response("ServiceUnavailable", dsl.StatusServiceUnavailable)
 		})
 	})
 
