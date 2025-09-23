@@ -578,7 +578,6 @@ func TestNewQuerySvc(t *testing.T) {
 				// Cast to concrete type to verify internal fields
 				if svc, ok := result.(*querySvcsrvc); ok {
 					assert.NotNil(t, svc.resourceService)
-					assert.NotNil(t, svc.resourceCountService)
 					assert.NotNil(t, svc.organizationService)
 				}
 			} else {

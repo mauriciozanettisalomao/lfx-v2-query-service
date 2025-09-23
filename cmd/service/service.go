@@ -18,10 +18,9 @@ import (
 
 // query-svc service implementation using clean architecture.
 type querySvcsrvc struct {
-	resourceService      service.ResourceSearcher
-	resourceCountService service.ResourceCountSearcher
-	organizationService  service.OrganizationSearcher
-	auth                 port.Authenticator
+	resourceService     service.ResourceSearcher
+	organizationService service.OrganizationSearcher
+	auth                port.Authenticator
 }
 
 // JWTAuth implements the authorization logic for service "query-svc" for the
@@ -81,7 +80,7 @@ func (s *querySvcsrvc) QueryResourcesCount(ctx context.Context, p *querysvc.Quer
 	aggregationCriteria := s.payloadToCountAggregationCriteria(p)
 
 	// Execute search using the service layer
-	result, errQueryResources := s.resourceCountService.QueryResourcesCount(ctx, countCriteria, aggregationCriteria)
+	result, errQueryResources := s.resourceService.QueryResourcesCount(ctx, countCriteria, aggregationCriteria)
 	if errQueryResources != nil {
 		return nil, wrapError(ctx, errQueryResources)
 	}
@@ -159,12 +158,10 @@ func NewQuerySvc(resourceSearcher port.ResourceSearcher,
 	auth port.Authenticator,
 ) querysvc.Service {
 	resourceService := service.NewResourceSearch(resourceSearcher, accessControlChecker)
-	resourceCountService := service.NewResourceCount(resourceSearcher, accessControlChecker)
 	organizationService := service.NewOrganizationSearch(organizationSearcher)
 	return &querySvcsrvc{
-		resourceService:      resourceService,
-		resourceCountService: resourceCountService,
-		organizationService:  organizationService,
-		auth:                 auth,
+		resourceService:     resourceService,
+		organizationService: organizationService,
+		auth:                auth,
 	}
 }
