@@ -19,6 +19,8 @@ type Service interface {
 	// Locate resources by their type or parent, or use typeahead search to query
 	// resources by a display name or similar alias.
 	QueryResources(context.Context, *QueryResourcesPayload) (res *QueryResourcesResult, err error)
+	// Count matching resources by query.
+	QueryResourcesCount(context.Context, *QueryResourcesCountPayload) (res *QueryResourcesCountResult, err error)
 	// Locate a single organization by name or domain.
 	QueryOrgs(context.Context, *QueryOrgsPayload) (res *Organization, err error)
 	// Get organization suggestions for typeahead search based on a query.
@@ -49,7 +51,7 @@ const ServiceName = "query-svc"
 // MethodNames lists the service method names as defined in the design. These
 // are the same values that are set in the endpoint request contexts under the
 // MethodKey key.
-var MethodNames = [5]string{"query-resources", "query-orgs", "suggest-orgs", "readyz", "livez"}
+var MethodNames = [6]string{"query-resources", "query-resources-count", "query-orgs", "suggest-orgs", "readyz", "livez"}
 
 type BadRequestError struct {
 	// Error message
@@ -80,7 +82,7 @@ type Organization struct {
 	Employees *string
 }
 
-// An organization suggestion for typeahead search.
+// An organization suggestion for the search.
 type OrganizationSuggestion struct {
 	// Organization name
 	Name string
@@ -101,6 +103,35 @@ type QueryOrgsPayload struct {
 	Name *string
 	// Organization domain or website URL
 	Domain *string
+}
+
+// QueryResourcesCountPayload is the payload type of the query-svc service
+// query-resources-count method.
+type QueryResourcesCountPayload struct {
+	// JWT token issued by Heimdall
+	BearerToken string
+	// Version of the API
+	Version string
+	// Resource name or alias; supports typeahead
+	Name *string
+	// Parent (for navigation; varies by object type)
+	Parent *string
+	// Resource type to search
+	Type *string
+	// Tags to search (varies by object type)
+	Tags []string
+}
+
+// QueryResourcesCountResult is the result type of the query-svc service
+// query-resources-count method.
+type QueryResourcesCountResult struct {
+	// Count of resources found
+	Count uint64
+	// True if count is not guaranteed to be exhaustive: client should request a
+	// narrower query
+	HasMore bool
+	// Cache control header
+	CacheControl *string
 }
 
 // QueryResourcesPayload is the payload type of the query-svc service
@@ -234,6 +265,11 @@ func (e *ServiceUnavailableError) ErrorName() string {
 // GoaErrorName returns "ServiceUnavailableError".
 func (e *ServiceUnavailableError) GoaErrorName() string {
 	return "ServiceUnavailable"
+}
+
+// MakeBadRequest builds a goa.ServiceError from an error.
+func MakeBadRequest(err error) *goa.ServiceError {
+	return goa.NewServiceError(err, "BadRequest", false, false, false)
 }
 
 // MakeNotReady builds a goa.ServiceError from an error.

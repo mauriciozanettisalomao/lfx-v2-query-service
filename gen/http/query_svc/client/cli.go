@@ -102,6 +102,68 @@ func BuildQueryResourcesPayload(querySvcQueryResourcesVersion string, querySvcQu
 	return v, nil
 }
 
+// BuildQueryResourcesCountPayload builds the payload for the query-svc
+// query-resources-count endpoint from CLI flags.
+func BuildQueryResourcesCountPayload(querySvcQueryResourcesCountVersion string, querySvcQueryResourcesCountName string, querySvcQueryResourcesCountParent string, querySvcQueryResourcesCountType string, querySvcQueryResourcesCountTags string, querySvcQueryResourcesCountBearerToken string) (*querysvc.QueryResourcesCountPayload, error) {
+	var err error
+	var version string
+	{
+		version = querySvcQueryResourcesCountVersion
+		if !(version == "1") {
+			err = goa.MergeErrors(err, goa.InvalidEnumValueError("version", version, []any{"1"}))
+		}
+		if err != nil {
+			return nil, err
+		}
+	}
+	var name *string
+	{
+		if querySvcQueryResourcesCountName != "" {
+			name = &querySvcQueryResourcesCountName
+			if utf8.RuneCountInString(*name) < 1 {
+				err = goa.MergeErrors(err, goa.InvalidLengthError("name", *name, utf8.RuneCountInString(*name), 1, true))
+			}
+			if err != nil {
+				return nil, err
+			}
+		}
+	}
+	var parent *string
+	{
+		if querySvcQueryResourcesCountParent != "" {
+			parent = &querySvcQueryResourcesCountParent
+		}
+	}
+	var type_ *string
+	{
+		if querySvcQueryResourcesCountType != "" {
+			type_ = &querySvcQueryResourcesCountType
+		}
+	}
+	var tags []string
+	{
+		if querySvcQueryResourcesCountTags != "" {
+			err = json.Unmarshal([]byte(querySvcQueryResourcesCountTags), &tags)
+			if err != nil {
+				return nil, fmt.Errorf("invalid JSON for tags, \nerror: %s, \nexample of valid JSON:\n%s", err, "'[\n      \"active\"\n   ]'")
+			}
+		}
+	}
+	var bearerToken string
+	{
+		bearerToken = querySvcQueryResourcesCountBearerToken
+	}
+	v := &querysvc.QueryResourcesCountPayload{}
+	v.Version = version
+	v.Name = name
+	v.Parent = parent
+	v.Type = type_
+	v.Tags = tags
+	v.BearerToken = bearerToken
+
+	return v, nil
+}
+
 // BuildQueryOrgsPayload builds the payload for the query-svc query-orgs
 // endpoint from CLI flags.
 func BuildQueryOrgsPayload(querySvcQueryOrgsVersion string, querySvcQueryOrgsName string, querySvcQueryOrgsDomain string, querySvcQueryOrgsBearerToken string) (*querysvc.QueryOrgsPayload, error) {

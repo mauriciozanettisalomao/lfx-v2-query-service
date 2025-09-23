@@ -16,8 +16,12 @@ import (
 
 // MockOpenSearchClient is a mock implementation of OpenSearchClientRetriever
 type MockOpenSearchClient struct {
-	searchResponse *SearchResponse
-	searchError    error
+	searchResponse      *SearchResponse
+	searchError         error
+	countResponse       *CountResponse
+	countError          error
+	aggregationResponse *AggregationResponse
+	aggregationError    error
 }
 
 func NewMockOpenSearchClient() *MockOpenSearchClient {
@@ -31,12 +35,42 @@ func (m *MockOpenSearchClient) Search(ctx context.Context, index string, query [
 	return m.searchResponse, nil
 }
 
+func (m *MockOpenSearchClient) Count(ctx context.Context, index string, query []byte) (*CountResponse, error) {
+	if m.countError != nil {
+		return nil, m.countError
+	}
+	return m.countResponse, nil
+}
+
+func (m *MockOpenSearchClient) AggregationSearch(ctx context.Context, index string, query []byte) (*AggregationResponse, error) {
+	if m.aggregationError != nil {
+		return nil, m.aggregationError
+	}
+	return m.aggregationResponse, nil
+}
+
 func (m *MockOpenSearchClient) SetSearchResponse(response *SearchResponse) {
 	m.searchResponse = response
 }
 
 func (m *MockOpenSearchClient) SetSearchError(err error) {
 	m.searchError = err
+}
+
+func (m *MockOpenSearchClient) SetCountResponse(response *CountResponse) {
+	m.countResponse = response
+}
+
+func (m *MockOpenSearchClient) SetCountError(err error) {
+	m.countError = err
+}
+
+func (m *MockOpenSearchClient) SetAggregationResponse(response *AggregationResponse) {
+	m.aggregationResponse = response
+}
+
+func (m *MockOpenSearchClient) SetAggregationError(err error) {
+	m.aggregationError = err
 }
 
 func (m *MockOpenSearchClient) IsReady(ctx context.Context) error {
@@ -383,7 +417,7 @@ func TestOpenSearchSearcherConvertResponse(t *testing.T) {
 
 			// Execute
 			ctx := context.Background()
-			result, err := searcher.convertResponse(ctx, tc.response)
+			result, err := searcher.convertSearchResponse(ctx, tc.response)
 
 			// Verify
 			if tc.expectedError {
@@ -645,6 +679,139 @@ func TestOpenSearchSearcherIntegration(t *testing.T) {
 		}
 	})
 }
+
+func TestOpenSearchSearcherQueryResourcesCount(t *testing.T) {
+	tests := []struct {
+		name                    string
+		countCriteria          model.SearchCriteria
+		aggregationCriteria    model.SearchCriteria
+		publicOnly             bool
+		setupMock              func(*MockOpenSearchClient)
+		expectedError          bool
+		expectedCount          int
+		expectedAggregationLen int
+	}{
+		{
+			name: "successful public only count",
+			countCriteria: model.SearchCriteria{
+				ResourceType: stringPtr("project"),
+				PageSize:     -1,
+				PublicOnly:   true,
+			},
+			aggregationCriteria: model.SearchCriteria{},
+			publicOnly:          true,
+			setupMock: func(mock *MockOpenSearchClient) {
+				mock.SetCountResponse(&CountResponse{
+					Count: 5,
+				})
+			},
+			expectedError: false,
+			expectedCount: 5,
+		},
+		{
+			name: "successful count with aggregation",
+			countCriteria: model.SearchCriteria{
+				ResourceType: stringPtr("committee"),
+				PageSize:     -1,
+				PublicOnly:   true,
+			},
+			aggregationCriteria: model.SearchCriteria{
+				GroupBy:     "access_check_query.keyword",
+				PageSize:    0,
+				PrivateOnly: true,
+			},
+			publicOnly: false,
+			setupMock: func(mock *MockOpenSearchClient) {
+				mock.SetCountResponse(&CountResponse{
+					Count: 3,
+				})
+				mock.SetAggregationResponse(&AggregationResponse{
+					GroupBy: TermsAggregation{
+						DocCountErrorUpperBound: 0,
+						SumOtherDocCount:        0,
+						Buckets: []AggregationBucket{
+							{
+								Key:      "committee:123#viewer@user:test-user",
+								DocCount: 2,
+							},
+							{
+								Key:      "committee:456#member@user:test-user",
+								DocCount: 1,
+							},
+						},
+					},
+				})
+			},
+			expectedError:          false,
+			expectedCount:          3,
+			expectedAggregationLen: 2,
+		},
+		{
+			name: "count error",
+			countCriteria: model.SearchCriteria{
+				ResourceType: stringPtr("project"),
+			},
+			aggregationCriteria: model.SearchCriteria{},
+			publicOnly:          true,
+			setupMock: func(mock *MockOpenSearchClient) {
+				mock.SetCountError(errors.New("opensearch count failed"))
+			},
+			expectedError: true,
+		},
+		{
+			name: "aggregation error",
+			countCriteria: model.SearchCriteria{
+				ResourceType: stringPtr("committee"),
+			},
+			aggregationCriteria: model.SearchCriteria{
+				GroupBy: "access_check_query.keyword",
+			},
+			publicOnly: false,
+			setupMock: func(mock *MockOpenSearchClient) {
+				mock.SetCountResponse(&CountResponse{
+					Count: 2,
+				})
+				mock.SetAggregationError(errors.New("opensearch aggregation failed"))
+			},
+			expectedError: true,
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			assertion := assert.New(t)
+
+			// Setup mock
+			mockClient := NewMockOpenSearchClient()
+			tc.setupMock(mockClient)
+
+			// Create searcher
+			searcher := &OpenSearchSearcher{
+				client: mockClient,
+				index:  "test-index",
+			}
+
+			// Execute
+			ctx := context.Background()
+			result, err := searcher.QueryResourcesCount(ctx, tc.countCriteria, tc.aggregationCriteria, tc.publicOnly)
+
+			// Verify
+			if tc.expectedError {
+				assertion.Error(err)
+				assertion.Nil(result)
+			} else {
+				assertion.NoError(err)
+				assertion.NotNil(result)
+				assertion.Equal(tc.expectedCount, result.Count)
+
+				if tc.expectedAggregationLen > 0 {
+					assertion.Equal(tc.expectedAggregationLen, len(result.Aggregation.Buckets))
+				}
+			}
+		})
+	}
+}
+
 
 // Helper function to create string pointers
 func stringPtr(s string) *string {

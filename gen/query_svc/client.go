@@ -15,21 +15,23 @@ import (
 
 // Client is the "query-svc" service client.
 type Client struct {
-	QueryResourcesEndpoint goa.Endpoint
-	QueryOrgsEndpoint      goa.Endpoint
-	SuggestOrgsEndpoint    goa.Endpoint
-	ReadyzEndpoint         goa.Endpoint
-	LivezEndpoint          goa.Endpoint
+	QueryResourcesEndpoint      goa.Endpoint
+	QueryResourcesCountEndpoint goa.Endpoint
+	QueryOrgsEndpoint           goa.Endpoint
+	SuggestOrgsEndpoint         goa.Endpoint
+	ReadyzEndpoint              goa.Endpoint
+	LivezEndpoint               goa.Endpoint
 }
 
 // NewClient initializes a "query-svc" service client given the endpoints.
-func NewClient(queryResources, queryOrgs, suggestOrgs, readyz, livez goa.Endpoint) *Client {
+func NewClient(queryResources, queryResourcesCount, queryOrgs, suggestOrgs, readyz, livez goa.Endpoint) *Client {
 	return &Client{
-		QueryResourcesEndpoint: queryResources,
-		QueryOrgsEndpoint:      queryOrgs,
-		SuggestOrgsEndpoint:    suggestOrgs,
-		ReadyzEndpoint:         readyz,
-		LivezEndpoint:          livez,
+		QueryResourcesEndpoint:      queryResources,
+		QueryResourcesCountEndpoint: queryResourcesCount,
+		QueryOrgsEndpoint:           queryOrgs,
+		SuggestOrgsEndpoint:         suggestOrgs,
+		ReadyzEndpoint:              readyz,
+		LivezEndpoint:               livez,
 	}
 }
 
@@ -48,6 +50,23 @@ func (c *Client) QueryResources(ctx context.Context, p *QueryResourcesPayload) (
 		return
 	}
 	return ires.(*QueryResourcesResult), nil
+}
+
+// QueryResourcesCount calls the "query-resources-count" endpoint of the
+// "query-svc" service.
+// QueryResourcesCount may return the following errors:
+//   - "BadRequest" (type *goa.ServiceError): Bad request
+//   - "NotFound" (type *NotFoundError): Not found
+//   - "InternalServerError" (type *InternalServerError): Internal server error
+//   - "ServiceUnavailable" (type *ServiceUnavailableError): Service unavailable
+//   - error: internal error
+func (c *Client) QueryResourcesCount(ctx context.Context, p *QueryResourcesCountPayload) (res *QueryResourcesCountResult, err error) {
+	var ires any
+	ires, err = c.QueryResourcesCountEndpoint(ctx, p)
+	if err != nil {
+		return
+	}
+	return ires.(*QueryResourcesCountResult), nil
 }
 
 // QueryOrgs calls the "query-orgs" endpoint of the "query-svc" service.

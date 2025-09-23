@@ -66,6 +66,28 @@ func (s *querySvcsrvc) QueryResources(ctx context.Context, p *querysvc.QueryReso
 	return res, nil
 }
 
+// QueryResourcesCount returns an aggregate count of resources the user hase
+// access to, by implementing an aggregation over the stored OpenFGA
+// relationship.
+func (s *querySvcsrvc) QueryResourcesCount(ctx context.Context, p *querysvc.QueryResourcesCountPayload) (*querysvc.QueryResourcesCountResult, error) {
+
+	slog.DebugContext(ctx, "querySvc.query-resource-counts",
+		"name", p.Name,
+	)
+
+	// Convert payload to domain criteria
+	countCriteria := s.payloadToCountPublicCriteria(p)
+	aggregationCriteria := s.payloadToCountAggregationCriteria(p)
+
+	// Execute search using the service layer
+	result, errQueryResources := s.resourceService.QueryResourcesCount(ctx, countCriteria, aggregationCriteria)
+	if errQueryResources != nil {
+		return nil, wrapError(ctx, errQueryResources)
+	}
+
+	return s.domainCountResultToResponse(result), nil
+}
+
 // Locate a single organization by name or domain.
 func (s *querySvcsrvc) QueryOrgs(ctx context.Context, p *querysvc.QueryOrgsPayload) (res *querysvc.Organization, err error) {
 

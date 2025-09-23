@@ -25,6 +25,10 @@ type MockAccessControlChecker struct {
 	SimulateErrors bool
 	// DefaultResult is the default access result ("allowed" or "denied")
 	DefaultResult string
+	// Test helper fields
+	checkAccessResponse map[string]string
+	checkAccessError    error
+	isReadyError        error
 }
 
 // CheckAccess implements the AccessControlChecker interface with mock behavior
@@ -35,6 +39,16 @@ func (m *MockAccessControlChecker) CheckAccess(ctx context.Context, subj string,
 		"message", string(data),
 		"public_only", m.PublicResourcesOnly,
 	)
+
+	// If test has set a mock error, return it
+	if m.checkAccessError != nil {
+		return nil, m.checkAccessError
+	}
+
+	// If test has set a mock response, return it
+	if m.checkAccessResponse != nil {
+		return m.checkAccessResponse, nil
+	}
 
 	result := make(model.AccessCheckResult)
 
@@ -85,6 +99,9 @@ func (m *MockAccessControlChecker) Close() error {
 
 // IsReady implements the AccessControlChecker interface (always ready for mock)
 func (m *MockAccessControlChecker) IsReady(ctx context.Context) error {
+	if m.isReadyError != nil {
+		return m.isReadyError
+	}
 	return nil
 }
 
@@ -170,4 +187,21 @@ func NewMockAccessControlCheckerDenyAll() *MockAccessControlChecker {
 		SimulateErrors:      false,
 		DefaultResult:       "denied",
 	}
+}
+
+// Test helper methods for setting up mock responses
+
+// SetCheckAccessResponse sets the mock response for CheckAccess calls
+func (m *MockAccessControlChecker) SetCheckAccessResponse(response map[string]string) {
+	m.checkAccessResponse = response
+}
+
+// SetCheckAccessError sets the mock error for CheckAccess calls
+func (m *MockAccessControlChecker) SetCheckAccessError(err error) {
+	m.checkAccessError = err
+}
+
+// SetIsReadyError sets the mock error for IsReady calls
+func (m *MockAccessControlChecker) SetIsReadyError(err error) {
+	m.isReadyError = err
 }

@@ -5,6 +5,7 @@ package service
 
 import (
 	"context"
+	"fmt"
 	"testing"
 
 	querysvc "github.com/linuxfoundation/lfx-v2-query-service/gen/query_svc"
@@ -167,6 +168,129 @@ func TestQuerySvcsrvc_QueryResources(t *testing.T) {
 				assert.NoError(t, err)
 				assert.NotNil(t, result)
 				assert.Equal(t, tc.expectedResources, len(result.Resources))
+			}
+		})
+	}
+}
+
+func TestQuerySvcsrvc_QueryResourcesCount(t *testing.T) {
+	tests := []struct {
+		name              string
+		payload           *querysvc.QueryResourcesCountPayload
+		setupMocks        func(*mock.MockResourceSearcher, *mock.MockAccessControlChecker)
+		expectedError     bool
+		expectedErrorType interface{}
+		expectedCount     uint64
+	}{
+		{
+			name: "successful count query",
+			payload: &querysvc.QueryResourcesCountPayload{
+				Version: "1",
+				Type:    stringPtr("project"),
+			},
+			setupMocks: func(searcher *mock.MockResourceSearcher, accessChecker *mock.MockAccessControlChecker) {
+				searcher.SetQueryResourcesCountResponse(&model.CountResult{
+					Count:   5,
+					HasMore: false,
+				})
+				accessChecker.DefaultResult = "allowed"
+			},
+			expectedError: false,
+			expectedCount: 5,
+		},
+		{
+			name: "successful count query with name filter",
+			payload: &querysvc.QueryResourcesCountPayload{
+				Version: "1",
+				Name:    stringPtr("Test"),
+				Type:    stringPtr("committee"),
+			},
+			setupMocks: func(searcher *mock.MockResourceSearcher, accessChecker *mock.MockAccessControlChecker) {
+				searcher.SetQueryResourcesCountResponse(&model.CountResult{
+					Count:   2,
+					HasMore: false,
+				})
+				accessChecker.DefaultResult = "allowed"
+			},
+			expectedError: false,
+			expectedCount: 2,
+		},
+		{
+			name: "count query with tags",
+			payload: &querysvc.QueryResourcesCountPayload{
+				Version: "1",
+				Tags:    []string{"active", "governance"},
+			},
+			setupMocks: func(searcher *mock.MockResourceSearcher, accessChecker *mock.MockAccessControlChecker) {
+				searcher.SetQueryResourcesCountResponse(&model.CountResult{
+					Count:   10,
+					HasMore: true,
+				})
+				accessChecker.DefaultResult = "allowed"
+			},
+			expectedError: false,
+			expectedCount: 10,
+		},
+		{
+			name: "count query with parent filter",
+			payload: &querysvc.QueryResourcesCountPayload{
+				Version: "1",
+				Parent:  stringPtr("project:123"),
+			},
+			setupMocks: func(searcher *mock.MockResourceSearcher, accessChecker *mock.MockAccessControlChecker) {
+				searcher.SetQueryResourcesCountResponse(&model.CountResult{
+					Count:   3,
+					HasMore: false,
+				})
+				accessChecker.DefaultResult = "allowed"
+			},
+			expectedError: false,
+			expectedCount: 3,
+		},
+		{
+			name: "count query with service error",
+			payload: &querysvc.QueryResourcesCountPayload{
+				Version: "1",
+				Type:    stringPtr("invalid"),
+			},
+			setupMocks: func(searcher *mock.MockResourceSearcher, accessChecker *mock.MockAccessControlChecker) {
+				searcher.SetQueryResourcesCountError(fmt.Errorf("service error"))
+			},
+			expectedError:     true,
+			expectedErrorType: &querysvc.InternalServerError{},
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			// Setup mocks
+			mockResourceSearcher := mock.NewMockResourceSearcher()
+			mockAccessChecker := mock.NewMockAccessControlChecker()
+			mockOrgSearcher := mock.NewMockOrganizationSearcher()
+			tc.setupMocks(mockResourceSearcher, mockAccessChecker)
+
+			service := NewQuerySvc(mockResourceSearcher, mockAccessChecker, mockOrgSearcher, mock.NewMockAuthService())
+			svc, ok := service.(*querySvcsrvc)
+			assert.True(t, ok)
+
+			ctx := context.WithValue(context.Background(), constants.PrincipalContextID, "test-user")
+
+			// Execute
+			result, err := svc.QueryResourcesCount(ctx, tc.payload)
+
+			// Verify
+			if tc.expectedError {
+				assert.Error(t, err)
+				if tc.expectedErrorType != nil {
+					assert.IsType(t, tc.expectedErrorType, err)
+				}
+				assert.Nil(t, result)
+			} else {
+				assert.NoError(t, err)
+				assert.NotNil(t, result)
+				assert.Equal(t, tc.expectedCount, result.Count)
+				// HasMore is returned from the service
+				assert.NotNil(t, result.HasMore)
 			}
 		})
 	}

@@ -29,4 +29,6 @@ type TransactionBodyStub struct {
 	AccessCheckRelation  string `json:"access_check_relation"`
 	HistoryCheckObject   string `json:"history_check_object"`
 	HistoryCheckRelation string `json:"history_check_relation"`
+	AccessCheckQuery     string `json:"access_check_query"`
+	HistoryCheckQuery    string `json:"history_check_query"`
 }

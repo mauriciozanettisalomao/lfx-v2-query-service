@@ -12,6 +12,11 @@ func QueryResourcesQuerySvcPath() string {
 	return "/query/resources"
 }
 
+// QueryResourcesCountQuerySvcPath returns the URL path to the query-svc service query-resources-count HTTP endpoint.
+func QueryResourcesCountQuerySvcPath() string {
+	return "/query/resources/count"
+}
+
 // QueryOrgsQuerySvcPath returns the URL path to the query-svc service query-orgs HTTP endpoint.
 func QueryOrgsQuerySvcPath() string {
 	return "/query/orgs"
