@@ -18,6 +18,15 @@ const queryResourceSource = `{
           "term": {"public": true}
         }
         {{- end }}
+        {{- if .PrivateOnly }},
+        {
+          "bool": {
+            "must_not": {
+              "term": {"public": true}
+            }
+          }
+        }
+        {{- end }}
         {{- if .ResourceType }},
         {
           "term": {
