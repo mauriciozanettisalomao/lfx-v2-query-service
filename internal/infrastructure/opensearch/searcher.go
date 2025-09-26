@@ -121,7 +121,7 @@ func (os *OpenSearchSearcher) QueryResourcesCount(
 
 	slog.DebugContext(ctx, "aggregation response", "response", aggregationResponse)
 
-	result, err := os.convertCountResponse(ctx, countResponse, aggregationResponse)
+	result, err := os.convertCountResponse(countResponse, aggregationResponse)
 	if err != nil {
 		return nil, fmt.Errorf("failed to convert count response: %w", err)
 	}
@@ -205,7 +205,7 @@ func (os *OpenSearchSearcher) convertHit(hit Hit) (model.Resource, error) {
 	return resource, nil
 }
 
-func (os *OpenSearchSearcher) convertCountResponse(ctx context.Context, response *CountResponse, aggregationResponse *AggregationResponse) (*model.CountResult, error) {
+func (os *OpenSearchSearcher) convertCountResponse(response *CountResponse, aggregationResponse *AggregationResponse) (*model.CountResult, error) {
 	aggregation := model.TermsAggregation{
 		DocCountErrorUpperBound: aggregationResponse.GroupBy.DocCountErrorUpperBound,
 		SumOtherDocCount:        aggregationResponse.GroupBy.SumOtherDocCount,
