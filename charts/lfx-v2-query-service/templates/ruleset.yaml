@@ -9,6 +9,7 @@ metadata:
 spec:
   rules:
     - id: "rule:lfx:lfx-v2-query-service:openapi:get"
+      allow_encoded_slashes: "off"
       match:
         methods:
           - GET
@@ -29,6 +30,7 @@ spec:
             values:
               aud: lfx-v2-query-service
     - id: "rule:lfx:lfx-v2-query-service"
+      allow_encoded_slashes: "off"
       match:
         methods:
           - GET
@@ -46,6 +48,7 @@ spec:
             values:
               aud: lfx-v2-query-service
     - id: "rule:lfx:lfx-v2-query-service:resources-count"
+      allow_encoded_slashes: "off"
       match:
         methods:
           - GET
@@ -63,6 +66,7 @@ spec:
             values:
               aud: lfx-v2-query-service
     - id: "rule:lfx:lfx-v2-query-service:org-search"
+      allow_encoded_slashes: "off"
       match:
         methods:
           - GET
@@ -79,6 +83,7 @@ spec:
             values:
               aud: lfx-v2-query-service
     - id: "rule:lfx:lfx-v2-query-service:org-suggest"
+      allow_encoded_slashes: "off"
       match:
         methods:
           - GET
