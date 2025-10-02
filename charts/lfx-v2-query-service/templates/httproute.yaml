@@ -40,6 +40,7 @@ spec:
       kind: Service
       name: lfx-v2-query-service
       port: {{ .Values.service.port }}
+      weight: 1
   # Main application endpoints (with authentication only)
   - matches:
     - path:
@@ -64,3 +65,4 @@ spec:
       kind: Service
       name: lfx-v2-query-service
       port: {{ .Values.service.port }}
+      weight: 1
