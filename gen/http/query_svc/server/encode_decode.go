@@ -251,7 +251,7 @@ func EncodeQueryResourcesCountError(encoder func(context.Context, http.ResponseW
 		}
 		switch en.GoaErrorName() {
 		case "BadRequest":
-			var res *goa.ServiceError
+			var res *querysvc.BadRequestError
 			errors.As(v, &res)
 			enc := encoder(ctx, w)
 			var body any

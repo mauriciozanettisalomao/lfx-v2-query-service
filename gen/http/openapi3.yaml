@@ -143,9 +143,6 @@ paths:
                                     - domain: linuxfoundation.org
                                       logo: https://example.com/logo.png
                                       name: Linux Foundation
-                                    - domain: linuxfoundation.org
-                                      logo: https://example.com/logo.png
-                                      name: Linux Foundation
                 "400":
                     description: 'BadRequest: Bad request'
                     content:
@@ -229,7 +226,7 @@ paths:
                     type: array
                     items:
                         type: string
-                        example: Sequi doloribus voluptatem ipsa.
+                        example: Animi aspernatur.
                     description: Tags to search with OR logic - matches resources with any of these tags
                     example:
                         - active
@@ -245,7 +242,7 @@ paths:
                     type: array
                     items:
                         type: string
-                        example: Voluptatem nobis corporis aperiam.
+                        example: Ex itaque.
                     description: Tags to search with AND logic - matches resources that have all of these tags
                     example:
                         - governance
@@ -395,7 +392,7 @@ paths:
                     type: array
                     items:
                         type: string
-                        example: Temporibus voluptatem vitae pariatur dolor culpa aliquam.
+                        example: Sint commodi.
                     description: Tags to search with OR logic - matches resources with any of these tags
                     example:
                         - active
@@ -411,7 +408,7 @@ paths:
                     type: array
                     items:
                         type: string
-                        example: Facere dolores numquam consequatur ut est.
+                        example: Labore aperiam libero ipsam et ullam.
                     description: Tags to search with AND logic - matches resources that have all of these tags
                     example:
                         - governance
@@ -440,9 +437,11 @@ paths:
                 "400":
                     description: 'BadRequest: Bad request'
                     content:
-                        application/vnd.goa.error:
+                        application/json:
                             schema:
-                                $ref: '#/components/schemas/Error'
+                                $ref: '#/components/schemas/BadRequestError'
+                            example:
+                                message: The request was invalid.
                 "500":
                     description: 'InternalServerError: Internal server error'
                     content:
@@ -474,48 +473,6 @@ components:
                 message: The request was invalid.
             required:
                 - message
-        Error:
-            type: object
-            properties:
-                fault:
-                    type: boolean
-                    description: Is the error a server-side fault?
-                    example: true
-                id:
-                    type: string
-                    description: ID is a unique identifier for this particular occurrence of the problem.
-                    example: 123abc
-                message:
-                    type: string
-                    description: Message is a human-readable explanation specific to this occurrence of the problem.
-                    example: parameter 'p' must be an integer
-                name:
-                    type: string
-                    description: Name is the name of this class of errors.
-                    example: bad_request
-                temporary:
-                    type: boolean
-                    description: Is the error temporary?
-                    example: true
-                timeout:
-                    type: boolean
-                    description: Is the error a timeout?
-                    example: true
-            description: Bad request
-            example:
-                fault: false
-                id: 123abc
-                message: parameter 'p' must be an integer
-                name: bad_request
-                temporary: false
-                timeout: true
-            required:
-                - name
-                - id
-                - message
-                - temporary
-                - timeout
-                - fault
         InternalServerError:
             type: object
             properties:
@@ -640,9 +597,21 @@ components:
                             description: a committee
                           id: "123"
                           type: committee
+                        - data:
+                            id: "123"
+                            name: My committee
+                            description: a committee
+                          id: "123"
+                          type: committee
             example:
                 page_token: '****'
                 resources:
+                    - data:
+                        id: "123"
+                        name: My committee
+                        description: a committee
+                      id: "123"
+                      type: committee
                     - data:
                         id: "123"
                         name: My committee
@@ -734,14 +703,11 @@ components:
                         - domain: linuxfoundation.org
                           logo: https://example.com/logo.png
                           name: Linux Foundation
-                        - domain: linuxfoundation.org
-                          logo: https://example.com/logo.png
-                          name: Linux Foundation
-                        - domain: linuxfoundation.org
-                          logo: https://example.com/logo.png
-                          name: Linux Foundation
             example:
                 suggestions:
+                    - domain: linuxfoundation.org
+                      logo: https://example.com/logo.png
+                      name: Linux Foundation
                     - domain: linuxfoundation.org
                       logo: https://example.com/logo.png
                       name: Linux Foundation

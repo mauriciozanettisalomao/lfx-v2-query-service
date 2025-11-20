@@ -271,11 +271,6 @@ func (e *ServiceUnavailableError) GoaErrorName() string {
 	return "ServiceUnavailable"
 }
 
-// MakeBadRequest builds a goa.ServiceError from an error.
-func MakeBadRequest(err error) *goa.ServiceError {
-	return goa.NewServiceError(err, "BadRequest", false, false, false)
-}
-
 // MakeNotReady builds a goa.ServiceError from an error.
 func MakeNotReady(err error) *goa.ServiceError {
 	return goa.NewServiceError(err, "NotReady", false, true, true)

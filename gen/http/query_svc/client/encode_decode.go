@@ -228,7 +228,7 @@ func EncodeQueryResourcesCountRequest(encoder func(*http.Request) goahttp.Encode
 // by the query-svc query-resources-count endpoint. restoreBody controls
 // whether the response body should be restored after having been read.
 // DecodeQueryResourcesCountResponse may return the following errors:
-//   - "BadRequest" (type *goa.ServiceError): http.StatusBadRequest
+//   - "BadRequest" (type *querysvc.BadRequestError): http.StatusBadRequest
 //   - "InternalServerError" (type *querysvc.InternalServerError): http.StatusInternalServerError
 //   - "ServiceUnavailable" (type *querysvc.ServiceUnavailableError): http.StatusServiceUnavailable
 //   - error: internal error

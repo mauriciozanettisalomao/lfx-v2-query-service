@@ -136,8 +136,6 @@ var _ = dsl.Service("query-svc", func() {
 			dsl.Required("count", "has_more")
 		})
 
-		dsl.Error("BadRequest", dsl.ErrorResult, "Bad request")
-
 		dsl.HTTP(func() {
 			dsl.GET("/query/resources/count")
 			dsl.Param("version:v")
