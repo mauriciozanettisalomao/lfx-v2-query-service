@@ -223,18 +223,36 @@ paths:
                   example: committee
                 - name: tags
                   in: query
-                  description: Tags to search (varies by object type)
+                  description: Tags to search with OR logic - matches resources with any of these tags
                   allowEmptyValue: true
                   schema:
                     type: array
                     items:
                         type: string
                         example: Sequi doloribus voluptatem ipsa.
-                    description: Tags to search (varies by object type)
+                    description: Tags to search with OR logic - matches resources with any of these tags
                     example:
                         - active
+                        - public
                   example:
                     - active
+                    - public
+                - name: tags_all
+                  in: query
+                  description: Tags to search with AND logic - matches resources that have all of these tags
+                  allowEmptyValue: true
+                  schema:
+                    type: array
+                    items:
+                        type: string
+                        example: Voluptatem nobis corporis aperiam.
+                    description: Tags to search with AND logic - matches resources that have all of these tags
+                    example:
+                        - governance
+                        - security
+                  example:
+                    - governance
+                    - security
                 - name: sort
                   in: query
                   description: Sort order for results
@@ -371,18 +389,36 @@ paths:
                   example: committee
                 - name: tags
                   in: query
-                  description: Tags to search (varies by object type)
+                  description: Tags to search with OR logic - matches resources with any of these tags
                   allowEmptyValue: true
                   schema:
                     type: array
                     items:
                         type: string
-                        example: Voluptatem nobis corporis aperiam.
-                    description: Tags to search (varies by object type)
+                        example: Temporibus voluptatem vitae pariatur dolor culpa aliquam.
+                    description: Tags to search with OR logic - matches resources with any of these tags
                     example:
                         - active
+                        - public
                   example:
                     - active
+                    - public
+                - name: tags_all
+                  in: query
+                  description: Tags to search with AND logic - matches resources that have all of these tags
+                  allowEmptyValue: true
+                  schema:
+                    type: array
+                    items:
+                        type: string
+                        example: Facere dolores numquam consequatur ut est.
+                    description: Tags to search with AND logic - matches resources that have all of these tags
+                    example:
+                        - governance
+                        - security
+                  example:
+                    - governance
+                    - security
             responses:
                 "200":
                     description: OK response.

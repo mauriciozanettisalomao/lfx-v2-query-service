@@ -118,8 +118,10 @@ type QueryResourcesCountPayload struct {
 	Parent *string
 	// Resource type to search
 	Type *string
-	// Tags to search (varies by object type)
+	// Tags to search with OR logic - matches resources with any of these tags
 	Tags []string
+	// Tags to search with AND logic - matches resources that have all of these tags
+	TagsAll []string
 }
 
 // QueryResourcesCountResult is the result type of the query-svc service
@@ -147,8 +149,10 @@ type QueryResourcesPayload struct {
 	Parent *string
 	// Resource type to search
 	Type *string
-	// Tags to search (varies by object type)
+	// Tags to search with OR logic - matches resources with any of these tags
 	Tags []string
+	// Tags to search with AND logic - matches resources that have all of these tags
+	TagsAll []string
 	// Sort order for results
 	Sort string
 	// Opaque token for pagination

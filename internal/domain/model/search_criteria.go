@@ -5,8 +5,10 @@ package model
 
 // SearchCriteria encapsulates all possible search parameters
 type SearchCriteria struct {
-	// Tags to filter resources
+	// Tags to filter resources with OR logic (any tag matches)
 	Tags []string
+	// TagsAll to filter resources with AND logic (all tags must match)
+	TagsAll []string
 	// Resource name or alias; supports typeahead
 	Name *string
 	// Parent (for navigation; varies by object type)

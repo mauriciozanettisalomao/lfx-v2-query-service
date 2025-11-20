@@ -18,7 +18,7 @@ import (
 
 // BuildQueryResourcesPayload builds the payload for the query-svc
 // query-resources endpoint from CLI flags.
-func BuildQueryResourcesPayload(querySvcQueryResourcesVersion string, querySvcQueryResourcesName string, querySvcQueryResourcesParent string, querySvcQueryResourcesType string, querySvcQueryResourcesTags string, querySvcQueryResourcesSort string, querySvcQueryResourcesPageToken string, querySvcQueryResourcesBearerToken string) (*querysvc.QueryResourcesPayload, error) {
+func BuildQueryResourcesPayload(querySvcQueryResourcesVersion string, querySvcQueryResourcesName string, querySvcQueryResourcesParent string, querySvcQueryResourcesType string, querySvcQueryResourcesTags string, querySvcQueryResourcesTagsAll string, querySvcQueryResourcesSort string, querySvcQueryResourcesPageToken string, querySvcQueryResourcesBearerToken string) (*querysvc.QueryResourcesPayload, error) {
 	var err error
 	var version string
 	{
@@ -63,7 +63,16 @@ func BuildQueryResourcesPayload(querySvcQueryResourcesVersion string, querySvcQu
 		if querySvcQueryResourcesTags != "" {
 			err = json.Unmarshal([]byte(querySvcQueryResourcesTags), &tags)
 			if err != nil {
-				return nil, fmt.Errorf("invalid JSON for tags, \nerror: %s, \nexample of valid JSON:\n%s", err, "'[\n      \"active\"\n   ]'")
+				return nil, fmt.Errorf("invalid JSON for tags, \nerror: %s, \nexample of valid JSON:\n%s", err, "'[\n      \"active\",\n      \"public\"\n   ]'")
+			}
+		}
+	}
+	var tagsAll []string
+	{
+		if querySvcQueryResourcesTagsAll != "" {
+			err = json.Unmarshal([]byte(querySvcQueryResourcesTagsAll), &tagsAll)
+			if err != nil {
+				return nil, fmt.Errorf("invalid JSON for tagsAll, \nerror: %s, \nexample of valid JSON:\n%s", err, "'[\n      \"governance\",\n      \"security\"\n   ]'")
 			}
 		}
 	}
@@ -95,6 +104,7 @@ func BuildQueryResourcesPayload(querySvcQueryResourcesVersion string, querySvcQu
 	v.Parent = parent
 	v.Type = type_
 	v.Tags = tags
+	v.TagsAll = tagsAll
 	v.Sort = sort
 	v.PageToken = pageToken
 	v.BearerToken = bearerToken
@@ -104,7 +114,7 @@ func BuildQueryResourcesPayload(querySvcQueryResourcesVersion string, querySvcQu
 
 // BuildQueryResourcesCountPayload builds the payload for the query-svc
 // query-resources-count endpoint from CLI flags.
-func BuildQueryResourcesCountPayload(querySvcQueryResourcesCountVersion string, querySvcQueryResourcesCountName string, querySvcQueryResourcesCountParent string, querySvcQueryResourcesCountType string, querySvcQueryResourcesCountTags string, querySvcQueryResourcesCountBearerToken string) (*querysvc.QueryResourcesCountPayload, error) {
+func BuildQueryResourcesCountPayload(querySvcQueryResourcesCountVersion string, querySvcQueryResourcesCountName string, querySvcQueryResourcesCountParent string, querySvcQueryResourcesCountType string, querySvcQueryResourcesCountTags string, querySvcQueryResourcesCountTagsAll string, querySvcQueryResourcesCountBearerToken string) (*querysvc.QueryResourcesCountPayload, error) {
 	var err error
 	var version string
 	{
@@ -145,7 +155,16 @@ func BuildQueryResourcesCountPayload(querySvcQueryResourcesCountVersion string, 
 		if querySvcQueryResourcesCountTags != "" {
 			err = json.Unmarshal([]byte(querySvcQueryResourcesCountTags), &tags)
 			if err != nil {
-				return nil, fmt.Errorf("invalid JSON for tags, \nerror: %s, \nexample of valid JSON:\n%s", err, "'[\n      \"active\"\n   ]'")
+				return nil, fmt.Errorf("invalid JSON for tags, \nerror: %s, \nexample of valid JSON:\n%s", err, "'[\n      \"active\",\n      \"public\"\n   ]'")
+			}
+		}
+	}
+	var tagsAll []string
+	{
+		if querySvcQueryResourcesCountTagsAll != "" {
+			err = json.Unmarshal([]byte(querySvcQueryResourcesCountTagsAll), &tagsAll)
+			if err != nil {
+				return nil, fmt.Errorf("invalid JSON for tagsAll, \nerror: %s, \nexample of valid JSON:\n%s", err, "'[\n      \"governance\",\n      \"security\"\n   ]'")
 			}
 		}
 	}
@@ -159,6 +178,7 @@ func BuildQueryResourcesCountPayload(querySvcQueryResourcesCountVersion string, 
 	v.Parent = parent
 	v.Type = type_
 	v.Tags = tags
+	v.TagsAll = tagsAll
 	v.BearerToken = bearerToken
 
 	return v, nil

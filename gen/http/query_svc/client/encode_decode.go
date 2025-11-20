@@ -64,6 +64,9 @@ func EncodeQueryResourcesRequest(encoder func(*http.Request) goahttp.Encoder) fu
 		for _, value := range p.Tags {
 			values.Add("tags", value)
 		}
+		for _, value := range p.TagsAll {
+			values.Add("tags_all", value)
+		}
 		values.Add("sort", p.Sort)
 		if p.PageToken != nil {
 			values.Add("page_token", *p.PageToken)
@@ -212,6 +215,9 @@ func EncodeQueryResourcesCountRequest(encoder func(*http.Request) goahttp.Encode
 		}
 		for _, value := range p.Tags {
 			values.Add("tags", value)
+		}
+		for _, value := range p.TagsAll {
+			values.Add("tags_all", value)
 		}
 		req.URL.RawQuery = values.Encode()
 		return nil

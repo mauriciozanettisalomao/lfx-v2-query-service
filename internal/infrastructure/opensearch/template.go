@@ -54,6 +54,15 @@ const queryResourceSource = `{
           }
         }
         {{- end }}
+        {{- if .TagsAll }}
+        {{- range .TagsAll }},
+        {
+          "term": {
+            "tags": {{ . | quote }}
+          }
+        }
+        {{- end }}
+        {{- end }}
       ]
       {{- if .Tags }},
       "minimum_should_match": 1,

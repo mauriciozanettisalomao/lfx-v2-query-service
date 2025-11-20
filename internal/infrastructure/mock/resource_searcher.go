@@ -184,27 +184,53 @@ func (m *MockResourceSearcher) QueryResources(ctx context.Context, criteria mode
 		filteredResources = nameFilteredResources
 	}
 
-	// Filter by tags
+	// Filter by tags (OR logic - any tag matches)
 	if len(criteria.Tags) > 0 {
 		var tagFilteredResources []model.Resource
 
 		for _, resource := range filteredResources {
 			if data, ok := resource.Data.(map[string]interface{}); ok {
 				if resourceTags, ok := data["tags"].([]string); ok {
-					// Check if resource has any of the requested tags
+					// OR logic: resource must have any of the requested tags
 					for _, requestedTag := range criteria.Tags {
 						for _, resourceTag := range resourceTags {
 							if requestedTag == resourceTag {
 								tagFilteredResources = append(tagFilteredResources, resource)
-								goto nextResource
+								goto nextResourceOR
 							}
 						}
 					}
 				}
 			}
-		nextResource:
+		nextResourceOR:
 		}
 		filteredResources = tagFilteredResources
+	}
+
+	// Filter by tags_all (AND logic - all tags must match)
+	if len(criteria.TagsAll) > 0 {
+		var tagAllFilteredResources []model.Resource
+
+		for _, resource := range filteredResources {
+			if data, ok := resource.Data.(map[string]interface{}); ok {
+				if resourceTags, ok := data["tags"].([]string); ok {
+					// AND logic: resource must have all requested tags
+					matchCount := 0
+					for _, requestedTag := range criteria.TagsAll {
+						for _, resourceTag := range resourceTags {
+							if requestedTag == resourceTag {
+								matchCount++
+								break
+							}
+						}
+					}
+					if matchCount == len(criteria.TagsAll) {
+						tagAllFilteredResources = append(tagAllFilteredResources, resource)
+					}
+				}
+			}
+		}
+		filteredResources = tagAllFilteredResources
 	}
 
 	// Sort results (simplified implementation)
@@ -282,25 +308,51 @@ func (m *MockResourceSearcher) QueryResourcesCount(ctx context.Context, countCri
 		filteredResources = nameFiltered
 	}
 
-	// Filter by tags
+	// Filter by tags (OR logic - any tag matches)
 	if len(countCriteria.Tags) > 0 {
 		var tagFiltered []model.Resource
 		for _, resource := range filteredResources {
 			if data, ok := resource.Data.(map[string]interface{}); ok {
 				if resourceTags, ok := data["tags"].([]string); ok {
+					// OR logic: resource must have any of the requested tags
 					for _, requestedTag := range countCriteria.Tags {
 						for _, resourceTag := range resourceTags {
 							if requestedTag == resourceTag {
 								tagFiltered = append(tagFiltered, resource)
-								goto nextResourceCount
+								goto nextResourceCountOR
 							}
 						}
 					}
 				}
 			}
-		nextResourceCount:
+		nextResourceCountOR:
 		}
 		filteredResources = tagFiltered
+	}
+
+	// Filter by tags_all (AND logic - all tags must match)
+	if len(countCriteria.TagsAll) > 0 {
+		var tagAllFiltered []model.Resource
+		for _, resource := range filteredResources {
+			if data, ok := resource.Data.(map[string]interface{}); ok {
+				if resourceTags, ok := data["tags"].([]string); ok {
+					// AND logic: resource must have all requested tags
+					matchCount := 0
+					for _, requestedTag := range countCriteria.TagsAll {
+						for _, resourceTag := range resourceTags {
+							if requestedTag == resourceTag {
+								matchCount++
+								break
+							}
+						}
+					}
+					if matchCount == len(countCriteria.TagsAll) {
+						tagAllFiltered = append(tagAllFiltered, resource)
+					}
+				}
+			}
+		}
+		filteredResources = tagAllFiltered
 	}
 
 	// Build aggregation based on aggregationCriteria
