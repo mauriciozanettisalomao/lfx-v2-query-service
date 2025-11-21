@@ -64,6 +64,9 @@ func EncodeQueryResourcesRequest(encoder func(*http.Request) goahttp.Encoder) fu
 		for _, value := range p.Tags {
 			values.Add("tags", value)
 		}
+		for _, value := range p.TagsAll {
+			values.Add("tags_all", value)
+		}
 		values.Add("sort", p.Sort)
 		if p.PageToken != nil {
 			values.Add("page_token", *p.PageToken)
@@ -213,6 +216,9 @@ func EncodeQueryResourcesCountRequest(encoder func(*http.Request) goahttp.Encode
 		for _, value := range p.Tags {
 			values.Add("tags", value)
 		}
+		for _, value := range p.TagsAll {
+			values.Add("tags_all", value)
+		}
 		req.URL.RawQuery = values.Encode()
 		return nil
 	}
@@ -222,7 +228,7 @@ func EncodeQueryResourcesCountRequest(encoder func(*http.Request) goahttp.Encode
 // by the query-svc query-resources-count endpoint. restoreBody controls
 // whether the response body should be restored after having been read.
 // DecodeQueryResourcesCountResponse may return the following errors:
-//   - "BadRequest" (type *goa.ServiceError): http.StatusBadRequest
+//   - "BadRequest" (type *querysvc.BadRequestError): http.StatusBadRequest
 //   - "InternalServerError" (type *querysvc.InternalServerError): http.StatusInternalServerError
 //   - "ServiceUnavailable" (type *querysvc.ServiceUnavailableError): http.StatusServiceUnavailable
 //   - error: internal error

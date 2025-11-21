@@ -44,6 +44,7 @@ func DecodeQueryResourcesRequest(mux goahttp.Muxer, decoder func(*http.Request) 
 			parent      *string
 			type_       *string
 			tags        []string
+			tagsAll     []string
 			sort        string
 			pageToken   *string
 			bearerToken string
@@ -78,6 +79,7 @@ func DecodeQueryResourcesRequest(mux goahttp.Muxer, decoder func(*http.Request) 
 			type_ = &type_Raw
 		}
 		tags = qp["tags"]
+		tagsAll = qp["tags_all"]
 		sortRaw := qp.Get("sort")
 		if sortRaw != "" {
 			sort = sortRaw
@@ -98,7 +100,7 @@ func DecodeQueryResourcesRequest(mux goahttp.Muxer, decoder func(*http.Request) 
 		if err != nil {
 			return nil, err
 		}
-		payload := NewQueryResourcesPayload(version, name, parent, type_, tags, sort, pageToken, bearerToken)
+		payload := NewQueryResourcesPayload(version, name, parent, type_, tags, tagsAll, sort, pageToken, bearerToken)
 		if strings.Contains(payload.BearerToken, " ") {
 			// Remove authorization scheme prefix (e.g. "Bearer")
 			cred := strings.SplitN(payload.BearerToken, " ", 2)[1]
@@ -189,6 +191,7 @@ func DecodeQueryResourcesCountRequest(mux goahttp.Muxer, decoder func(*http.Requ
 			parent      *string
 			type_       *string
 			tags        []string
+			tagsAll     []string
 			bearerToken string
 			err         error
 		)
@@ -218,6 +221,7 @@ func DecodeQueryResourcesCountRequest(mux goahttp.Muxer, decoder func(*http.Requ
 			type_ = &type_Raw
 		}
 		tags = qp["tags"]
+		tagsAll = qp["tags_all"]
 		bearerToken = r.Header.Get("Authorization")
 		if bearerToken == "" {
 			err = goa.MergeErrors(err, goa.MissingFieldError("bearer_token", "header"))
@@ -225,7 +229,7 @@ func DecodeQueryResourcesCountRequest(mux goahttp.Muxer, decoder func(*http.Requ
 		if err != nil {
 			return nil, err
 		}
-		payload := NewQueryResourcesCountPayload(version, name, parent, type_, tags, bearerToken)
+		payload := NewQueryResourcesCountPayload(version, name, parent, type_, tags, tagsAll, bearerToken)
 		if strings.Contains(payload.BearerToken, " ") {
 			// Remove authorization scheme prefix (e.g. "Bearer")
 			cred := strings.SplitN(payload.BearerToken, " ", 2)[1]
@@ -247,7 +251,7 @@ func EncodeQueryResourcesCountError(encoder func(context.Context, http.ResponseW
 		}
 		switch en.GoaErrorName() {
 		case "BadRequest":
-			var res *goa.ServiceError
+			var res *querysvc.BadRequestError
 			errors.As(v, &res)
 			enc := encoder(ctx, w)
 			var body any

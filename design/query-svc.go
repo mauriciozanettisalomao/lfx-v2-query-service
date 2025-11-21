@@ -50,8 +50,11 @@ var _ = dsl.Service("query-svc", func() {
 			dsl.Attribute("type", dsl.String, "Resource type to search", func() {
 				dsl.Example("committee")
 			})
-			dsl.Attribute("tags", dsl.ArrayOf(dsl.String), "Tags to search (varies by object type)", func() {
-				dsl.Example([]string{"active"})
+			dsl.Attribute("tags", dsl.ArrayOf(dsl.String), "Tags to search with OR logic - matches resources with any of these tags", func() {
+				dsl.Example([]string{"active", "public"})
+			})
+			dsl.Attribute("tags_all", dsl.ArrayOf(dsl.String), "Tags to search with AND logic - matches resources that have all of these tags", func() {
+				dsl.Example([]string{"governance", "security"})
 			})
 			dsl.Required("bearer_token", "version")
 		})
@@ -74,6 +77,7 @@ var _ = dsl.Service("query-svc", func() {
 			dsl.Param("parent")
 			dsl.Param("type")
 			dsl.Param("tags")
+			dsl.Param("tags_all")
 			dsl.Param("sort")
 			dsl.Param("page_token")
 			dsl.Header("bearer_token:Authorization")
@@ -110,8 +114,11 @@ var _ = dsl.Service("query-svc", func() {
 			dsl.Attribute("type", dsl.String, "Resource type to search", func() {
 				dsl.Example("committee")
 			})
-			dsl.Attribute("tags", dsl.ArrayOf(dsl.String), "Tags to search (varies by object type)", func() {
-				dsl.Example([]string{"active"})
+			dsl.Attribute("tags", dsl.ArrayOf(dsl.String), "Tags to search with OR logic - matches resources with any of these tags", func() {
+				dsl.Example([]string{"active", "public"})
+			})
+			dsl.Attribute("tags_all", dsl.ArrayOf(dsl.String), "Tags to search with AND logic - matches resources that have all of these tags", func() {
+				dsl.Example([]string{"governance", "security"})
 			})
 			dsl.Required("bearer_token", "version")
 		})
@@ -129,8 +136,6 @@ var _ = dsl.Service("query-svc", func() {
 			dsl.Required("count", "has_more")
 		})
 
-		dsl.Error("BadRequest", dsl.ErrorResult, "Bad request")
-
 		dsl.HTTP(func() {
 			dsl.GET("/query/resources/count")
 			dsl.Param("version:v")
@@ -138,6 +143,7 @@ var _ = dsl.Service("query-svc", func() {
 			dsl.Param("parent")
 			dsl.Param("type")
 			dsl.Param("tags")
+			dsl.Param("tags_all")
 			dsl.Header("bearer_token:Authorization")
 			dsl.Response(dsl.StatusOK, func() {
 				dsl.Header("cache_control:Cache-Control")

@@ -80,19 +80,8 @@ type QueryResourcesServiceUnavailableResponseBody struct {
 // service "query-resources-count" endpoint HTTP response body for the
 // "BadRequest" error.
 type QueryResourcesCountBadRequestResponseBody struct {
-	// Name is the name of this class of errors.
-	Name string `form:"name" json:"name" xml:"name"`
-	// ID is a unique identifier for this particular occurrence of the problem.
-	ID string `form:"id" json:"id" xml:"id"`
-	// Message is a human-readable explanation specific to this occurrence of the
-	// problem.
+	// Error message
 	Message string `form:"message" json:"message" xml:"message"`
-	// Is the error temporary?
-	Temporary bool `form:"temporary" json:"temporary" xml:"temporary"`
-	// Is the error a timeout?
-	Timeout bool `form:"timeout" json:"timeout" xml:"timeout"`
-	// Is the error a server-side fault?
-	Fault bool `form:"fault" json:"fault" xml:"fault"`
 }
 
 // QueryResourcesCountInternalServerErrorResponseBody is the type of the
@@ -290,14 +279,9 @@ func NewQueryResourcesServiceUnavailableResponseBody(res *querysvc.ServiceUnavai
 // NewQueryResourcesCountBadRequestResponseBody builds the HTTP response body
 // from the result of the "query-resources-count" endpoint of the "query-svc"
 // service.
-func NewQueryResourcesCountBadRequestResponseBody(res *goa.ServiceError) *QueryResourcesCountBadRequestResponseBody {
+func NewQueryResourcesCountBadRequestResponseBody(res *querysvc.BadRequestError) *QueryResourcesCountBadRequestResponseBody {
 	body := &QueryResourcesCountBadRequestResponseBody{
-		Name:      res.Name,
-		ID:        res.ID,
-		Message:   res.Message,
-		Temporary: res.Temporary,
-		Timeout:   res.Timeout,
-		Fault:     res.Fault,
+		Message: res.Message,
 	}
 	return body
 }
@@ -401,13 +385,14 @@ func NewReadyzNotReadyResponseBody(res *goa.ServiceError) *ReadyzNotReadyRespons
 
 // NewQueryResourcesPayload builds a query-svc service query-resources endpoint
 // payload.
-func NewQueryResourcesPayload(version string, name *string, parent *string, type_ *string, tags []string, sort string, pageToken *string, bearerToken string) *querysvc.QueryResourcesPayload {
+func NewQueryResourcesPayload(version string, name *string, parent *string, type_ *string, tags []string, tagsAll []string, sort string, pageToken *string, bearerToken string) *querysvc.QueryResourcesPayload {
 	v := &querysvc.QueryResourcesPayload{}
 	v.Version = version
 	v.Name = name
 	v.Parent = parent
 	v.Type = type_
 	v.Tags = tags
+	v.TagsAll = tagsAll
 	v.Sort = sort
 	v.PageToken = pageToken
 	v.BearerToken = bearerToken
@@ -417,13 +402,14 @@ func NewQueryResourcesPayload(version string, name *string, parent *string, type
 
 // NewQueryResourcesCountPayload builds a query-svc service
 // query-resources-count endpoint payload.
-func NewQueryResourcesCountPayload(version string, name *string, parent *string, type_ *string, tags []string, bearerToken string) *querysvc.QueryResourcesCountPayload {
+func NewQueryResourcesCountPayload(version string, name *string, parent *string, type_ *string, tags []string, tagsAll []string, bearerToken string) *querysvc.QueryResourcesCountPayload {
 	v := &querysvc.QueryResourcesCountPayload{}
 	v.Version = version
 	v.Name = name
 	v.Parent = parent
 	v.Type = type_
 	v.Tags = tags
+	v.TagsAll = tagsAll
 	v.BearerToken = bearerToken
 
 	return v

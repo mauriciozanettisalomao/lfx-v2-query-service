@@ -55,7 +55,7 @@ func (c *Client) QueryResources(ctx context.Context, p *QueryResourcesPayload) (
 // QueryResourcesCount calls the "query-resources-count" endpoint of the
 // "query-svc" service.
 // QueryResourcesCount may return the following errors:
-//   - "BadRequest" (type *goa.ServiceError): Bad request
+//   - "BadRequest" (type *BadRequestError): Bad request
 //   - "NotFound" (type *NotFoundError): Not found
 //   - "InternalServerError" (type *InternalServerError): Internal server error
 //   - "ServiceUnavailable" (type *ServiceUnavailableError): Service unavailable

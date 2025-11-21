@@ -73,6 +73,40 @@ func TestMockResourceSearcherQueryResourcesCount(t *testing.T) {
 			expectedCount:       5, // All resources have "active" tag
 			expectedError:       false,
 		},
+		{
+			name: "count resources by tags_all (AND logic)",
+			countCriteria: model.SearchCriteria{
+				TagsAll:  []string{"active", "security"},
+				PageSize: -1,
+			},
+			aggregationCriteria: model.SearchCriteria{},
+			publicOnly:          false,
+			expectedCount:       2, // Resources with both "active" AND "security" tags
+			expectedError:       false,
+		},
+		{
+			name: "count resources by tags (OR logic)",
+			countCriteria: model.SearchCriteria{
+				Tags:     []string{"governance", "security"},
+				PageSize: -1,
+			},
+			aggregationCriteria: model.SearchCriteria{},
+			publicOnly:          false,
+			expectedCount:       4, // Resources with "governance" OR "security" tags
+			expectedError:       false,
+		},
+		{
+			name: "count resources with both tags and tags_all",
+			countCriteria: model.SearchCriteria{
+				Tags:     []string{"public"},
+				TagsAll:  []string{"active", "security"},
+				PageSize: -1,
+			},
+			aggregationCriteria: model.SearchCriteria{},
+			publicOnly:          false,
+			expectedCount:       0, // Resources with (public) AND (active AND security) - no matches in test data
+			expectedError:       false,
+		},
 	}
 
 	for _, tc := range tests {
@@ -132,6 +166,80 @@ func TestMockResourceSearcherQueryResourcesCountWithAggregation(t *testing.T) {
 	assertion.Contains(bucketKeys, "committee")
 	assertion.Contains(bucketKeys, "project")
 	assertion.Contains(bucketKeys, "meeting")
+}
+
+func TestMockResourceSearcherQueryResourcesWithTags(t *testing.T) {
+	tests := []struct {
+		name          string
+		criteria      model.SearchCriteria
+		expectedCount int
+		expectedError bool
+	}{
+		{
+			name: "search with tags (OR logic)",
+			criteria: model.SearchCriteria{
+				Tags: []string{"governance", "security"},
+			},
+			expectedCount: 4, // Resources with "governance" OR "security"
+			expectedError: false,
+		},
+		{
+			name: "search with tags_all (AND logic)",
+			criteria: model.SearchCriteria{
+				TagsAll: []string{"active", "security"},
+			},
+			expectedCount: 2, // Resources with both "active" AND "security"
+			expectedError: false,
+		},
+		{
+			name: "search with tags_all (AND logic) - all three tags",
+			criteria: model.SearchCriteria{
+				TagsAll: []string{"active", "security", "private"},
+			},
+			expectedCount: 1, // Only one resource has all three tags
+			expectedError: false,
+		},
+		{
+			name: "search with tags_all (AND logic) - no matches",
+			criteria: model.SearchCriteria{
+				TagsAll: []string{"governance", "platform"},
+			},
+			expectedCount: 0, // No resources have both tags
+			expectedError: false,
+		},
+		{
+			name: "search with both tags and tags_all",
+			criteria: model.SearchCriteria{
+				Tags:    []string{"governance"},
+				TagsAll: []string{"active", "security"},
+			},
+			expectedCount: 0, // Resources must have (governance) AND (active AND security) - no match
+			expectedError: false,
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			assertion := assert.New(t)
+
+			// Create mock searcher
+			searcher := NewMockResourceSearcher()
+
+			// Execute
+			ctx := context.Background()
+			result, err := searcher.QueryResources(ctx, tc.criteria)
+
+			// Verify
+			if tc.expectedError {
+				assertion.Error(err)
+				assertion.Nil(result)
+			} else {
+				assertion.NoError(err)
+				assertion.NotNil(result)
+				assertion.Equal(tc.expectedCount, len(result.Resources))
+			}
+		})
+	}
 }
 
 func TestMockResourceSearcherAddResource(t *testing.T) {

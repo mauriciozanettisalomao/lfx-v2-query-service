@@ -266,12 +266,29 @@ func TestOpenSearchSearcherRender(t *testing.T) {
 			expectedFields: []string{"object_type", "project"},
 		},
 		{
-			name: "render query with tags",
+			name: "render query with tags (OR logic)",
 			criteria: model.SearchCriteria{
 				Tags: []string{"active", "governance"},
 			},
 			expectedError:  false,
 			expectedFields: []string{"should", "active", "governance"},
+		},
+		{
+			name: "render query with tags_all (AND logic)",
+			criteria: model.SearchCriteria{
+				TagsAll: []string{"active", "governance"},
+			},
+			expectedError:  false,
+			expectedFields: []string{"must", "active", "governance"},
+		},
+		{
+			name: "render query with both tags and tags_all",
+			criteria: model.SearchCriteria{
+				Tags:    []string{"public"},
+				TagsAll: []string{"active", "governance"},
+			},
+			expectedError:  false,
+			expectedFields: []string{"must", "should", "public", "active", "governance"},
 		},
 		{
 			name: "render query with multiple criteria",

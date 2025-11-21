@@ -22,6 +22,7 @@ func (s *querySvcsrvc) payloadToCriteria(ctx context.Context, p *querysvc.QueryR
 		Parent:       p.Parent,
 		ResourceType: p.Type,
 		Tags:         p.Tags,
+		TagsAll:      p.TagsAll,
 		SortBy:       p.Sort,
 		PageToken:    p.PageToken,
 		PageSize:     constants.DefaultPageSize,
@@ -91,6 +92,7 @@ func (s *querySvcsrvc) payloadToCountPublicCriteria(payload *querysvc.QueryResou
 
 	// Set the criteria from the payload
 	criteria.Tags = payload.Tags
+	criteria.TagsAll = payload.TagsAll
 	if payload.Name != nil {
 		criteria.Name = payload.Name
 	}
@@ -119,6 +121,7 @@ func (s *querySvcsrvc) payloadToCountAggregationCriteria(payload *querysvc.Query
 
 	// Set the criteria from the payload
 	criteria.Tags = payload.Tags
+	criteria.TagsAll = payload.TagsAll
 	if payload.Name != nil {
 		criteria.Name = payload.Name
 	}
